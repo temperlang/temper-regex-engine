@@ -1,5 +1,6 @@
 
 let { ... } = import("std/regex");
+let { TemperRegex } = import("./regex");
 
 let isCodePointWordChar(code: Int): Boolean {
   (48 <= code && code <= 57) // this range is 0 to 9, like above
@@ -259,13 +260,7 @@ class Matcher {
   }
 }
 
-interface TemperRegex {
-  public constructor(data: Regex);
-  public found(text: String): Boolean;
-  public find(text: String): Map<String, Group> | Bubble;
-}
-
-export class TemperCompiledRegex extends TemperRegex {
+export class TemperRegexWalker extends TemperRegex {
   public data: Regex;
 
   public constructor(re: Regex) {
@@ -294,26 +289,5 @@ export class TemperCompiledRegex extends TemperRegex {
       }
     }
     bubble()
-  }
-}
-
-var cat: Regex = new CodePoints("cat");
-var dog: Regex = new CodePoints("dog");
-var pet: Regex = new Or([cat, dog]);
-
-var re = new TemperCompiledRegex(pet);
-
-for (var i = 0; i < 100000; i++) {
-  if (!re.found("cat")) {
-    console.log("bad: cat");
-  }
-  if (!re.found("dog")) {
-    console.log("bad: dog");
-  }
-  if (re.found("cow")) {
-    console.log("bad: cow");
-  }
-  if (re.found("pig")) {
-    console.log("bad: pig");
   }
 }

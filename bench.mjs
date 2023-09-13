@@ -24,7 +24,7 @@ const bench = (name, mod) => {
         ],
     };
     const times = {};
-    for (const key of Object.keys(checks)) {
+    for (const key of ['true', 'false']) {
         for (const ent of checks[key]) {
             let iters = 1;
             let res = re.found(ent);
@@ -39,7 +39,7 @@ const bench = (name, mod) => {
             const ms = endTime - beginTime;
             const passed = String(res) === key;
             if (passed) {
-                times[ent] = iters / (ms / 1000) | 0;
+                times[ent] = iters / (ms / 1000);
             } else {
                 throw new Error(`bad test for ${name}: ${ent}`);
             }

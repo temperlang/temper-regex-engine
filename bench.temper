@@ -1,0 +1,66 @@
+let { Regex } = import('std/regex');
+let { TemperRegex } = import('./regex');
+let { TemperRegexGraphs } = import('./nfa');
+let { TemperRegexWalker } = import('./walk');
+let { sub } = import('./parser');
+
+var regex = sub("h(?:[eu]l+o|i)");
+
+class Check {
+  public want: Boolean;
+  public str: String;
+}
+
+var engines = [
+  fn(regex: Regex): TemperRegex {
+    return new TemperRegexGraphs(regex);
+  },
+  fn(regex: Regex): TemperRegex {
+    return new TemperRegexWalker(regex);
+  },
+];
+
+export let bench(time: fn(): Float64, res: fn(Float64, Float64): Void): Void {
+  var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
+
+  var checks = [
+    new Check(true, 'hello'),
+    new Check(true, 'hi'),
+    new Check(true, 'helo'),
+    new Check(true, 'hullo'),
+    new Check(true, 'hulo'),
+    new Check(true, 'i am going to say hello'),
+    new Check(true, 'abcdefghijklmnopqrstuvwxyz'),
+    new Check(false, 'test'),
+    new Check(false, 'Hell, MI'),
+    new Check(false, 'hydrogen helium carbon nitrognen'),
+    new Check(false, many_a),
+    new Check(false, many_h),
+  ];
+
+  for (var i = 0; i < checks.length; i++) {
+    let {str, want} = checks[i];
+    var ents = new ListBuilder<Float64>();
+    for (var j = 0; j < engines.length; j++) {
+      var re: TemperRegex = engines[j](regex);
+      var iters = 1;
+      var res = re.found(str);
+      var beginTime = time();
+      do {
+          for (var k = 0; k < iters; k++) {
+            res = re.found(str);
+          }
+          iters += iters;
+      } while (time() - beginTime < 100);
+      var endTime = time();
+      var ms = endTime - beginTime;
+      if (res == want) {
+        ents.add(iters.toFloat64() / (ms / 1000.0));
+      } else {
+        bubble();
+      }
+    }
+    res(ents[0], ents[1]);
+  }
+}

@@ -1,5 +1,6 @@
 
 let {...} = import("std/regex");
+let { TemperRegex } = import("./regex");
 
 let CodePoint = Int;
 let Id = Int;
@@ -57,8 +58,8 @@ class BeginMatcher extends Matcher {
 
 class WordBoundaryMatcher extends Matcher {
   public matches(str: List<CodePoint>, index: Int): Boolean {
-    var code1 = str[index-1] orelse -1;
-    var code2 = str[index] orelse -1;
+    var code1 = str.getOr(index-1, -1);
+    var code2 = str.getOr(index, -1);
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
     return isWord1 != isWord2;
@@ -67,7 +68,7 @@ class WordBoundaryMatcher extends Matcher {
 
 class WordClassMatcher extends Matcher {
   public matches(str: List<CodePoint>, index: Int): Boolean {
-    var code = str[index] orelse -1;
+    var code = str.getOr(index, -1);
     return (48 <= code && code <= 57) // this range is 0 to 9, like above
       || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
       || (97 <= code && code <= 122)  // this range is a to z (lowercase)
@@ -80,7 +81,7 @@ class WordClassMatcher extends Matcher {
 
 class SpaceClassMatcher extends Matcher {
   public matches(str: List<CodePoint>, index: Int): Boolean {
-    var code = str[index] orelse -1;
+    var code = str.getOr(index, -1);
     return code == 9 || code == 10 || code == 11 || code == 13 || code == 32;
   }
 
@@ -114,7 +115,7 @@ class RangeMatcher extends Matcher {
   public high: CodePoint;
 
   public matches(str: List<CodePoint>, index: Int): Boolean {
-    var c = str[index] orelse -1;
+    var c = str.getOr(index, -1);
     return low <= c && c <= high;
   }
 
@@ -131,7 +132,7 @@ class CharMatcher extends Matcher {
   }
 
   public matches(str: List<CodePoint>, index: Int): Boolean {
-    var c = str[index] orelse -1;
+    var c = str.getOr(index, -1);
     return c == code;
   }
 
@@ -204,10 +205,10 @@ class Engine {
   }
 }
 
-export class TemperCompiledRegex {
+export class TemperRegexGraphs extends TemperRegex {
   public engine: Engine;
   
-  constructor(regex: Regex): Void {
+  public constructor(regex: Regex): Void {
     engine = new Engine();
     buildRegex(regex, engine.startState, engine.endState);
   }
@@ -315,26 +316,5 @@ export class TemperCompiledRegex {
 
   public found(str: String): Boolean {
     return engine.matches(str);
-  }
-}
-
-var cat: Regex = new CodePoints("cat");
-var dog: Regex = new CodePoints("dog");
-var pet: Regex = new Or([cat, dog]);
-
-var re = new TemperCompiledRegex(pet);
-
-for (var i = 0; i < 100000; i++) {
-  if (!re.found("cat")) {
-    console.log("bad: cat");
-  }
-  if (!re.found("dog")) {
-    console.log("bad: dog");
-  }
-  if (re.found("cow")) {
-    console.log("bad: cow");
-  }
-  if (re.found("pig")) {
-    console.log("bad: pig");
   }
 }
