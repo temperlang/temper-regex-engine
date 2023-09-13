@@ -1,3 +1,6 @@
-# Temper Regex Engine
+# Temper Regex Parser
+
     export let name = "temper-regex-engine";
-    import("./runtime.temper")
+    import("./parser.temper");
+    import("./walk.temper");
+    import("./nfa.temper");

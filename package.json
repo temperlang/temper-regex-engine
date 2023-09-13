@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@temperlang/core": "file:temper.out/js/temper-core",
+    "@temperlang/std": "file:temper.out/js/std",
+    "temper-regex-engine": "file:temper.out/js/temper-regex-engine",
+    "temper-regex-parser": "file:temper.out/js/temper-regex-parser",
+    "unnamed": "file:temper.out/js/unnamed"
+  }
+}

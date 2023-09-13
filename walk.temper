@@ -296,3 +296,24 @@ export class TemperCompiledRegex extends TemperRegex {
     bubble()
   }
 }
+
+var cat: Regex = new CodePoints("cat");
+var dog: Regex = new CodePoints("dog");
+var pet: Regex = new Or([cat, dog]);
+
+var re = new TemperCompiledRegex(pet);
+
+for (var i = 0; i < 100000; i++) {
+  if (!re.found("cat")) {
+    console.log("bad: cat");
+  }
+  if (!re.found("dog")) {
+    console.log("bad: dog");
+  }
+  if (re.found("cow")) {
+    console.log("bad: cow");
+  }
+  if (re.found("pig")) {
+    console.log("bad: pig");
+  }
+}

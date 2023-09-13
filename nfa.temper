@@ -1,0 +1,340 @@
+
+let {...} = import("std/regex");
+
+let CodePoint = Int;
+let Id = Int;
+
+let ord(s: String): CodePoint {
+  return s.codePoints.read();
+}
+
+class Next {
+  public toState: State;
+  public matcher: Matcher;
+}
+
+class State {
+  public id: Id;
+  public next: ListBuilder<Next>;
+  
+  public constructor(identify: Id): Void {
+    id = identify; 
+    next = new ListBuilder<Next>();
+  }
+
+  public addNext(matcher: Matcher, toState: State): Void {
+    next.add(new Next(toState, matcher));
+  }
+
+  public addNextFirst(matcher: Matcher, toState: State): Void {
+    var oldNext = next;
+    next = [new Next(toState, matcher)];
+    for (var i = 0; i < oldNext.length; i++) {
+      next.add(oldNext[i]);
+    }
+  }
+}
+
+interface Matcher {
+  public isEpsilon(): Boolean {
+    return false;
+  }
+
+  public matches(str: List<CodePoint>, index: Int): Boolean;
+
+  public toString(): String;
+}
+
+class BeginMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return index == 0;
+  }
+
+  public toString(): String {
+    return "BeginMatcher()";
+  }
+}
+
+class WordBoundaryMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    var code1 = str[index-1] orelse -1;
+    var code2 = str[index] orelse -1;
+    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
+    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
+    return isWord1 != isWord2;
+  }
+}
+
+class WordClassMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    var code = str[index] orelse -1;
+    return (48 <= code && code <= 57) // this range is 0 to 9, like above
+      || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
+      || (97 <= code && code <= 122)  // this range is a to z (lowercase)
+  }
+
+  public toString(): String {
+    return "BeginMatcher()";
+  }
+}
+
+class SpaceClassMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    var code = str[index] orelse -1;
+    return code == 9 || code == 10 || code == 11 || code == 13 || code == 32;
+  }
+
+  public toString(): String {
+    return "SpaceClassMatcher()";
+  }
+}
+
+class EndMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return index == str.length;
+  }
+
+  public toString(): String {
+    return "EndMatcher()";
+  }
+}
+
+class AnyMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return index != str.length;
+  }
+
+  public toString(): String {
+    return "AnyMatcher()";
+  }
+}
+
+class RangeMatcher extends Matcher {
+  public low: CodePoint;
+  public high: CodePoint;
+
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    var c = str[index] orelse -1;
+    return low <= c && c <= high;
+  }
+
+  public toString(): String {
+    return "RangeMatcher(low = ${low.toString()}, high = ${high.toString()})";
+  }
+}
+
+class CharMatcher extends Matcher {
+  public code: CodePoint;
+  
+  public constructor(str: String): Void {
+    code = ord(str);
+  }
+
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    var c = str[index] orelse -1;
+    return c == code;
+  }
+
+  public toString(): String {
+    return "CharMatcher(code = ${code.toString()})";
+  }
+}
+
+class EpsilonMatcher extends Matcher {
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return true;
+  }
+
+  public isEpsilon(): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "Epsilon()";
+  }
+}
+
+class Visited {
+  public index: Int;
+  public state: State;
+  public visited: DenseBitVector;
+}
+
+class Engine {
+  public states: ListBuilder<State>;
+  public startState: State;
+  public endState: State;
+
+  public constructor() {
+    states = new ListBuilder<State>();
+    startState = newState();
+    endState = newState();
+  }
+
+  public newState(): State {
+    var ret = new State(states.length);
+    states.add(ret);
+    return ret;
+  }
+
+  public matches(str: String): Boolean {
+    var codePoints = str.split("").map(ord);
+    var stack = new ListBuilder<Visited>();
+    for (var i = 0; i < codePoints.length; i++) {
+      stack.add(new Visited(i, startState, new DenseBitVector(0)));
+      while (!stack.isEmpty) {
+        let {index, state, visited} = stack.removeLast();
+        if (state.id == endState.id) {
+          return true;
+        }
+        out: for (var c = state.next.length - 1; c >= 0; c -= 1) {
+          let {matcher, toState} = state.next[c];
+          if (matcher.isEpsilon()) {
+            if (!visited[toState.id]) {
+              visited[state.id] = true;
+              stack.add(new Visited(index, toState, visited));
+            }
+          } else if (matcher.matches(codePoints, index)) {
+            stack.add(new Visited(index + 1, toState, new DenseBitVector(0)));
+          }
+        }
+      }
+    }
+    return false;
+  }
+}
+
+export class TemperCompiledRegex {
+  public engine: Engine;
+  
+  constructor(regex: Regex): Void {
+    engine = new Engine();
+    buildRegex(regex, engine.startState, engine.endState);
+  }
+
+  public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
+    match (regex) {
+      is Capture -> do {
+        console.log("Capture");
+        bubble();
+      }
+      is CodePoints -> do {
+        var split = regex.value.split("");
+        var lastState = input;
+        for (var i = 0; i < split.length ; i++) {
+          var curState = engine.newState();
+          lastState.addNext(new CharMatcher(split[i]), curState);
+          lastState = curState;
+        }
+        lastState.addNext(new EpsilonMatcher(), output);
+      }
+      is CodeSet -> do {
+        for (var j = 0; j < regex.items.length; j++) {
+          var subRegex = regex.items[j];
+          match (subRegex) {
+            is CodeRange -> do {
+              input.addNext(new RangeMatcher(subRegex.min, subRegex.max), output);
+            }
+            is CodePoints -> do {
+              var split = subRegex.value.split("");
+              for (var i = 0; i < split.length ; i++) {
+                var nextState = engine.newState();
+                input.addNext(new CharMatcher(split[i]), nextState);
+                nextState.addNext(new EpsilonMatcher(), output);
+              }
+            }
+          }
+        }
+      }
+      is Or -> do {
+        for (var i = 0; i < regex.items.length; i++) {
+          var nextTryState = engine.newState();
+          input.addNext(new EpsilonMatcher(), nextTryState);
+          buildRegex(regex.items[i], nextTryState, output)
+        }
+      }
+      is Repeat -> do {
+        var lastState = input;
+        for (var i = 0; i < regex.min; i++) {
+          var curState = engine.newState();
+          buildRegex(regex.item, lastState, curState);
+          lastState = curState;
+        }
+        var max = regex.max;
+        if (max != null) {
+          for (var i = regex.min; i < max; i++) {
+            var curState = engine.newState();
+            if (regex.reluctant) {
+              curState.addNext(new EpsilonMatcher(), output);
+              buildRegex(regex.item, lastState, curState);
+            } else {
+              buildRegex(regex.item, lastState, curState);
+              curState.addNext(new EpsilonMatcher(), output);
+            }
+            lastState = curState;
+          }
+        } else {
+          buildRegex(regex.item, input, output);
+          if (regex.reluctant) {
+            output.addNextFirst(new EpsilonMatcher(), input);
+          } else {
+            output.addNext(new EpsilonMatcher(), input);
+          }
+        }
+      }
+      is Sequence -> do {
+        var lastState = input;
+        for (var j = 0; j < regex.items.length; j++) {
+          var curState = engine.newState();
+          buildRegex(regex.items[j], lastState, curState);
+          lastState = curState;
+        }
+        lastState.addNext(new EpsilonMatcher(), output);
+      }
+      is Special -> do {
+        if (regex == Begin) {
+          input.addNext(new BeginMatcher(), output);
+        } else if (regex == Dot) { 
+          input.addNext(new AnyMatcher(), output);
+        } else if (regex == End) {
+          input.addNext(new EndMatcher(), output);
+        } else if (regex == WordBoundary) { 
+          input.addNext(new WordBoundaryMatcher(), output);
+        } else if (regex == Digit) {
+          input.addNext(new RangeMatcher(48, 57), output);
+        } else if(regex == Space) {
+          input.addNext(new SpaceClassMatcher(), output);
+        } else if (regex == Word) {
+          input.addNext(new WordClassMatcher(), output);
+        } else {
+          bubble();
+        }
+      }
+    }
+  }
+
+  public found(str: String): Boolean {
+    return engine.matches(str);
+  }
+}
+
+var cat: Regex = new CodePoints("cat");
+var dog: Regex = new CodePoints("dog");
+var pet: Regex = new Or([cat, dog]);
+
+var re = new TemperCompiledRegex(pet);
+
+for (var i = 0; i < 100000; i++) {
+  if (!re.found("cat")) {
+    console.log("bad: cat");
+  }
+  if (!re.found("dog")) {
+    console.log("bad: dog");
+  }
+  if (re.found("cow")) {
+    console.log("bad: cow");
+  }
+  if (re.found("pig")) {
+    console.log("bad: pig");
+  }
+}
