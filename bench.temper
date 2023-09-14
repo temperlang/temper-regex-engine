@@ -2,25 +2,61 @@ let { Regex } = import('std/regex');
 let { TemperRegex } = import('./regex');
 let { TemperRegexGraphs } = import('./nfa');
 let { TemperRegexWalker } = import('./walk');
+let { TemperRegexNative } = import('./native');
 let { sub } = import('./parser');
 
-var regex = sub("h(?:[eu]l+o|i)");
+var regex: Regex = sub("h(?:[eu]l+o|i)");
 
 class Check {
   public want: Boolean;
   public str: String;
 }
 
-var engines = [
-  fn(regex: Regex): TemperRegex {
-    return new TemperRegexGraphs(regex);
-  },
-  fn(regex: Regex): TemperRegex {
-    return new TemperRegexWalker(regex);
-  },
-];
+class Engine {
+  public name: String;
+  public cons: fn(Regex): TemperRegex;
 
-export let bench(time: fn(): Float64, res: fn(Float64, Float64): Void): Void {
+  public invoke(re: Regex): TemperRegex {
+    return cons(re);
+  }
+}
+
+var engines = new ListBuilder<Engine>();
+engines.add(
+  new Engine(
+    "walker",
+    fn(regex: Regex): TemperRegex {
+      return new TemperRegexWalker(regex);
+    }
+  )
+);
+engines.add(
+  new Engine(
+    "graphs",
+    fn(regex: Regex): TemperRegex {
+      return new TemperRegexGraphs(regex);
+    }
+  )
+);
+engines.add(
+  new Engine(
+    "native",
+    fn(regex: Regex): TemperRegex {
+      return new TemperRegexNative(regex);
+    }
+  )
+);
+
+export class Result {
+  public name: String;
+  public score: Float64;
+
+  public toString(): String {
+    return "${name}'s score = ${score.toInt().toString()}";
+  }
+}
+
+export let bench(time: fn(): Float64): List<Result> {
   var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
 
@@ -39,11 +75,13 @@ export let bench(time: fn(): Float64, res: fn(Float64, Float64): Void): Void {
     new Check(false, many_h),
   ];
 
-  for (var i = 0; i < checks.length; i++) {
-    let {str, want} = checks[i];
-    var ents = new ListBuilder<Float64>();
-    for (var j = 0; j < engines.length; j++) {
-      var re: TemperRegex = engines[j](regex);
+  var res = new ListBuilder<Result>();
+  for (var j = 0; j < engines.length; j++) {
+    var engine = engines[j];
+    var sum = 0.0;
+    for (var i = 0; i < checks.length; i++) {
+      let {str, want} = checks[i];
+      var re = engine.invoke(regex);
       var iters = 1;
       var res = re.found(str);
       var beginTime = time();
@@ -56,11 +94,13 @@ export let bench(time: fn(): Float64, res: fn(Float64, Float64): Void): Void {
       var endTime = time();
       var ms = endTime - beginTime;
       if (res == want) {
-        ents.add(iters.toFloat64() / (ms / 1000.0));
+        sum += iters.toFloat64() / (ms / 1000.0);
       } else {
         bubble();
       }
     }
-    res(ents[0], ents[1]);
+    res.add(new Result(engine.name, sum / checks.length.toFloat64()));
   }
+
+  return res.toList();
 }

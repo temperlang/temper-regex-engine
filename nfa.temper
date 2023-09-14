@@ -37,10 +37,6 @@ class State {
 }
 
 interface Matcher {
-  public isEpsilon(): Boolean {
-    return false;
-  }
-
   public matches(str: List<CodePoint>, index: Int): Boolean;
 
   public toString(): String;
@@ -146,30 +142,52 @@ class EpsilonMatcher extends Matcher {
     return true;
   }
 
-  public isEpsilon(): Boolean {
-    return true;
-  }
-
   public toString(): String {
     return "Epsilon()";
   }
 }
 
-class Visited {
+interface Stack {
   public index: Int;
   public state: State;
-  public visited: DenseBitVector;
+  public get next(): Stack;
+}
+
+class StackStart extends Stack {
+  public index: Int;
+  public state: State;
+
+  public constructor(): Void {
+    index = -1;
+    state = new State(-1);
+  }
+  
+  public get next(): Stack {
+    return this;
+  }
+}
+
+class StackSlot extends Stack {
+  public index: Int;
+  public state: State;
+  public slot: Stack;
+
+  public get next(): Stack {
+    return slot;
+  }
 }
 
 class Engine {
   public states: ListBuilder<State>;
   public startState: State;
   public endState: State;
+  public epsilon: EpsilonMatcher;
 
   public constructor() {
     states = new ListBuilder<State>();
     startState = newState();
     endState = newState();
+    epsilon = new EpsilonMatcher();
   }
 
   public newState(): State {
@@ -180,23 +198,25 @@ class Engine {
 
   public matches(str: String): Boolean {
     var codePoints = str.split("").map(ord);
-    var stack = new ListBuilder<Visited>();
-    for (var i = 0; i < codePoints.length; i++) {
-      stack.add(new Visited(i, startState, new DenseBitVector(0)));
-      while (!stack.isEmpty) {
-        let {index, state, visited} = stack.removeLast();
+    var stackStart = new StackStart();
+    var badNext = new Next(endState, epsilon);
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: Stack = new StackSlot(i, startState, stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        stack = stack.next;
         if (state.id == endState.id) {
           return true;
         }
-        out: for (var c = state.next.length - 1; c >= 0; c -= 1) {
-          let {matcher, toState} = state.next[c];
-          if (matcher.isEpsilon()) {
-            if (!visited[toState.id]) {
-              visited[state.id] = true;
-              stack.add(new Visited(index, toState, visited));
-            }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          if (matcher == epsilon) {
+            stack = new StackSlot(index, toState, stack);
           } else if (matcher.matches(codePoints, index)) {
-            stack.add(new Visited(index + 1, toState, new DenseBitVector(0)));
+            stack = new StackSlot(index + 1, toState, stack);
           }
         }
       }
@@ -227,7 +247,7 @@ export class TemperRegexGraphs extends TemperRegex {
           lastState.addNext(new CharMatcher(split[i]), curState);
           lastState = curState;
         }
-        lastState.addNext(new EpsilonMatcher(), output);
+        lastState.addNext(engine.epsilon, output);
       }
       is CodeSet -> do {
         for (var j = 0; j < regex.items.length; j++) {
@@ -241,7 +261,7 @@ export class TemperRegexGraphs extends TemperRegex {
               for (var i = 0; i < split.length ; i++) {
                 var nextState = engine.newState();
                 input.addNext(new CharMatcher(split[i]), nextState);
-                nextState.addNext(new EpsilonMatcher(), output);
+                nextState.addNext(engine.epsilon, output);
               }
             }
           }
@@ -250,7 +270,7 @@ export class TemperRegexGraphs extends TemperRegex {
       is Or -> do {
         for (var i = 0; i < regex.items.length; i++) {
           var nextTryState = engine.newState();
-          input.addNext(new EpsilonMatcher(), nextTryState);
+          input.addNext(engine.epsilon, nextTryState);
           buildRegex(regex.items[i], nextTryState, output)
         }
       }
@@ -266,20 +286,20 @@ export class TemperRegexGraphs extends TemperRegex {
           for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
             if (regex.reluctant) {
-              curState.addNext(new EpsilonMatcher(), output);
+              curState.addNext(engine.epsilon, output);
               buildRegex(regex.item, lastState, curState);
             } else {
               buildRegex(regex.item, lastState, curState);
-              curState.addNext(new EpsilonMatcher(), output);
+              curState.addNext(engine.epsilon, output);
             }
             lastState = curState;
           }
         } else {
           buildRegex(regex.item, input, output);
           if (regex.reluctant) {
-            output.addNextFirst(new EpsilonMatcher(), input);
+            output.addNextFirst(engine.epsilon, input);
           } else {
-            output.addNext(new EpsilonMatcher(), input);
+            output.addNext(engine.epsilon, input);
           }
         }
       }
@@ -290,7 +310,7 @@ export class TemperRegexGraphs extends TemperRegex {
           buildRegex(regex.items[j], lastState, curState);
           lastState = curState;
         }
-        lastState.addNext(new EpsilonMatcher(), output);
+        lastState.addNext(engine.epsilon, output);
       }
       is Special -> do {
         if (regex == Begin) {

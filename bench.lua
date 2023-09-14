@@ -18,6 +18,7 @@ local function on_result(graph, tree)
     tcount = tcount + 1
 end
 
-bench.bench(clock_ms, on_result)
-print(math.floor(tsum / tcount) .. ' -> ' .. math.floor(gsum / gcount))
-print(math.floor(gsum / tsum * 1000) / 1000 .. 'x')
+local res = bench.bench(clock_ms)
+for i=1, #res do
+    print(res[i]:toString())
+end

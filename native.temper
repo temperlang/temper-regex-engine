@@ -1,0 +1,19 @@
+
+let { ... } = import("std/regex");
+let { TemperRegex } = import("./regex");
+
+export class TemperRegexNative extends TemperRegex {
+  public data: CompiledRegex;
+
+  public constructor(re: Regex) {
+    data = new CompiledRegex(re);
+  }
+
+  public found(text: String): Boolean {
+    return data.found(text);
+  }
+  
+  public find(text: String): Map<String, Group> | Bubble {
+    return data.find(text);
+  }
+}
