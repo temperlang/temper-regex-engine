@@ -1,5 +1,6 @@
 import time
 import math
+import sys
 import temper_regex_engine.bench as bench
 
 def clock_ms():
@@ -7,4 +8,4 @@ def clock_ms():
 
 res = bench.bench(clock_ms)
 for i in res:
-    print(i.to_string())
+    print(f"{sys.implementation.name}{sys.version_info.major}.{sys.version_info.minor} {i.name}: {int(i.score)}")

@@ -29,7 +29,8 @@ class State {
 
   public addNextFirst(matcher: Matcher, toState: State): Void {
     var oldNext = next;
-    next = [new Next(toState, matcher)];
+    next = new ListBuilder<Next>();
+    next.add(new Next(toState, matcher));
     for (var i = 0; i < oldNext.length; i++) {
       next.add(oldNext[i]);
     }
@@ -283,7 +284,8 @@ export class TemperRegexGraphs extends TemperRegex {
         }
         var max = regex.max;
         if (max != null) {
-          for (var i = regex.min; i < max; i++) {
+          var maxNoNull = max.as<Int>();
+          for (var i = regex.min; i < maxNoNull; i++) {
             var curState = engine.newState();
             if (regex.reluctant) {
               curState.addNext(engine.epsilon, output);

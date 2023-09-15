@@ -90,7 +90,7 @@ export let bench(time: fn(): Float64): List<Result> {
             res = re.found(str);
           }
           iters += iters;
-      } while (time() - beginTime < 100);
+      } while (time() - beginTime < 100.0);
       var endTime = time();
       var ms = endTime - beginTime;
       if (res == want) {

@@ -202,7 +202,8 @@ class Matcher {
         }
       }
     } else {
-      for (var i = regex.min; i < regex.max; i++) {
+      var maxNoNull = regex.max.as<Int>();
+      for (var i = regex.min; i < maxNoNull; i++) {
         var mid = head;
         if (!matchRegex(regex.item)) {
           setHead(mid);
@@ -255,9 +256,9 @@ class Matcher {
           resetGroups(regex.items[i]);
         }
       }
-      else -> false;
+      else -> do {}
     }
-  }
+  };
 }
 
 export class TemperRegexWalker extends TemperRegex {
