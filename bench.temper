@@ -24,20 +24,20 @@ class Engine {
 var engines = new ListBuilder<Engine>();
 engines.add(
   new Engine(
-    "walker",
+    "native",
     fn(regex: Regex): TemperRegex {
-      return new TemperRegexWalker(regex);
+      return new TemperRegexNative(regex);
     }
   )
 );
-// engines.add(
-//   new Engine(
-//     "dfa",
-//     fn(regex: Regex): TemperRegex {
-//       return new TemperRegexDFA(regex);
-//     }
-//   )
-// );
+engines.add(
+  new Engine(
+    "dfa",
+    fn(regex: Regex): TemperRegex {
+      return new TemperRegexDFA(regex);
+    }
+  )
+);
 engines.add(
   new Engine(
     "nfa",
@@ -48,9 +48,9 @@ engines.add(
 );
 engines.add(
   new Engine(
-    "native",
+    "walker",
     fn(regex: Regex): TemperRegex {
-      return new TemperRegexNative(regex);
+      return new TemperRegexWalker(regex);
     }
   )
 );

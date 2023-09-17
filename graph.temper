@@ -216,13 +216,7 @@ class Engine {
       }
       map[state.id] = outState.id;
 
-      var added = new DenseBitVector(0);
-
       let add(matcher: Matcher, toState: State): Void {
-        if (added[toState.id]) {
-          return;
-        }
-        added[toState.id] = true;
         if (matcher == unopt.epsilon) {
           for (var i = 0; i < toState.next.length; i++) {
             var next = toState.next[i];
@@ -438,7 +432,7 @@ let fromVec(vec: DenseBitVector, size: Int): List<Int> {
   return key.toList();
 }
 
-class TableEntry {
+class TransitionTableEntry {
   public key: DenseBitVector;
   public val: List<DenseBitVector>;
 
@@ -460,20 +454,20 @@ class TableEntry {
   }
 }
 
-class Table {
+class TransitionTable {
   public nsyms: Int;
-  public table: ListBuilder<TableEntry>;
+  public table: ListBuilder<TransitionTableEntry>;
 
   public constructor(size: Int) {
     nsyms = size;
-    table = new ListBuilder<TableEntry>();
+    table = new ListBuilder<TransitionTableEntry>();
   }
 
   public has(key: DenseBitVector): Boolean {
     return do { get(key); true } orelse false;
   }
 
-  public get(key: DenseBitVector): TableEntry | Bubble {
+  public get(key: DenseBitVector): TransitionTableEntry | Bubble {
     outer: for (var i = 0; i < table.length; i++) {
       var cur = table[i];
       var ret = true;
@@ -493,7 +487,7 @@ class Table {
   public toStringWith(map: MapBuilder<CodePoint, Int>): String {
     var l = map.toList();
     var size = nsyms;
-    var inner = table.join("\n", fn(ent: TableEntry): String {
+    var inner = table.join("\n", fn(ent: TransitionTableEntry): String {
       return ent.toStringWith(size);
     });
     var header = new ListBuilder<String>();
@@ -568,9 +562,10 @@ let validFor(next: Matcher): DenseBitVector {
 
 export class TemperRegexDFA extends TemperRegex {
   public nsyms: Int;
-  public nstates: Int;
   public symbols: MapBuilder<CodePoint, Int>;
-  public table: Table;
+  public table: TransitionTable;
+  public map: Map<Int, Map<CodePoint, Int>>;
+  public final: List<Boolean>;
 
   public addCodePoint(c: CodePoint): Void {
     symbols[c] orelse do {
@@ -586,6 +581,12 @@ export class TemperRegexDFA extends TemperRegex {
     }
   }
 
+  public nameFor(vec: DenseBitVector, nstates: Int): String {
+    return fromVec(vec, nstates).join("|", fn(s: Int): String {
+      return s.toString();
+    })
+  }
+
   public constructor(regex: Regex): Void {
     nsyms = 0;
     symbols = new MapBuilder<CodePoint, Int>()
@@ -593,20 +594,20 @@ export class TemperRegexDFA extends TemperRegex {
     var nfa = new TemperRegexNFA(regex);
     var engine = nfa.engine;
 
-    nstates = engine.states.length;
+    var nstates = engine.states.length;
 
-    for (var i = 0; i < engine.states.length; i++) {
+    for (var i = 0; i < nstates; i++) {
       var state = engine.states[i];
       for (var j = 0; j < state.next.length; j++) {
         addSymbolsFrom(state.next[j].matcher);
       }
     }
 
-    table = new Table(engine.states.length);
+    table = new TransitionTable(nstates);
 
     var pairs = symbols.toList();
 
-    for (var i = 0; i < engine.states.length; i++) {
+    for (var i = 0; i < nstates; i++) {
       var state = engine.states[i];
       var val = new ListBuilder<DenseBitVector>();
       for (var j = 0; j < nsyms; j++) {
@@ -619,17 +620,51 @@ export class TemperRegexDFA extends TemperRegex {
         }
         val.add(toVec(cur.toList(), nstates));
       }
-      var ent = new TableEntry(toVec([state.id], nstates), val.toList());
+      var ent = new TransitionTableEntry(toVec([state.id], nstates), val.toList());
       table.table.add(ent);
     }
 
 
-    for (var i = 0; i < engine.states.length; i++) {
-      visit(table.table[i]);
+    for (var i = 0; i < nstates; i++) {
+      buildTable(table.table[i], nstates);
     }
+
+    var index = new MapBuilder<String, Int>();
+    index[""] = -1;
+    for (var i = 0; i < table.table.length; i++) {
+      var tent = table.table[i];
+      var name = nameFor(tent.key, nstates);
+      if (name == "") {
+        continue;
+      }
+      index[nameFor(tent.key, nstates)] = i;
+    }
+
+    var finalBuilder = new ListBuilder<Boolean>();
+    for (var i = 0; i < table.table.length + 1; i++) {
+      finalBuilder.add(true);
+    }
+    var mapBuilder = new MapBuilder<Int, Map<CodePoint, Int>>();
+    for (var i = 0; i < table.table.length; i++) {
+      var tent = table.table[i];
+      var subBuilder = new MapBuilder<CodePoint, Int>();
+      var isFinal = true;
+      for (var j = 0; j < nsyms; j++) {
+        var value = index[nameFor(tent.val[j], nstates)];
+        if (value != -1) {
+          isFinal = false;
+        }
+        subBuilder[pairs[j].key] = value;
+      }
+      var ci = index[nameFor(tent.key, nstates)];
+      finalBuilder[ci + 1] = isFinal;
+      mapBuilder[ci] = subBuilder.toMap();
+    }
+    final = finalBuilder.toList();
+    map = mapBuilder.toMap();
   }
 
-  let visit(tent: TableEntry): Void {
+  let buildTable(tent: TransitionTableEntry, nstates: Int): Void {
     for (var i = 0; i < nsyms; i++) {
       var newKey = tent.val[i];
       if (fromVec(newKey, nstates).length >= 1 && !table.has(newKey)) {
@@ -648,9 +683,9 @@ export class TemperRegexDFA extends TemperRegex {
           }
           allVals.add(newVal);
         }
-        var ent = new TableEntry(newKey, allVals.toList());
+        var ent = new TransitionTableEntry(newKey, allVals.toList());
         table.table.add(ent);
-        visit(ent);
+        buildTable(ent, nstates);
       }
     }
   }
@@ -693,15 +728,33 @@ export class TemperRegexDFA extends TemperRegex {
   }
 
   public found(str: String): Boolean {
-    return false;
+    var slice0 = str.codePoints;
+    outer: while (true) {
+      var slice = slice0;
+      var state = 0;
+      while (true) {
+        if (final.getOr(state + 1, true)) {
+          if (state != -1) {
+            return true;
+          }
+          if (slice0.isEmpty) {
+            return false;
+          }
+          slice0 = slice0.advance(1);
+          continue outer;
+        }
+        if (slice.isEmpty) {
+          if (slice0.isEmpty) {
+            return false;
+          }
+          slice0 = slice0.advance(1);
+          continue outer;
+        }
+        state = map[state][slice.read()] orelse -1;
+        slice = slice.advance(1);
+      }
+    }
   }
-
-//   public toString(): String {
-//     var ret = symbols.toList().join(",", fn(c: Pair<CodePoint, Int>): String {
-//       return "#${c.key.toString()}";
-//     });
-//     return ret
-//   }
 
   public toStringTable(): String {
     return table.toStringWith(symbols);
