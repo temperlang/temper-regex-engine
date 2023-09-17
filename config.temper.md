@@ -3,5 +3,5 @@
     export let name = "temper-regex-engine";
     import("./parser.temper");
     import("./walk.temper");
-    import("./nfa.temper");
+    import("./graph.temper");
     import("./bench.temper");

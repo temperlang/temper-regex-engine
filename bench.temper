@@ -1,6 +1,6 @@
 let { Regex } = import('std/regex');
 let { TemperRegex } = import('./regex');
-let { TemperRegexGraphs } = import('./nfa');
+let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
 let { TemperRegexWalker } = import('./walk');
 let { TemperRegexNative } = import('./native');
 let { sub } = import('./parser');
@@ -30,11 +30,19 @@ engines.add(
     }
   )
 );
+// engines.add(
+//   new Engine(
+//     "dfa",
+//     fn(regex: Regex): TemperRegex {
+//       return new TemperRegexDFA(regex);
+//     }
+//   )
+// );
 engines.add(
   new Engine(
-    "graphs",
+    "nfa",
     fn(regex: Regex): TemperRegex {
-      return new TemperRegexGraphs(regex);
+      return new TemperRegexNFA(regex);
     }
   )
 );

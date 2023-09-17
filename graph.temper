@@ -49,7 +49,7 @@ class BeginMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "BeginMatcher()";
+    return "^";
   }
 }
 
@@ -72,7 +72,7 @@ class WordClassMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "BeginMatcher()";
+    return "\\w";
   }
 }
 
@@ -83,7 +83,7 @@ class SpaceClassMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "SpaceClassMatcher()";
+    return "\\s";
   }
 }
 
@@ -93,7 +93,7 @@ class EndMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "EndMatcher()";
+    return "$";
   }
 }
 
@@ -103,7 +103,7 @@ class AnyMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "AnyMatcher()";
+    return ".";
   }
 }
 
@@ -117,14 +117,16 @@ class RangeMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "RangeMatcher(low = ${low.toString()}, high = ${high.toString()})";
+    return "[\\x${low.toString()}-\\x${high.toString()}]";
   }
 }
 
 class CharMatcher extends Matcher {
+  public char: String;
   public code: CodePoint;
   
   public constructor(str: String): Void {
+    char = str;
     code = ord(str);
   }
 
@@ -134,7 +136,7 @@ class CharMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "CharMatcher(code = ${code.toString()})";
+    return char;
   }
 }
 
@@ -144,7 +146,7 @@ class EpsilonMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "Epsilon()";
+    return "ε";
   }
 }
 
@@ -191,6 +193,58 @@ class Engine {
     epsilon = new EpsilonMatcher();
   }
 
+  public opt(): Engine {
+    return optEpsilonEllison();
+  }
+
+  public optEpsilonEllison(): Engine {
+    var unopt = this;
+    var opt = new Engine();
+    var map = new MapBuilder<Id, Id>();
+
+    let visit(state: State): State {
+      var optId = map[state.id] orelse -1;
+      if (optId >= 0) {
+        return opt.states[optId];
+      }
+      var outState: State = if (state == unopt.startState) {
+        opt.startState
+      } else if (state == unopt.endState) {
+        opt.endState
+      } else {
+        opt.newState()
+      }
+      map[state.id] = outState.id;
+
+      var added = new DenseBitVector(0);
+
+      let add(matcher: Matcher, toState: State): Void {
+        if (added[toState.id]) {
+          return;
+        }
+        added[toState.id] = true;
+        if (matcher == unopt.epsilon) {
+          for (var i = 0; i < toState.next.length; i++) {
+            var next = toState.next[i];
+            add(next.matcher, next.toState);
+          }
+        } else {
+          outState.addNext(matcher, visit(toState));
+        }
+      }
+
+      for (var i = 0; i < state.next.length; i++) {
+        var next = state.next[i];
+        add(next.matcher, next.toState);
+      }
+      return outState;
+    }
+
+    visit(startState);
+
+    return opt;
+  }
+
   public newState(): State {
     var ret = new State(states.length);
     states.add(ret);
@@ -224,14 +278,29 @@ class Engine {
     }
     return false;
   }
+
+  public toString(): String {
+    var count = 0;
+    var inner = states.join("", fn(state: State): String {
+      var name = "q${state.id.toString()}";
+      return state.next.join("", fn(next: Next): String {
+        var line = count.toString();
+        count++;
+        var nexts = next.toState.id.toString();
+        return "\n  ${name} -> q${nexts} [label=\"${next.matcher.toString()}\"];";
+      });
+    })
+    return "digraph {\n  rankdir=\"LR\";${inner}\n}";
+  }
 }
 
-export class TemperRegexGraphs extends TemperRegex {
+export class TemperRegexNFA extends TemperRegex {
   public engine: Engine;
   
   public constructor(regex: Regex): Void {
     engine = new Engine();
     buildRegex(regex, engine.startState, engine.endState);
+    engine = engine.opt();
   }
 
   public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
@@ -244,11 +313,14 @@ export class TemperRegexGraphs extends TemperRegex {
         var split = regex.value.split("");
         var lastState = input;
         for (var i = 0; i < split.length ; i++) {
-          var curState = engine.newState();
-          lastState.addNext(new CharMatcher(split[i]), curState);
-          lastState = curState;
+          if (i == split.length - 1) {
+            lastState.addNext(new CharMatcher(split[i]), output);
+          } else {
+            var curState = engine.newState();
+            lastState.addNext(new CharMatcher(split[i]), curState);
+            lastState = curState;
+          }
         }
-        lastState.addNext(engine.epsilon, output);
       }
       is CodeSet -> do {
         for (var j = 0; j < regex.items.length; j++) {
@@ -260,9 +332,7 @@ export class TemperRegexGraphs extends TemperRegex {
             is CodePoints -> do {
               var split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
-                var nextState = engine.newState();
-                input.addNext(new CharMatcher(split[i]), nextState);
-                nextState.addNext(engine.epsilon, output);
+                input.addNext(new CharMatcher(split[i]), output);
               }
             }
           }
@@ -270,9 +340,7 @@ export class TemperRegexGraphs extends TemperRegex {
       }
       is Or -> do {
         for (var i = 0; i < regex.items.length; i++) {
-          var nextTryState = engine.newState();
-          input.addNext(engine.epsilon, nextTryState);
-          buildRegex(regex.items[i], nextTryState, output)
+          buildRegex(regex.items[i], input, output)
         }
       }
       is Repeat -> do {
@@ -286,33 +354,40 @@ export class TemperRegexGraphs extends TemperRegex {
         if (max != null) {
           var maxNoNull = max.as<Int>();
           for (var i = regex.min; i < maxNoNull; i++) {
-            var curState = engine.newState();
+            var curState = if (i == maxNoNull - 1) {
+              engine.newState()
+            } else {
+              output
+            };
             if (regex.reluctant) {
               curState.addNext(engine.epsilon, output);
-              buildRegex(regex.item, lastState, curState);
+              buildRegex(regex.item, lastState, output);
             } else {
-              buildRegex(regex.item, lastState, curState);
+              buildRegex(regex.item, lastState, output);
               curState.addNext(engine.epsilon, output);
             }
             lastState = curState;
           }
         } else {
-          buildRegex(regex.item, input, output);
+          buildRegex(regex.item, input, input);
           if (regex.reluctant) {
-            output.addNextFirst(engine.epsilon, input);
+            input.addNextFirst(engine.epsilon, output);
           } else {
-            output.addNext(engine.epsilon, input);
+            input.addNext(engine.epsilon, output);
           }
         }
       }
       is Sequence -> do {
-        var lastState = input;
+        var lastState = input; 
         for (var j = 0; j < regex.items.length; j++) {
-          var curState = engine.newState();
-          buildRegex(regex.items[j], lastState, curState);
-          lastState = curState;
+          if (j == regex.items.length - 1) {
+            buildRegex(regex.items[j], lastState, output);
+          } else {
+            var curState = engine.newState();
+            buildRegex(regex.items[j], lastState, curState);
+            lastState = curState;
+          }
         }
-        lastState.addNext(engine.epsilon, output);
       }
       is Special -> do {
         if (regex == Begin) {
@@ -338,5 +413,144 @@ export class TemperRegexGraphs extends TemperRegex {
 
   public found(str: String): Boolean {
     return engine.matches(str);
+  }
+
+  public toString(): String {
+    return engine.toString();
+  }
+}
+
+let toVec(ls: List<Int>, size: Int): DenseBitVector {
+  var vec = new DenseBitVector(size);
+  for (var i = 0; i < ls.length; i++) {
+    vec.set(ls[i], true);
+  }
+  return vec;
+}
+
+class TableEntry {
+  public key: DenseBitVector;
+  public val: List<DenseBitVector>;
+}
+
+class Table {
+  public nsyms: Int;
+  public table: ListBuilder<TableEntry>;
+
+  public constructor(size: Int) {
+    nsyms = size;
+    table = new ListBuilder<TableEntry>();
+  }
+
+  public get(key: DenseBitVector): TableEntry | Bubble {
+    outer: for (var i = 0; i < table.length; i++) {
+      var cur = table[i];
+      var ret = true;
+      for (var j = 0; j < nsyms; j++) {
+        if (key[j] != cur.key[j]) {
+          ret = false;
+          break;
+        }
+      }
+      if (ret) {
+        return cur;
+      }
+    }
+    return bubble();
+  }
+
+  public add(keyList: List<Int>, valList: List<List<Int>>): Void {
+    var key = toVec(keyList, nsyms);
+    var val = valList.map(fn(val: List<Int>): DenseBitVector {
+      return toVec(val, nsyms);
+    });
+    var ent: TableEntry = this[key] orelse do {
+      var newKey = new TableEntry(key, val);
+      table.add(newKey);
+      return;
+    };
+    for (var i = 0; i < val.length; i++) {
+      var entn = ent.val[i];
+      var valn = val[i];
+      for (var j = 0; j < nsyms; j++) {
+        if (valn[j]) {
+          entn[j] = true;
+        }
+      }
+    }
+  }
+}
+
+export class TemperRegexDFA extends TemperRegex {
+  public nsyms: Int;
+  public symbols: MapBuilder<CodePoint, Int>;
+  public table: Table;
+
+  public addCodePoint(c: CodePoint): Void {
+    symbols[c] = symbols[c] orelse nsyms++;
+  }
+
+  public addCodePointRange(min: CodePoint, max: CodePoint): Void {
+    for (var i = min; i <= max; i++) {
+      addCodePoint(i);
+    }
+  }
+
+  public constructor(regex: Regex): Void {
+    nsyms = 0;
+    symbols = new MapBuilder<CodePoint, Int>()
+
+    var nfa = new TemperRegexNFA(regex);
+    var engine = nfa.engine;
+
+    for (var i = 0; i < engine.states.length; i++) {
+      var state = engine.states[i];
+      for (var j = 0; j < state.next.length; j++) {
+        addSymbolsFrom(state.next[j]);
+      }
+    }
+
+    table = new Table(nsyms);
+  }
+
+  public addSymbolsFrom(next: Next): Void {
+    match (next) {
+      is WordClassMatcher -> do {
+        addCodePointRange(48, 57);
+        addCodePointRange(65, 90);
+        addCodePointRange(97, 122);
+      }
+      is SpaceClassMatcher -> do {
+        addCodePoint(9);
+        addCodePoint(10);
+        addCodePoint(11);
+        addCodePoint(13);
+        addCodePoint(32);
+      }
+      is RangeMatcher -> do {
+        addCodePointRange(next.low, next.high);
+      }
+      is CharMatcher -> do {
+        addCodePoint(next.code);
+      }
+      is AnyMatcher -> do {}
+      is EpsilonMatcher -> do {}
+      is WordBoundaryMatcher -> do {
+        console.log("WordBoundaryMatcher");
+        bubble();
+      }
+      is EndMatcher -> do {
+        console.log("EndMatcher");
+        bubble();
+      }
+      is BeginMatcher -> do {
+        console.log("BeginMatcher");
+        bubble();
+      }
+    }
+  }
+
+  public found(str: String): Boolean {
+    return false;
   }
 }
