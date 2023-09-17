@@ -7,5 +7,7 @@ end
 
 local res = bench.bench(clock_ms)
 for i=1, #res do
-    print(res[i]:toString())
+    if res[i].name ~= 'walker' then
+        print(res[i]:toString())
+    end
 end

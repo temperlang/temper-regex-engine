@@ -560,11 +560,27 @@ let validFor(next: Matcher): DenseBitVector {
   return valid;
 }
 
+let mapToList<T>(map: Map<Int, T>, defaultValue: T): List<T> {
+  var ls = map.toList();
+  var max = 0;
+  for (var i = 0; i < ls.length; i++) {
+    var key = ls[i].key;
+    if (key > max) {
+      max = key;
+    }
+  }
+  var ret = new ListBuilder<T>();
+  for (var i = 0; i <= max; i++) {
+    ret.add(map[i] orelse defaultValue);
+  }
+  return ret.toList();
+}
+
 export class TemperRegexDFA extends TemperRegex {
   public nsyms: Int;
   public symbols: MapBuilder<CodePoint, Int>;
   public table: TransitionTable;
-  public map: Map<Int, Map<CodePoint, Int>>;
+  public map: List<List<Int>>;
   public final: List<Boolean>;
 
   public addCodePoint(c: CodePoint): Void {
@@ -640,11 +656,11 @@ export class TemperRegexDFA extends TemperRegex {
       index[nameFor(tent.key, nstates)] = i;
     }
 
-    var finalBuilder = new ListBuilder<Boolean>();
+    var finalBuilder = new MapBuilder<Int, Boolean>();
     for (var i = 0; i < table.table.length + 1; i++) {
-      finalBuilder.add(true);
+      finalBuilder[i] = true;
     }
-    var mapBuilder = new MapBuilder<Int, Map<CodePoint, Int>>();
+    var mapBuilder = new MapBuilder<Int, List<Int>>();
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
       var subBuilder = new MapBuilder<CodePoint, Int>();
@@ -658,10 +674,14 @@ export class TemperRegexDFA extends TemperRegex {
       }
       var ci = index[nameFor(tent.key, nstates)];
       finalBuilder[ci + 1] = isFinal;
-      mapBuilder[ci] = subBuilder.toMap();
+      mapBuilder[ci] = mapToList(subBuilder.toMap(), -1);
     }
-    final = finalBuilder.toList();
-    map = mapBuilder.toMap();
+    var finalBuilderList = new ListBuilder<Boolean>();
+    for (var i = 0; i < table.table.length + 1; i++) {
+      finalBuilderList.add(finalBuilder[i]);
+    }
+    final = finalBuilderList.toList();
+    map = mapToList(mapBuilder.toMap(), []);
   }
 
   let buildTable(tent: TransitionTableEntry, nstates: Int): Void {
@@ -729,6 +749,7 @@ export class TemperRegexDFA extends TemperRegex {
 
   public found(str: String): Boolean {
     var slice0 = str.codePoints;
+    var emptyList = [];
     outer: while (true) {
       var slice = slice0;
       var state = 0;
@@ -750,7 +771,7 @@ export class TemperRegexDFA extends TemperRegex {
           slice0 = slice0.advance(1);
           continue outer;
         }
-        state = map[state][slice.read()] orelse -1;
+        state = map.getOr(state, emptyList).getOr(slice.read(), -1);
         slice = slice.advance(1);
       }
     }
