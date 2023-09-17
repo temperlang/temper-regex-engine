@@ -421,16 +421,43 @@ export class TemperRegexNFA extends TemperRegex {
 }
 
 let toVec(ls: List<Int>, size: Int): DenseBitVector {
-  var vec = new DenseBitVector(size);
+  var vec = new DenseBitVector(0);
   for (var i = 0; i < ls.length; i++) {
     vec.set(ls[i], true);
   }
   return vec;
 }
 
+let fromVec(vec: DenseBitVector, size: Int): List<Int> {
+  var key = new ListBuilder<Int>();
+  for (var i = 0; i < size; i++) {
+    if (vec[i]) {
+      key.add(i);
+    }
+  }
+  return key.toList();
+}
+
 class TableEntry {
   public key: DenseBitVector;
   public val: List<DenseBitVector>;
+
+  public toStringWith(nsyms: Int): String {
+    var keyStr = fromVec(key, nsyms).join(",", fn(id: Int): String {
+      return "q${id.toString()}";
+    });
+    var valStrs = val.join(" | ", fn(vec: DenseBitVector): String {
+      var vec = fromVec(vec, nsyms);
+      if (vec.length == 0) {
+        return "-";
+      } else {
+        return vec.join(",", fn(id: Int): String {
+          return "q${id.toString()}";
+        });
+      }
+    });
+    return "| ${keyStr} | ${valStrs} |"
+  }
 }
 
 class Table {
@@ -440,6 +467,10 @@ class Table {
   public constructor(size: Int) {
     nsyms = size;
     table = new ListBuilder<TableEntry>();
+  }
+
+  public has(key: DenseBitVector): Boolean {
+    return do { get(key); true } orelse false;
   }
 
   public get(key: DenseBitVector): TableEntry | Bubble {
@@ -459,35 +490,94 @@ class Table {
     return bubble();
   }
 
-  public add(keyList: List<Int>, valList: List<List<Int>>): Void {
-    var key = toVec(keyList, nsyms);
-    var val = valList.map(fn(val: List<Int>): DenseBitVector {
-      return toVec(val, nsyms);
+  public toStringWith(map: MapBuilder<CodePoint, Int>): String {
+    var l = map.toList();
+    var size = nsyms;
+    var inner = table.join("\n", fn(ent: TableEntry): String {
+      return ent.toStringWith(size);
     });
-    var ent: TableEntry = this[key] orelse do {
-      var newKey = new TableEntry(key, val);
-      table.add(newKey);
-      return;
-    };
-    for (var i = 0; i < val.length; i++) {
-      var entn = ent.val[i];
-      var valn = val[i];
-      for (var j = 0; j < nsyms; j++) {
-        if (valn[j]) {
-          entn[j] = true;
-        }
-      }
+    var header = new ListBuilder<String>();
+    header.add("state");
+    for (var i = 0; i < nsyms; i++) {
+      header.add("");
+    }
+    var ls = map.toList();
+    for (var i = 0; i < ls.length; i++) {
+      var ent = ls[i];
+      header[ent.value + 1] = "#${ent.key.toString()}";
+    }
+    var noop = fn(s: String): String{s}
+    var dash = fn(s: String): String{ "---" }
+    return "\n|${header.join("|", noop)}|\n|${header.join("|", dash)}|\n${inner}\n"
+  }
+}
+
+let isValidFor(next: Matcher, sym: Int): Boolean {
+  return validFor(next)[sym];
+}
+
+let validFor(next: Matcher): DenseBitVector {
+  var valid = new DenseBitVector(0);
+
+  let validPoint(c: CodePoint): Void {
+    valid[c] = true;
+  }
+
+  let validRange(min: CodePoint, max: CodePoint): Void {
+    for (var i = min; i <= max; i++) {
+      validPoint(i);
     }
   }
+
+  match (next) {
+    is WordClassMatcher -> do {
+      validRange(48, 57);
+      validRange(65, 90);
+      validRange(97, 122);
+    }
+    is SpaceClassMatcher -> do {
+      validPoint(9);
+      validPoint(10);
+      validPoint(11);
+      validPoint(13);
+      validPoint(32);
+    }
+    is RangeMatcher -> do {
+      validRange(next.low, next.high);
+    }
+    is CharMatcher -> do {
+      validPoint(next.code);
+    }
+    is AnyMatcher -> do {}
+    is EpsilonMatcher -> do {}
+    is WordBoundaryMatcher -> do {
+      console.log("WordBoundaryMatcher");
+      bubble();
+    }
+    is EndMatcher -> do {
+      console.log("EndMatcher");
+      bubble();
+    }
+    is BeginMatcher -> do {
+      console.log("BeginMatcher");
+      bubble();
+    }
+  }
+  return valid;
 }
 
 export class TemperRegexDFA extends TemperRegex {
   public nsyms: Int;
+  public nstates: Int;
   public symbols: MapBuilder<CodePoint, Int>;
   public table: Table;
 
   public addCodePoint(c: CodePoint): Void {
-    symbols[c] = symbols[c] orelse nsyms++;
+    symbols[c] orelse do {
+      var newSym = nsyms;
+      nsyms += 1;
+      symbols[c] = newSym;
+    };
   }
 
   public addCodePointRange(min: CodePoint, max: CodePoint): Void {
@@ -503,17 +593,69 @@ export class TemperRegexDFA extends TemperRegex {
     var nfa = new TemperRegexNFA(regex);
     var engine = nfa.engine;
 
+    nstates = engine.states.length;
+
     for (var i = 0; i < engine.states.length; i++) {
       var state = engine.states[i];
       for (var j = 0; j < state.next.length; j++) {
-        addSymbolsFrom(state.next[j]);
+        addSymbolsFrom(state.next[j].matcher);
       }
     }
 
-    table = new Table(nsyms);
+    table = new Table(engine.states.length);
+
+    var pairs = symbols.toList();
+
+    for (var i = 0; i < engine.states.length; i++) {
+      var state = engine.states[i];
+      var val = new ListBuilder<DenseBitVector>();
+      for (var j = 0; j < nsyms; j++) {
+        var cur = new ListBuilder<Int>();
+        for (var k = 0; k < state.next.length; k++) {
+          var next = state.next[k];
+          if (isValidFor(next.matcher, pairs[j].key)) {
+            cur.add(next.toState.id);
+          }
+        }
+        val.add(toVec(cur.toList(), nstates));
+      }
+      var ent = new TableEntry(toVec([state.id], nstates), val.toList());
+      table.table.add(ent);
+    }
+
+
+    for (var i = 0; i < engine.states.length; i++) {
+      visit(table.table[i]);
+    }
   }
 
-  public addSymbolsFrom(next: Next): Void {
+  let visit(tent: TableEntry): Void {
+    for (var i = 0; i < nsyms; i++) {
+      var newKey = tent.val[i];
+      if (fromVec(newKey, nstates).length >= 1 && !table.has(newKey)) {
+        var allVals = new ListBuilder<DenseBitVector>();
+        for (var j = 0; j < nsyms; j++) {
+          var newVal = new DenseBitVector(0);
+          for (var k = 0; k < nstates; k++) {
+            if (newKey[k]) {
+              var bv = table[toVec([k], nstates)].val[j];
+              for (var l = 0; l < nstates; l++) {
+                if (bv[l]) {
+                  newVal[l] = true;
+                }
+              }
+            }
+          }
+          allVals.add(newVal);
+        }
+        var ent = new TableEntry(newKey, allVals.toList());
+        table.table.add(ent);
+        visit(ent);
+      }
+    }
+  }
+
+  public addSymbolsFrom(next: Matcher): Void {
     match (next) {
       is WordClassMatcher -> do {
         addCodePointRange(48, 57);
@@ -552,5 +694,16 @@ export class TemperRegexDFA extends TemperRegex {
 
   public found(str: String): Boolean {
     return false;
+  }
+
+//   public toString(): String {
+//     var ret = symbols.toList().join(",", fn(c: Pair<CodePoint, Int>): String {
+//       return "#${c.key.toString()}";
+//     });
+//     return ret
+//   }
+
+  public toStringTable(): String {
+    return table.toStringWith(symbols);
   }
 }
