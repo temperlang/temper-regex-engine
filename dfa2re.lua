@@ -7,7 +7,3 @@ local res = graph.TemperRegexDFA(regex)
 local pattern = res:toRegexString(string.char)
 
 print(pattern)
-
-local res = string.find("hi", pattern)
-
-print(res)

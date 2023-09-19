@@ -8,7 +8,7 @@ end
 
 local engines = {
     {
-        name = "pattern",
+        name = "compile",
         invoke = function(self, re)
             local res = graph.TemperRegexDFA(re)
             return res:toLua(string.char, function(str, test)
