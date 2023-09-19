@@ -5,3 +5,4 @@
     import("./walk.temper");
     import("./graph.temper");
     import("./bench.temper");
+    import("./tostring.temper");

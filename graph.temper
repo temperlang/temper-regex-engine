@@ -346,6 +346,7 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
+    // console.log("${input.id.toString()} -> /${regexToString(regex)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
         console.log("Capture");
@@ -386,50 +387,35 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is Repeat -> do {
-        var lastState = input;
-        for (var i = 0; i < regex.min; i++) {
+        var nextState = output;
+        for (var j = regex.min - 1; j >= 0; j--) {
           var curState = engine.newState();
-          buildRegex(regex.item, lastState, curState);
-          lastState = curState;
+          buildRegex(regex.item, curState, nextState);
+          nextState = curState;
         }
-        var max = regex.max;
-        if (max != null) {
-          var maxNoNull = max.as<Int>();
-          for (var i = regex.min; i < maxNoNull; i++) {
-            var curState = if (i == maxNoNull - 1) {
-              engine.newState()
-            } else {
-              output
-            };
-            if (regex.reluctant) {
-              curState.addNext(engine.epsilon, output);
-              buildRegex(regex.item, lastState, output);
-            } else {
-              buildRegex(regex.item, lastState, output);
-              curState.addNext(engine.epsilon, output);
-            }
-            lastState = curState;
+        if (regex.max != null) {
+          for (var j = regex.max.as<Int>() - 1; j >= regex.min; j--) {
+            var curState = engine.newState();
+            curState.addNext(engine.epsilon, nextState);
+            buildRegex(regex.item, curState, nextState);
+            nextState = curState;
           }
         } else {
-          buildRegex(regex.item, input, input);
-          if (regex.reluctant) {
-            input.addNextFirst(engine.epsilon, output);
-          } else {
-            input.addNext(engine.epsilon, output);
-          }
+          var curState = engine.newState();
+          curState.addNext(engine.epsilon, nextState);
+          buildRegex(regex.item, curState, curState);
+          nextState = curState;
         }
+        input.addNext(engine.epsilon, nextState);
       }
       is Sequence -> do {
-        var lastState = input; 
-        for (var j = 0; j < regex.items.length; j++) {
-          if (j == regex.items.length - 1) {
-            buildRegex(regex.items[j], lastState, output);
-          } else {
-            var curState = engine.newState();
-            buildRegex(regex.items[j], lastState, curState);
-            lastState = curState;
-          }
+        var nextState = output; 
+        for (var j = regex.items.length - 1; j >= 0; j--) {
+          var curState = engine.newState();
+          buildRegex(regex.items[j], curState, nextState);
+          nextState = curState;
         }
+        input.addNext(engine.epsilon, nextState);
       }
       is Special -> do {
         if (regex == Begin) {
@@ -675,49 +661,27 @@ export class TemperRegexDFA extends TemperRegex {
   public final: List<Boolean>;
   public nfa: Engine;
 
-  public addCodePoint(c: CodePoint): Void {
-    symbols[c] orelse do {
-      var newSym = nsyms;
-      nsyms += 1;
-      symbols[c] = newSym;
-    };
-  }
-
-  public addCodePointRange(min: CodePoint, max: CodePoint): Void {
-    for (var i = min; i <= max; i++) {
-      addCodePoint(i);
-    }
-  }
-
-  public nameFor(vec: DenseBitVector, nstates: Int): String {
-    return fromVec(vec, nstates).join("|", fn(s: Int): String {
-      return s.toString();
-    })
+  public get nstates(): Int {
+    return nfa.states.length;
   }
 
   public constructor(regex: Regex): Void {
     nsyms = 0;
-    symbols = new MapBuilder<CodePoint, Int>()
-
-    var engine = new TemperRegexNFA(regex).engine;
-
-    nfa = engine;
-
-    var nstates = engine.states.length;
+    symbols = new MapBuilder<CodePoint, Int>();
+    nfa = new TemperRegexNFA(regex).engine;
+    table = new TransitionTable(nstates);
 
     for (var i = 0; i < nstates; i++) {
-      var state = engine.states[i];
+      var state = nfa.states[i];
       for (var j = 0; j < state.next.length; j++) {
         addSymbolsFrom(state.next[j].matcher);
       }
     }
 
-    table = new TransitionTable(nstates);
-
     var pairs = symbols.toList();
 
     for (var i = 0; i < nstates; i++) {
-      var state = engine.states[i];
+      var state = nfa.states[i];
       var val = new ListBuilder<DenseBitVector>();
       for (var j = 0; j < nsyms; j++) {
         var cur = new ListBuilder<Int>();
@@ -733,7 +697,6 @@ export class TemperRegexDFA extends TemperRegex {
       table.table.add(ent);
     }
 
-
     for (var i = 0; i < nstates; i++) {
       buildTable(table.table[i], nstates);
     }
@@ -742,11 +705,11 @@ export class TemperRegexDFA extends TemperRegex {
     index[""] = 0;
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
-      var name = nameFor(tent.key, nstates);
+      var name = nameFor(tent.key);
       if (name == "") {
         continue;
       }
-      index[nameFor(tent.key, nstates)] = i + 1;
+      index[nameFor(tent.key)] = i + 1;
     }
 
     var finalBuilder = new MapBuilder<Int, Boolean>();
@@ -757,16 +720,12 @@ export class TemperRegexDFA extends TemperRegex {
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
       var subBuilder = new MapBuilder<CodePoint, Int>();
-      var isFinal = true;
       for (var j = 0; j < nsyms; j++) {
-        var value = index[nameFor(tent.val[j], nstates)];
-        if (value != 0) {
-          isFinal = false;
-        }
+        var value = index[nameFor(tent.val[j])];
         subBuilder[pairs[j].key] = value;
       }
-      var ci = index[nameFor(tent.key, nstates)];
-      finalBuilder[ci] = isFinal;
+      var ci = index[nameFor(tent.key)];
+      finalBuilder[ci] = tent.key[1];
       mapBuilder[ci] = mapToList(subBuilder.toMap(), 0);
     }
     var finalBuilderList = new ListBuilder<Boolean>();
@@ -777,6 +736,26 @@ export class TemperRegexDFA extends TemperRegex {
     map = mapToList(mapBuilder.toMap(), []);
   }
 
+  public addCodePoint(c: CodePoint): Void {
+    symbols[c] orelse do {
+      var newSym = nsyms;
+      nsyms += 1;
+      symbols[c] = newSym;
+    };
+  }
+
+  public addCodePointRange(min: CodePoint, max: CodePoint): Void {
+    for (var i = min; i <= max; i++) {
+      addCodePoint(i);
+    }
+  }
+
+  public nameFor(vec: DenseBitVector): String {
+    return fromVec(vec, nstates).join("|", fn(s: Int): String {
+      return s.toString();
+    })
+  }
+
   public buildEngine(): Engine {
     var nstates = nfa.states.length;
 
@@ -784,11 +763,11 @@ export class TemperRegexDFA extends TemperRegex {
     index[""] = -1;
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
-      var name = nameFor(tent.key, nstates);
+      var name = nameFor(tent.key);
       if (name == "") {
         continue;
       }
-      index[nameFor(tent.key, nstates)] = i;
+      index[nameFor(tent.key)] = i;
     }
 
     var dfa = new Engine();
@@ -797,7 +776,7 @@ export class TemperRegexDFA extends TemperRegex {
       var tent = table.table[i];
       var isFinal = true;
       for (var j = 0; j < nsyms; j++) {
-        var value = index[nameFor(tent.val[j], nstates)];
+        var value = index[nameFor(tent.val[j])];
         if (value != -1) {
           isFinal = false;
         }
@@ -817,7 +796,7 @@ export class TemperRegexDFA extends TemperRegex {
       var state = dfaStates[i];
       var isFinal = true;
       for (var j = 0; j < nsyms; j++) {
-        var value = index[nameFor(tent.val[j], nstates)];
+        var value = index[nameFor(tent.val[j])];
         if (value != -1) {
           state.addNext(new CharCodeMatcher(pairs[j].key), dfaStates[value]);
           isFinal = false;
@@ -936,5 +915,180 @@ export class TemperRegexDFA extends TemperRegex {
     var tableDot = table.toDotWith(symbols, "#E0FFFF");
     var dfaDot = buildEngine().toDotSub("dfa", "#E0FFE0");
     return "digraph {\n  ${nfaDot}\n  table[shape=none label=<${tableDot}>];\n  ${dfaDot}\n}\n";
+  }
+
+  public toLua(chr: fn(Int): String, isMatch: fn(String, String): Boolean): TemperRegexLua {
+    return new TemperRegexLua(toRegexList(chr).map(regexToString), isMatch);
+  }
+
+  public toRegex(chr: fn(Int): String): Regex {
+    return new Or(toRegexList(chr));
+  }
+
+  public toRegexList(chr: fn(Int): String): List<Regex> {
+    var builder = new RegexBuilder();
+    var syms = symbols.toList();
+    for (var i = 0; i < table.table.length; i++) {
+      var tent = table.table[i];
+      var kname = nameFor(tent.key);
+      if (kname == "") {
+        continue;
+      }
+      var tmap = new MapBuilder<String, ListBuilder<Int>>();
+      for (var j = 0; j < nsyms; j++) {
+        var val = nameFor(tent.val[j]);
+        var got = tmap[val] orelse new ListBuilder<Int>();
+        if (val != "") {
+          got.add(syms[j].key);
+          tmap[val] = got;
+        }
+      }
+      var ls = tmap.toList();
+      if (i == 0) {
+        builder.add("#begin", kname, new Sequence([]));
+      } else if (tent.key[1]) {
+        builder.add(kname, "#end", new Sequence([]));
+      }
+      for (var j = 0; j < ls.length; j++) {
+        var points = new CodePoints(ls[j].value.join("", chr));
+        if (ls[j].value.length == 1) {
+          builder.add(kname, ls[j].key, points);
+        } else {
+          builder.add(kname, ls[j].key, new CodeSet([points]));
+        }
+      }
+    }
+    return builder.toRegexList();
+  } 
+
+  public toRegexString(chr: fn(Int): String): String {
+    return regexToString(toRegex(chr));
+  }
+}
+
+class TemperRegexLua extends TemperRegex {
+  public tries: List<String>;
+  public check: fn(String, String): Boolean;
+
+  public constructor(strs: List<String>, isMatch: fn(String, String): Boolean): Void {
+    tries = strs;
+    check = isMatch;
+  }
+
+  public found(str: String): Boolean {
+    for (var i = 0; i < tries.length; i++) {
+      if (check(str, tries[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+let {regexToString} = import("./tostring.temper");
+
+class RegexBuilderEdge {
+  public from: String;
+  public to: String;
+  public regex: Regex;
+}
+
+class RegexBuilder {
+  public list: ListBuilder<RegexBuilderEdge>;
+
+  constructor(): Void {
+    list = new ListBuilder<RegexBuilderEdge>();
+  }
+
+  public has(from: String, to: String): Boolean {
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to && edge.from == from) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public find(from: String, to: String): Regex | Bubble {
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to && edge.from == from) {
+        return edge.regex;
+      }
+    }
+    return bubble();
+  }
+
+  public forEachWentFrom(to: String, cb: fn(RegexBuilderEdge): Void): Void {
+    var ls = new ListBuilder<RegexBuilderEdge>();
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to) {
+        ls.add(edge);
+      }
+    }
+    for (var i = 0; i < ls.length; i++) {
+      cb(ls[i]);
+    }
+  }
+
+  public forEachGoesTo(from: String, cb: fn(RegexBuilderEdge): Void): Void {
+    var ls = new ListBuilder<RegexBuilderEdge>();
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.from == from) {
+        ls.add(edge);
+      }
+    }
+    for (var i = 0; i < ls.length; i++) {
+      cb(ls[i]);
+    }
+  }
+
+  public simplify(node: String): Void {
+    var me = this;
+    if (has(node, node)) {
+      var self = find(node, node);
+      me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
+        me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
+          me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
+        });
+      });
+    } else {
+      me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
+        me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
+          me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, goesTo.regex]));
+        });
+      });
+    }
+  }
+
+  public add(from: String, to: String, regex: Regex): Void {
+    list.add(new RegexBuilderEdge(from, to, regex));
+  }
+
+  public toRegexList(): List<Regex> {
+    var done = new MapBuilder<String, Boolean>();
+    done["#begin"] = true;
+    for (var j = 0; j < list.length; j++) {
+      var cur = list[j];
+      if (!(done[cur.from] orelse false)) {
+        done[cur.from] = true;
+        simplify(cur.from);
+      }
+    }
+    // for (var j = 0; j < list.length; j++) {
+    //   var cur = list[j];
+    //   console.log("${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}");
+    // }
+    var ret = new ListBuilder<Regex>();
+    for (var j = 0; j < list.length; j++) {
+      var cur = list[j];
+      if (cur.from == "#begin" && cur.to == "#end") {
+        ret.add(cur.regex);
+      }
+    }
+    return ret.toList();
   }
 }

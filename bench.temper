@@ -64,7 +64,11 @@ export class Result {
   }
 }
 
-export let bench(time: fn(): Float64): List<Result> {
+export let bench(time: fn(): Float64, extra: List<Engine>): List<Result> {
+  var all = new ListBuilder<Engine>();
+  all.addAll(extra);
+  all.addAll(engines);
+
   var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
 
@@ -84,8 +88,8 @@ export let bench(time: fn(): Float64): List<Result> {
   ];
 
   var res = new ListBuilder<Result>();
-  for (var j = 0; j < engines.length; j++) {
-    var engine = engines[j];
+  for (var j = 0; j < all.length; j++) {
+    var engine = all[j];
     var sum = 0.0;
     for (var i = 0; i < checks.length; i++) {
       let {str, want} = checks[i];
