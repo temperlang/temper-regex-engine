@@ -80,15 +80,44 @@ class Parser {
     new CodeSet(opts.toList(), invert)
   }
 
-  public readPostfix(exist: Regex): Regex {
+  public matchNum(): Int {
+    var n = 0;
+    while (48 <= peek().codePoints.read() && peek().codePoints.read() <= 57) {
+      n *= 10;
+      n += read().codePoints.read() - 48;
+    }
+    return n;
+  }
+
+  public readPostfix(exist: Regex): Regex | Bubble {
     if (matchChar("+")) {
-      new Repeat(exist, 1, null, matchChar("?"))
+      return new Repeat(exist, 1, null, matchChar("?"));
     } else if (matchChar("*")) {
-      new Repeat(exist, 0, null, matchChar("?"))
+      return new Repeat(exist, 0, null, matchChar("?"));
     } else if (matchChar("?")) {
-      new Repeat(exist, 0, 1, matchChar("?"))
+      return new Repeat(exist, 0, 1, matchChar("?"));
+    } else if (matchChar("{")) {
+      var min = matchNum();
+      if (matchChar("}")) {
+        return new Repeat(exist, min, min, matchChar("?"));
+      } else if (matchChar(",")) {
+        if (matchChar("}")) {
+          return new Repeat(exist, min, null, matchChar("?"));
+        } else {
+          var max = matchNum();
+          if (matchChar("}")) {
+            return new Repeat(exist, min, max, matchChar("?"));
+          } else {
+            error("expecting closing curly brace in repititon");
+            return bubble();
+          }
+        }
+      } else {
+        error("expecting comma or closing curly brace in repition");
+        return bubble();
+      }
     } else {
-      exist
+      return exist;
     }
   }
 

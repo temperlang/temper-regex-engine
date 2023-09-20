@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import temper_regex_engine.graph as graph
 import temper_regex_engine.parser as parser
 import sys

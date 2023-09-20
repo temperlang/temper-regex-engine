@@ -349,8 +349,7 @@ export class TemperRegexNFA extends TemperRegex {
     // console.log("${input.id.toString()} -> /${regexToString(regex)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
-        console.log("Capture");
-        bubble();
+        buildRegex(regex.item, input, output);
       }
       is CodePoints -> do {
         var split = regex.value.split("");
@@ -774,16 +773,9 @@ export class TemperRegexDFA extends TemperRegex {
     var dfaStates = new ListBuilder<State>();
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
-      var isFinal = true;
-      for (var j = 0; j < nsyms; j++) {
-        var value = index[nameFor(tent.val[j])];
-        if (value != -1) {
-          isFinal = false;
-        }
-      }
       if (i == 0) {
         dfaStates.add(dfa.startState);
-      } else if (isFinal) {
+      } else if (tent.key[1]) {
         dfaStates.add(dfa.endState);
       } else {
         dfaStates.add(dfa.newState());
@@ -794,12 +786,10 @@ export class TemperRegexDFA extends TemperRegex {
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
       var state = dfaStates[i];
-      var isFinal = true;
       for (var j = 0; j < nsyms; j++) {
         var value = index[nameFor(tent.val[j])];
         if (value != -1) {
           state.addNext(new CharCodeMatcher(pairs[j].key), dfaStates[value]);
-          isFinal = false;
         }
       }
     }
@@ -1024,7 +1014,7 @@ class RegexBuilder {
     var ls = new ListBuilder<RegexBuilderEdge>();
     for (var i = 0; i < list.length; i++) {
       var edge = list[i];
-      if (edge.to == to) {
+      if (edge.to == to && edge.from != to) {
         ls.add(edge);
       }
     }
@@ -1037,7 +1027,7 @@ class RegexBuilder {
     var ls = new ListBuilder<RegexBuilderEdge>();
     for (var i = 0; i < list.length; i++) {
       var edge = list[i];
-      if (edge.from == from) {
+      if (edge.from == from && edge.to != from) {
         ls.add(edge);
       }
     }
@@ -1050,9 +1040,24 @@ class RegexBuilder {
     var me = this;
     if (has(node, node)) {
       var self = find(node, node);
+      var r1 = regexToString(self);
       me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
+        var r0 = regexToString(wentFrom.regex);
         me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
-          me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
+          var r2 = regexToString(goesTo.regex);
+          if (r1 == r0) {
+            if (r1 == r2) {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+            } else {
+              me.add(wentFrom.from, goesTo.to, new Sequence([new Repeat(self, 1, null, false), goesTo.regex]));
+            }
+          } else {
+            if (r1 == r2) {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+            } else {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
+            }
+          }
         });
       });
     } else {
@@ -1068,6 +1073,12 @@ class RegexBuilder {
     list.add(new RegexBuilderEdge(from, to, regex));
   }
 
+  public dumpInternal(): String {
+    return list.join("\n", fn(cur: RegexBuilderEdge): String {
+      return "${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}";
+    });
+  }
+
   public toRegexList(): List<Regex> {
     var done = new MapBuilder<String, Boolean>();
     done["#begin"] = true;
@@ -1078,10 +1089,6 @@ class RegexBuilder {
         simplify(cur.from);
       }
     }
-    // for (var j = 0; j < list.length; j++) {
-    //   var cur = list[j];
-    //   console.log("${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}");
-    // }
     var ret = new ListBuilder<Regex>();
     for (var j = 0; j < list.length; j++) {
       var cur = list[j];

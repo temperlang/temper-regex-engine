@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 
 local graph = require('temper-regex-engine/graph')
 local parser = require('temper-regex-engine/parser')
