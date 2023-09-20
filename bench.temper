@@ -4,13 +4,8 @@ let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
 let { TemperRegexWalker } = import('./walk');
 let { TemperRegexNative } = import('./native');
 let { sub } = import('./parser');
+let { regexToString } = import('./tostring');
 
-var regex: Regex = sub("h(?:[eu]l+o|i)");
-
-class Check {
-  public want: Boolean;
-  public str: String;
-}
 
 class Engine {
   public name: String;
@@ -22,97 +17,169 @@ class Engine {
 }
 
 var engines = new ListBuilder<Engine>();
-engines.add(
-  new Engine(
-    "native",
-    fn(regex: Regex): TemperRegex {
-      return new TemperRegexNative(regex);
-    }
-  )
-);
-engines.add(
-  new Engine(
-    "dfa",
-    fn(regex: Regex): TemperRegex {
-      return new TemperRegexDFA(regex);
-    }
-  )
-);
-engines.add(
-  new Engine(
-    "nfa",
-    fn(regex: Regex): TemperRegex {
-      return new TemperRegexNFA(regex);
-    }
-  )
-);
-engines.add(
-  new Engine(
-    "walker",
-    fn(regex: Regex): TemperRegex {
-      return new TemperRegexWalker(regex);
-    }
-  )
-);
 
-export class Result {
-  public name: String;
+export class SingleResult {
+  public engine: String;
+  public str: String;
+  public regex: String;
+  public found: Boolean;
   public score: Float64;
 
   public toString(): String {
-    return "${name}'s score = ${score.toInt().toString()}";
+    return "${engine} score: ${score.toString()} (found: ${found.toString()}) (str: ${str}) (regex: ${regex})";
   }
 }
 
-export let bench(time: fn(): Float64, extra: List<Engine>): List<Result> {
-  var all = new ListBuilder<Engine>();
-  all.addAll(extra);
-  all.addAll(engines);
+class EngineResult {
+  public engine: String;
+  public score: Float64;
 
-  var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-  var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
+  public toString(): String {
+    return "${engine}: ${((score * 100.0).toInt().toFloat64() / 100.0).toString()}";
+  }
+}
 
-  var checks = [
-    new Check(true, 'hello'),
-    new Check(true, 'hi'),
-    new Check(true, 'helo'),
-    new Check(true, 'hullo'),
-    new Check(true, 'hulo'),
-    new Check(true, 'i am going to say hello'),
-    new Check(true, 'abcdefghijklmnopqrstuvwxyz'),
-    new Check(false, 'test'),
-    new Check(false, 'Hell, MI'),
-    new Check(false, 'hydrogen helium carbon nitrognen'),
-    new Check(false, many_a),
-    new Check(false, many_h),
-  ];
+export class RegexBench {
+  private time: fn(): Float64;
+  private chr: fn(Int): String;
+  private engines: ListBuilder<Engine>;
+  private checks: ListBuilder<String>;
+  private regex: ListBuilder<Regex>;
+  private onSingleResultCallback: fn(SingleResult): Void;
+  private onEngineResultCallback: fn(EngineResult): Void;
+  private timePerRunInternal: Float64;
 
-  var res = new ListBuilder<Result>();
-  for (var j = 0; j < all.length; j++) {
-    var engine = all[j];
-    var sum = 0.0;
-    for (var i = 0; i < checks.length; i++) {
-      let {str, want} = checks[i];
-      var re = engine.invoke(regex);
-      var iters = 1;
-      var res = re.found(str);
-      var beginTime = time();
-      do {
-          for (var k = 0; k < iters; k++) {
-            res = re.found(str);
-          }
-          iters += iters;
-      } while (time() - beginTime < 100.0);
-      var endTime = time();
-      var ms = endTime - beginTime;
-      if (res == want) {
-        sum += iters.toFloat64() / (ms / 1000.0);
-      } else {
-        bubble();
-      }
-    }
-    res.add(new Result(engine.name, sum / checks.length.toFloat64()));
+  public constructor(intChr: fn(Int): String, getTime: fn(): Float64): Void {
+    chr = intChr;
+    time = getTime;
+    engines = new ListBuilder<Engine>();
+    checks = new ListBuilder<String>();
+    regex = new ListBuilder<Regex>();
+    onSingleResultCallback = fn(r: SingleResult): Void {};
+    onEngineResultCallback = fn(r: EngineResult): Void {};
+    timePerRunInternal = 10.0;
   }
 
-  return res.toList();
+  public onSingleResult(v: fn(SingleResult): Void): Void {
+    onSingleResultCallback = v;
+  }
+
+  public onEngineResult(v: fn(EngineResult): Void): Void {
+    onEngineResultCallback = v;
+  }
+
+  public addRegexDefaults(): Void {
+    addRegexStr("h(?:[eu]l+o|i)");
+    addRegexStr("(a+a)+a");
+    addRegexStr("([Hh][eu]l+l){4}");
+  }
+
+  public addCheckDefaults(): Void {
+    checks.add(('hello'));
+    checks.add(('hi'));
+    checks.add(('helo'));
+    checks.add(('hullo'));
+    checks.add(('hulo'));
+    checks.add(('i am going to say hello'));
+    checks.add(('abcdefghijklmnopqrstuvwxyz'));
+    checks.add(('test'));
+    checks.add(('Hell, MI'));
+    checks.add(('hydrogen helium carbon nitrognen'));
+    var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
+    checks.add((many_a));
+    checks.add((many_h));
+  }
+
+  public addEngineDefaults(): Void {
+    addEngineTemper();
+    addEngineDFA();
+    addEngineNFA();
+    addEngineWalker();
+  }
+
+  public addEngine(name: String, cb: fn(Regex): TemperRegex): Void {
+    engines.add(new Engine(name, cb));
+  }
+
+  public addRegexStr(str: String): Void {
+    addRegex(sub(str));
+  }
+
+  public addRegex(re: Regex): Void {
+    regex.add(re);
+  }
+
+  public addEngineTemper(): Void {
+    addEngine(
+      "Temper",
+      fn(regex: Regex): TemperRegex {
+        return new TemperRegexNative(regex);
+      }
+    );
+  }
+
+  public addEngineDFA(): Void {
+    addEngine(
+      "DFA",
+      fn(regex: Regex): TemperRegex {
+        return new TemperRegexDFA(regex);
+      }
+    );
+  }
+
+  public addEngineNFA(): Void {
+    addEngine(
+      "NFA",
+      fn(regex: Regex): TemperRegex {
+        return new TemperRegexNFA(regex);
+      }
+    );
+  }
+
+  public addEngineWalker(): Void {
+    addEngine(
+      "Walker",
+      fn(regex: Regex): TemperRegex {
+        return new TemperRegexWalker(regex);
+      }
+    );
+  }
+
+  public run(): Void {
+    var runs = new ListBuilder<SingleResult>();
+
+    for (var i = 0; i < engines.length; i++) {
+      var engine = engines[i];
+      var count = 0.0;
+      var total = 0.0;
+      for (var j = 0; j < regex.length; j++) {
+        var re = regex[j];
+        var tcre = engine.invoke(re);
+        for (var k = 0; k < checks.length; k++) {
+          var check = checks[k];
+          var iters = 1;
+          var found = tcre.found(check);
+          var beginTime = time();
+          do {
+            for (var l = 0; l < iters; l++) {
+              found = tcre.found(check);
+            }
+            iters += iters;
+          } while (time() - beginTime < timePerRunInternal);
+          var endTime = time();
+          var ms = endTime - beginTime;
+          var score = iters.toFloat64() / ms;
+          count += 1.0;
+          total += score;
+          var thisRun = new SingleResult(engine.name, check, regexToString(re, chr), found, score);
+          onSingleResultCallback(thisRun);
+          runs.add(thisRun);
+        }
+      }
+      onEngineResultCallback(new EngineResult(engine.name, total / count));
+    }
+
+    return runs.toList();
+  }
 }

@@ -1,26 +1,27 @@
+local RegexBench = require('temper-regex-engine/bench').RegexBench
+local TemperRegexDFA = require('temper-regex-engine/graph').TemperRegexDFA
 
-local bench = require('temper-regex-engine/bench')
-local graph = require('temper-regex-engine/graph')
-
-local function clock_ms()
-    return os.clock() * 1000
+local chr = string.char
+local start = os.clock()
+local clock = function()
+    return (os.clock() - start) * 1000
 end
 
-local engines = {
-    {
-        name = "compile",
-        invoke = function(self, re)
-            local res = graph.TemperRegexDFA(re)
-            return res:toLua(string.char, function(str, test)
-                return string.find(str, test) ~= nil
-            end)
-        end,
-    }
-}
+local bench = RegexBench(chr, clock);
 
-local res = bench.bench(clock_ms, engines)
-for i=1, #res do
-    if res[i].name ~= 'native' then
-        print(res[i]:toString())
-    end
-end
+bench:addRegexDefaults();
+bench:addCheckDefaults();
+
+bench:addEngine('OptRegex', function (re)
+    local res = TemperRegexDFA(re)
+    return res:toLua(chr, function(str, test)
+        return string.find(str, test) ~= nil
+    end)
+end);
+bench:addEngineDefaults();
+
+bench:onEngineResult(function (result)
+    print(result:toString());
+end);
+
+bench:run();
