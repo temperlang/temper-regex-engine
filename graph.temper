@@ -211,7 +211,42 @@ class Engine {
   }
 
   public opt(): Engine {
-    return optEpsilonEllison();
+    var cur = this;
+    cur = cur.optEpsilonEllison();
+    cur = cur.optDeadCode();
+    return cur;
+  }
+
+  public optDeadCode(): Engine {
+    var unopt = this;
+    var opt = new Engine();
+    var map = new MapBuilder<Id, Id>();
+
+    let visit(state: State): State {
+      var optId = map[state.id] orelse -1;
+      if (optId >= 0) {
+        return opt.states[optId];
+      }
+      var outState: State = if (state == unopt.startState) {
+        opt.startState
+      } else if (state == unopt.endState) {
+        opt.endState
+      } else {
+        opt.newState()
+      };
+
+      map[state.id] = outState.id;
+
+      for (var i = 0; i < state.next.length; i++) {
+        var next = state.next[i];
+        outState.addNext(next.matcher, visit(next.toState));
+      }
+      return outState;
+    }
+
+    visit(startState);
+
+    return opt;
   }
 
   public optEpsilonEllison(): Engine {
@@ -230,22 +265,31 @@ class Engine {
         opt.endState
       } else {
         opt.newState()
-      }
+      };
+
       map[state.id] = outState.id;
 
-      var complete = new DenseBitVector(0);
+      var added = new DenseBitVector(0);
+      var count = 0;
+
+      var isFinal = false;
 
       let add(matcher: Matcher, toState: State): Void {
         if (matcher == unopt.epsilon) {
-          if (complete[toState.id]) {
+          if (added[toState.id]) {
             return;
           }
-          complete[toState.id] = true;
+          added[toState.id] = true;
+          if (toState.id == 1) {
+            isFinal = true;
+            return;
+          }
           for (var i = 0; i < toState.next.length; i++) {
             var next = toState.next[i];
             add(next.matcher, next.toState);
           }
         } else {
+          count += 1;
           outState.addNext(matcher, visit(toState));
         }
       }
@@ -254,6 +298,11 @@ class Engine {
         var next = state.next[i];
         add(next.matcher, next.toState);
       }
+
+      if (count == 0 || isFinal) {
+        return opt.endState;
+      }
+
       return outState;
     }
 
@@ -327,7 +376,15 @@ class Engine {
     var decls = states.join("", fn(state: State): String {
       if (used[state.id] orelse false) {
         var name = "q${state.id.toString()}";
-        return "\n    ${gname}_${name} [label=\"${name}\"];";
+        var label = if (state.id == 0) {
+          "start"
+        } else if (state.id == 1) {
+          "end"
+        } else {
+          name
+        };
+        var shape = "ellipse";
+        return "\n    ${gname}_${name} [shape=\"${shape}\"] [label=\"${label}\"];";
       } else {
         return "";
       }
@@ -342,11 +399,10 @@ export class TemperRegexNFA extends TemperRegex {
   public constructor(regex: Regex): Void {
     engine = new Engine();
     buildRegex(regex, engine.startState, engine.endState);
-    engine = engine.opt();
   }
 
   public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
-    // console.log("${input.id.toString()} -> /${regexToString(regex)}/ -> ${output.id.toString()}");
+    // console.log("${input.id.toString()} -> /${regexToString(regex, charU)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
         buildRegex(regex.item, input, output);
@@ -386,35 +442,40 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is Repeat -> do {
-        var nextState = output;
-        for (var j = regex.min - 1; j >= 0; j--) {
+        var lastState = input;
+        for (var i = 0; i < regex.min; i++) {
           var curState = engine.newState();
-          buildRegex(regex.item, curState, nextState);
-          nextState = curState;
+          buildRegex(regex.item, lastState, curState);
+          lastState = curState;
         }
         if (regex.max != null) {
-          for (var j = regex.max.as<Int>() - 1; j >= regex.min; j--) {
+          var max = regex.max.as<Int>();
+          for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
-            curState.addNext(engine.epsilon, nextState);
-            buildRegex(regex.item, curState, nextState);
-            nextState = curState;
+            buildRegex(regex.item, lastState, curState);
+            lastState.addNext(engine.epsilon, output);
+            lastState = curState;
           }
+          lastState.addNext(engine.epsilon, output);
         } else {
-          var curState = engine.newState();
-          curState.addNext(engine.epsilon, nextState);
-          buildRegex(regex.item, curState, curState);
-          nextState = curState;
+          buildRegex(regex.item, lastState, lastState);
+          lastState.addNext(engine.epsilon, output);
         }
-        input.addNext(engine.epsilon, nextState);
       }
       is Sequence -> do {
         var nextState = output; 
         for (var j = regex.items.length - 1; j >= 0; j--) {
-          var curState = engine.newState();
+          var curState = if (j == 0) {
+            input
+          } else {
+            engine.newState()
+          };
           buildRegex(regex.items[j], curState, nextState);
           nextState = curState;
         }
-        input.addNext(engine.epsilon, nextState);
+        if (regex.items.length == 0) {
+          input.addNext(engine.epsilon, nextState);
+        }
       }
       is Special -> do {
         if (regex == Begin) {
@@ -450,7 +511,7 @@ export class TemperRegexNFA extends TemperRegex {
 let toVec(ls: List<Int>, size: Int): DenseBitVector {
   var vec = new DenseBitVector(0);
   for (var i = 0; i < ls.length; i++) {
-    vec.set(ls[i], true);
+    vec[ls[i]] = true;
   }
   return vec;
 }
@@ -657,7 +718,7 @@ export class TemperRegexDFA extends TemperRegex {
   public symbols: MapBuilder<CodePoint, Int>;
   public table: TransitionTable;
   public map: List<List<Int>>;
-  public final: List<Boolean>;
+  public rawNfa: Engine;
   public nfa: Engine;
 
   public get nstates(): Int {
@@ -667,7 +728,8 @@ export class TemperRegexDFA extends TemperRegex {
   public constructor(regex: Regex): Void {
     nsyms = 0;
     symbols = new MapBuilder<CodePoint, Int>();
-    nfa = new TemperRegexNFA(regex).engine;
+    rawNfa = new TemperRegexNFA(regex).engine;
+    nfa = rawNfa.opt();
     table = new TransitionTable(nstates);
 
     for (var i = 0; i < nstates; i++) {
@@ -711,10 +773,6 @@ export class TemperRegexDFA extends TemperRegex {
       index[nameFor(tent.key)] = i + 1;
     }
 
-    var finalBuilder = new MapBuilder<Int, Boolean>();
-    for (var i = 0; i < table.table.length + 1; i++) {
-      finalBuilder[i] = true;
-    }
     var mapBuilder = new MapBuilder<Int, List<Int>>();
     for (var i = 0; i < table.table.length; i++) {
       var tent = table.table[i];
@@ -724,14 +782,8 @@ export class TemperRegexDFA extends TemperRegex {
         subBuilder[pairs[j].key] = value;
       }
       var ci = index[nameFor(tent.key)];
-      finalBuilder[ci] = tent.key[1];
       mapBuilder[ci] = mapToList(subBuilder.toMap(), 0);
     }
-    var finalBuilderList = new ListBuilder<Boolean>();
-    for (var i = 0; i < table.table.length + 1; i++) {
-      finalBuilderList.add(finalBuilder[i]);
-    }
-    final = finalBuilderList.toList();
     map = mapToList(mapBuilder.toMap(), []);
   }
 
@@ -805,6 +857,7 @@ export class TemperRegexDFA extends TemperRegex {
           var newVal = new DenseBitVector(0);
           for (var k = 0; k < nstates; k++) {
             if (newKey[k]) {
+              var ent = table[toVec([k], nstates)];
               var bv = table[toVec([k], nstates)].val[j];
               for (var l = 0; l < nstates; l++) {
                 if (bv[l]) {
@@ -872,8 +925,11 @@ export class TemperRegexDFA extends TemperRegex {
   public foundAfter(slice: CodePointStringSlice): Boolean {
     var state = 1;
     while (true) {
-      if (final.getOr(state, true)) {
-        return state != 0;
+      if (state == 0) {
+        return false
+      }
+      if (state == 2) {
+        return true;
       }
       if (slice.isEmpty) {
         return false;
@@ -901,14 +957,18 @@ export class TemperRegexDFA extends TemperRegex {
   }
 
   public toDot(): String {
-    var nfaDot = nfa.toDotSub("nfa", "#E0E0FF");
+    var nfaDot1 = rawNfa.toDotSub("nfa2", "#FFE0FF");
+    var nfaDot2 = nfa.toDotSub("nfa1", "#E0E0FF");
     var tableDot = table.toDotWith(symbols, "#E0FFFF");
     var dfaDot = buildEngine().toDotSub("dfa", "#E0FFE0");
-    return "digraph {\n  ${nfaDot}\n  table[shape=none label=<${tableDot}>];\n  ${dfaDot}\n}\n";
+    return "digraph {\n  ${nfaDot1}\n  ${nfaDot2}\n  table[shape=none label=<${tableDot}>];\n  ${dfaDot}\n}\n";
   }
 
   public toLua(chr: fn(Int): String, isMatch: fn(String, String): Boolean): TemperRegexLua {
-    return new TemperRegexLua(toRegexList(chr).map(regexToString), isMatch);
+    let regexToStringChr(r: Regex): String {
+      return regexToString(r, chr);
+    }
+    return new TemperRegexLua(toRegexList(chr).map(regexToStringChr), isMatch);
   }
 
   public toRegex(chr: fn(Int): String): Regex {
@@ -936,15 +996,43 @@ export class TemperRegexDFA extends TemperRegex {
       var ls = tmap.toList();
       if (i == 0) {
         builder.add("#begin", kname, new Sequence([]));
-      } else if (tent.key[1]) {
+      }
+      if (i == 1) {
         builder.add(kname, "#end", new Sequence([]));
       }
       for (var j = 0; j < ls.length; j++) {
-        var points = new CodePoints(ls[j].value.join("", chr));
-        if (ls[j].value.length == 1) {
+        var vals = ls[j].value;
+        if (vals.length == 1) {
+          var points = new CodePoints(ls[j].value.join("", chr));
           builder.add(kname, ls[j].key, points);
         } else {
-          builder.add(kname, ls[j].key, new CodeSet([points]));
+          var parts = new ListBuilder<CodePart>();
+          var bits = new DenseBitVector(0);
+          var max = 0;
+          for (var k = 0; k < vals.length; k++) {
+            var chr = vals[k];
+            if (chr > max) {
+              max = chr;
+            }
+            bits[chr] = true;
+          }
+          var start = -1;
+          for (var k = 0; k <= max; k++) {
+            if (bits[k]) {
+              var s = k;
+              while (bits[k]) {
+                k += 1;
+              }
+              if (k-s <= 2) {
+                for (var l = s; l < k; l++) {
+                  parts.add(new CodePoints(chr(l)));
+                }
+              } else {
+                parts.add(new CodeRange(s, k-1));
+              }
+            }
+          }
+          builder.add(kname, ls[j].key, new CodeSet(parts.toList()));
         }
       }
     }
@@ -952,7 +1040,7 @@ export class TemperRegexDFA extends TemperRegex {
   } 
 
   public toRegexString(chr: fn(Int): String): String {
-    return regexToString(toRegex(chr));
+    return regexToString(toRegex(chr), chr);
   }
 }
 
@@ -976,6 +1064,10 @@ class TemperRegexLua extends TemperRegex {
 }
 
 let {regexToString} = import("./tostring.temper");
+
+let charU(i: Int): String {
+  return "\\u{${i.toString()}}";
+}
 
 class RegexBuilderEdge {
   public from: String;
@@ -1040,11 +1132,11 @@ class RegexBuilder {
     var me = this;
     if (has(node, node)) {
       var self = find(node, node);
-      var r1 = regexToString(self);
+      var r1 = regexToString(self, charU);
       me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
-        var r0 = regexToString(wentFrom.regex);
+        var r0 = regexToString(wentFrom.regex, charU);
         me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
-          var r2 = regexToString(goesTo.regex);
+          var r2 = regexToString(goesTo.regex, charU);
           if (r1 == r0) {
             if (r1 == r2) {
               me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
@@ -1073,9 +1165,9 @@ class RegexBuilder {
     list.add(new RegexBuilderEdge(from, to, regex));
   }
 
-  public dumpInternal(): String {
+  public dumpInternal(chr: fn(Int): String): String {
     return list.join("\n", fn(cur: RegexBuilderEdge): String {
-      return "${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}";
+      return "${cur.from} -> /${regexToString(cur.regex, chr)}/ -> ${cur.to}";
     });
   }
 

@@ -1,11 +1,11 @@
 
 let {...} = import("std/regex");
 
-export let regexToString(base: Regex): String {
+export let regexToString(base: Regex, chr: fn(Int): String): String {
   match (base) {
     is Capture -> do {
       var regex = base.as<Capture>();
-      return "(?${regex.name}=${regexToString(regex.item)})";
+      return "(?${regex.name}=${regexToString(regex.item, chr)})";
     }
     is CodePoints -> do {
       var regex = base.as<CodePoints>();
@@ -19,7 +19,7 @@ export let regexToString(base: Regex): String {
         match (subBase) {
           is CodeRange -> do {
             var subRegex = subBase.as<CodeRange>();
-            ret.add("\\u{${subRegex.min.toString()}}-\\u{${subRegex.max.toString()}}");
+            ret.add("${chr(subRegex.min)}-${chr(subRegex.max)}");
           }
           is CodePoints -> do {
             var subRegex = subBase.as<CodePoints>();
@@ -40,7 +40,7 @@ export let regexToString(base: Regex): String {
             }
           }
           else -> do {
-            ret[regexToString(ent)] = true;
+            ret[regexToString(ent, chr)] = true;
           }
         }
       }
@@ -71,7 +71,7 @@ export let regexToString(base: Regex): String {
       } else {
         ""
       };
-      var str = regexToString(regex.item);
+      var str = regexToString(regex.item, chr);
       var pat = "%";
       match (regex.item) {
         is CodeSet -> do {
@@ -96,9 +96,12 @@ export let regexToString(base: Regex): String {
       if (regex.items.length == 0) {
         return "";
       } else if (regex.items.length == 1) {
-        return regexToString(regex.items[0]);
+        return regexToString(regex.items[0], chr);
       } else {
-        var inner = regex.items.join("", regexToString);
+        let rec(r: Regex): String {
+          return regexToString(r, chr);
+        }
+        var inner = regex.items.join("", rec);
         for (var i = 0; i < regex.items.length; i++) {
           match (regex.items[i]) {
             is Or -> return "(${inner})";
