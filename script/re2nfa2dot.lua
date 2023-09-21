@@ -1,8 +1,8 @@
 #!/usr/bin/env lua
 
-local graph = require('temper-regex-engine/graph')
-local parser = require('temper-regex-engine/parser')
+local TemperRegexNFA = require('temper-regex-engine/engines/graph/nfa').TemperRegexNFA
+local sub = require('temper-regex-engine/util/parser').sub
 
-local regex = parser.sub(arg[1])
-local res = graph.TemperRegexNFA(regex)
+local regex = sub(arg[1])
+local res = TemperRegexNFA(regex)
 print(res:toString())

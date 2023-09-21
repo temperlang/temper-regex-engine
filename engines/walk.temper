@@ -1,6 +1,6 @@
 
 let { ... } = import("std/regex");
-let { TemperRegex } = import("./regex");
+let { TemperRegex } = import("../util/regex");
 
 let isCodePointWordChar(code: Int): Boolean {
   (48 <= code && code <= 57) // this range is 0 to 9, like above

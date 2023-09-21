@@ -1,6 +1,6 @@
 
 let { ... } = import("std/regex");
-let { TemperRegex } = import("./regex");
+let { TemperRegex } = import("../util/regex");
 
 export class TemperRegexNative extends TemperRegex {
   public data: CompiledRegex;

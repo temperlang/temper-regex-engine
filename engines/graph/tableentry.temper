@@ -1,0 +1,41 @@
+
+let {fromVec, toVec} = import("./vec");
+
+export class TransitionTableEntry {
+  public key: DenseBitVector;
+  public val: List<DenseBitVector>;
+
+  public toMarkdownWith(nsyms: Int): String {
+    var keyStr = fromVec(key, nsyms).join(",", fn(id: Int): String {
+      return "q${id.toString()}";
+    });
+    var valStrs = val.join(" | ", fn(vec: DenseBitVector): String {
+      var vec = fromVec(vec, nsyms);
+      if (vec.length == 0) {
+        return "-";
+      } else {
+        return vec.join(",", fn(id: Int): String {
+          return "q${id.toString()}";
+        });
+      }
+    });
+    return "| ${keyStr} | ${valStrs} |"
+  }
+
+  public toDotWith(nsyms: Int): String {
+    var keyStr = fromVec(key, nsyms).join("", fn(id: Int): String {
+      return "q${id.toString()}";
+    });
+    var valStrs = val.join("", fn(vec: DenseBitVector): String {
+      var vec = fromVec(vec, nsyms);
+      if (vec.length == 0) {
+        return "<TD>-</TD>";
+      } else {
+        return "<TD>${vec.join(",", fn(id: Int): String {
+          return "q${id.toString()}";
+        })}</TD>";
+      }
+    });
+    return "<TR><TD>${keyStr}</TD>${valStrs}</TR>"
+  }
+}

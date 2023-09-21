@@ -1,10 +1,10 @@
 #!/usr/bin/env lua
 
-local graph = require('temper-regex-engine/graph')
-local parser = require('temper-regex-engine/parser')
+local TemperRegexDFA = require('temper-regex-engine/engines/graph/dfa').TemperRegexDFA
+local sub = require('temper-regex-engine/util/parser').sub
 
-local regex = parser.sub(arg[1])
-local res = graph.TemperRegexDFA(regex)
+local regex = sub(arg[1])
+local res = TemperRegexDFA(regex)
 local pattern = res:toRegexString(string.char)
 
 print(pattern)

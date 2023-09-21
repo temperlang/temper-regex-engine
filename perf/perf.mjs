@@ -1,5 +1,5 @@
-import {RegexBench} from 'temper-regex-engine/bench.js';
-import {TemperRegexDFA} from 'temper-regex-engine/graph.js';
+import {RegexBench} from 'temper-regex-engine/perf/bench.js';
+import {TemperRegexDFA} from 'temper-regex-engine/engines/graph/dfa.js';
 
 const init = new Date();
 
@@ -11,7 +11,7 @@ const bench = new RegexBench(chr, clock);
 bench.addRegexDefaults();
 bench.addCheckDefaults();
 
-bench.addEngine('OptRegex', (re) => {
+bench.addEngine('temper regex-opt', (re) => {
     const res = new TemperRegexDFA(re);
     const str = res.toRegexString(String.fromCharCode);
     const final = new RegExp(str);

@@ -1,0 +1,541 @@
+[90m5: [39mtable: ListBuilder<[1mTransitionTableEntr[22m[1my[22m>;
+                      ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:5+28-48]@G: No declaration for TransitionTableEntry
+[90m9: [39me = new ListBuilder<[1mTransitionTableEntr[22m[1my[22m>();
+                       ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:9+28-48]@G: No declaration for TransitionTableEntry
+[90m16: [39my: DenseBitVector): [1mTransitionTableEntry | Bubbl[22m[1me[22m {
+                        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:16+35-64]@G: Could not resolve part of function signature to a type
+[90m17: [39mer: for (var i = 0; [1mi < table.lengt[22m[1mh[22m; i++) {
+                        ┗━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:17+27-43]@G: Expected value of type Boolean not Invalid
+[90m21: [39mif ([1mkey[j] != cur.key[j[22m[1m][22m) {
+        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:21+12-32]@G: Expected value of type Boolean not Invalid
+[90m17: [39mar i = 0; i < table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/table.temper:17+37-43]@G: Expected function type, but got Invalid
+[90m17: [39mfor (var i = 0; i < [1mtable.lengt[22m[1mh[22m; i++) {
+                        ┗━━━━━━━━━━┛
+[-work//engines/graph/table.temper:17+31-43]@G: No member length in MissingType
+[90m18: [39mvar cur = table[i];
+                   ⇧
+[-work//engines/graph/table.temper:18+21]@G: Expected function type, but got Invalid
+[90m18: [39mvar cur = [1mtable[i[22m[1m][22m;
+              ┗━━━━━━┛
+[-work//engines/graph/table.temper:18+16-24]@G: No member get in MissingType
+[90m21: [39mif (key[j] != cur.[1mke[22m[1my[22m[j]) {
+                      ┗━┛
+[-work//engines/graph/table.temper:21+26-29]@G: Expected function type, but got Invalid
+[90m21: [39mif (key[j] != [1mcur.ke[22m[1my[22m[j]) {
+                  ┗━━━━━┛
+[-work//engines/graph/table.temper:21+22-29]@G: No member key in MissingType
+[90m21: [39mif ([1mkey[j[22m[1m][22m != cur.key[j]) {
+        ┗━━━━┛
+[-work//engines/graph/table.temper:21+12-18]@G: Expected subtype of eqT | Null, but got Boolean
+[90m21: [39mf (key[j] != cur.key[j]) {
+                        ⇧
+[-work//engines/graph/table.temper:21+29]@G: Expected function type, but got Invalid
+[90m21: [39mif (key[j] != [1mcur.key[j[22m[1m][22m) {
+                  ┗━━━━━━━━┛
+[-work//engines/graph/table.temper:21+22-32]@G: No member get in MissingType
+[90m17: [39mer: for (var i = 0; [1mi[22m < table.length; i++
+                        ⇧
+[-work//engines/graph/table.temper:17+27-28]@G: Expected subtype of cmpT | Null, but got Int
+[90m30: [39m[1mreturn bubble([22m[1m)[22m;
+    ┗━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:30+4-19]@G: Cannot assign to Invalid from Never
+[90m30: [39m[1mreturn bubble([22m[1m)[22m;
+    ┗━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:30+4-19]@G: Expected subtype of Invalid, but got Never
+[90m36: [39mvar inner = table.[1mjoi[22m[1mn[22m("\n", fn(ent: Trans
+                      ┗━━┛
+[-work//engines/graph/table.temper:36+22-26]@G: Expected function type, but got Invalid
+                ⇩
+[90m36: [39mvar inner = [1mtable.join("\n", fn(ent: TransitionTableEntry): String {[22m
+[90m37: [39m[1m  return ent.toMarkdownWith(size);[22m
+[90m38: [39m[1m}[22m[1m)[22m;
+     ⇧
+[-work//engines/graph/table.temper:36+16 - 38+6]@G: No member join in MissingType
+[90m36: [39m.join("\n", fn(ent: [1mTransitionTableEntr[22m[1my[22m): String {
+                        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:36+41-61]@G: Could not resolve part of function signature to a type
+[90m36: [39m.join("\n", fn(ent: [1mTransitionTableEntr[22m[1my[22m): String {
+                        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:36+41-61]@G: No declaration for TransitionTableEntry
+[90m37: [39mreturn [1ment.toMarkdownWith(size[22m[1m)[22m;
+           ┗━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:37+13-37]@G: Expected subtype of String, but got Invalid
+[90m37: [39mreturn ent.[1mtoMarkdownWit[22m[1mh[22m(size);
+               ┗━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:37+17-31]@G: Expected function type, but got Invalid
+[90m37: [39mreturn [1ment.toMarkdownWith(size[22m[1m)[22m;
+           ┗━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:37+13-37]@G: No member toMarkdownWith in MissingType
+[90m57: [39mvar inner = table.[1mjoi[22m[1mn[22m("", fn(ent: Transit
+                      ┗━━┛
+[-work//engines/graph/table.temper:57+22-26]@G: Expected function type, but got Invalid
+                ⇩
+[90m57: [39mvar inner = [1mtable.join("", fn(ent: TransitionTableEntry): String {[22m
+[90m58: [39m[1m  return ent.toDotWith(size);[22m
+[90m59: [39m[1m}[22m[1m)[22m;
+     ⇧
+[-work//engines/graph/table.temper:57+16 - 59+6]@G: No member join in MissingType
+[90m57: [39mle.join("", fn(ent: [1mTransitionTableEntr[22m[1my[22m): String {
+                        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:57+39-59]@G: Could not resolve part of function signature to a type
+[90m57: [39mle.join("", fn(ent: [1mTransitionTableEntr[22m[1my[22m): String {
+                        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:57+39-59]@G: No declaration for TransitionTableEntry
+[90m58: [39mreturn [1ment.toDotWith(size[22m[1m)[22m;
+           ┗━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:58+13-32]@G: Expected subtype of String, but got Invalid
+[90m58: [39mreturn ent.[1mtoDotWit[22m[1mh[22m(size);
+               ┗━━━━━━━┛
+[-work//engines/graph/table.temper:58+17-26]@G: Expected function type, but got Invalid
+[90m58: [39mreturn [1ment.toDotWith(size[22m[1m)[22m;
+           ┗━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:58+13-32]@G: No member toDotWith in MissingType
+[90m5: [39mpublic table: [1mListBuilder<TransitionTableEntry[22m[1m>[22m;
+                 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:5+16-49]@G: Could not resolve part of function signature to a type
+[90m16: [39my: DenseBitVector): [1mTransitionTableEntry | Bubbl[22m[1me[22m {
+                        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:16+35-64]@G: No applicable variants in (fn (Int, Int): Int & fn (Type, Type): Type) for inputs (Invalid, Type)
+[90m16: [39my: DenseBitVector): [1mTransitionTableEntr[22m[1my[22m | Bubble {
+                        ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper:16+35-55]@G: No declaration for TransitionTableEntry
+[90m98: [39mconstructor(regex: [1mRege[22m[1mx[22m): Void {
+                       ┗━━━┛
+[-work//engines/graph/dfa.temper:98+28-33]@G: Could not resolve part of function signature to a type
+[90m98: [39mconstructor(regex: [1mRege[22m[1mx[22m): Void {
+                       ┗━━━┛
+[-work//engines/graph/dfa.temper:98+28-33]@G: No declaration for Regex
+[90m137: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:137+20-42]@G: Expected value of type Boolean not Invalid
+[90m147: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:147+20-42]@G: Expected value of type Boolean not Invalid
+[90m128: [39mtable.table.[1mad[22m[1md[22m(ent);
+                 ┗━┛
+[-work//engines/graph/dfa.temper:128+18-21]@G: Expected function type, but got Invalid
+[90m128: [39m[1mtable.table.add(ent[22m[1m)[22m;
+     ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:128+6-26]@G: No member add in MissingType
+[90m132: [39mildTable(table.table[i], nstates);
+                         ⇧
+[-work//engines/graph/dfa.temper:132+28]@G: Expected function type, but got Invalid
+[90m132: [39mbuildTable([1mtable.table[i[22m[1m][22m, nstates);
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:132+17-31]@G: No member get in MissingType
+[90m143: [39mindex[nameFor(tent.[1mke[22m[1my[22m)] = i + 1;
+                        ┗━┛
+[-work//engines/graph/dfa.temper:143+25-28]@G: Expected function type, but got Invalid
+[90m143: [39mindex[nameFor([1mtent.ke[22m[1my[22m)] = i + 1;
+                   ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:143+20-28]@G: No member key in MissingType
+[90m139: [39mname = nameFor(tent.[1mke[22m[1my[22m);
+                         ┗━┛
+[-work//engines/graph/dfa.temper:139+30-33]@G: Expected function type, but got Invalid
+[90m139: [39mvar name = nameFor([1mtent.ke[22m[1my[22m);
+                        ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:139+25-33]@G: No member key in MissingType
+[90m138: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:138+28]@G: Expected function type, but got Invalid
+[90m138: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:138+17-31]@G: No member get in MissingType
+[90m137: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:137+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m137: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:137+36-42]@G: Expected function type, but got Invalid
+[90m137: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:137+24-42]@G: No member length in MissingType
+[90m154: [39mindex[nameFor(tent.[1mke[22m[1my[22m)];
+                        ┗━┛
+[-work//engines/graph/dfa.temper:154+34-37]@G: Expected function type, but got Invalid
+[90m154: [39mci = index[nameFor([1mtent.ke[22m[1my[22m)];
+                        ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:154+29-37]@G: No member key in MissingType
+[90m151: [39mindex[nameFor(tent.[1mva[22m[1ml[22m[j])];
+                        ┗━┛
+[-work//engines/graph/dfa.temper:151+39-42]@G: Expected function type, but got Invalid
+[90m151: [39mlue = index[nameFor([1mtent.va[22m[1ml[22m[j])];
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:151+34-42]@G: No member val in MissingType
+[90m151: [39mdex[nameFor(tent.val[j])];
+                         ⇧
+[-work//engines/graph/dfa.temper:151+42]@G: Expected function type, but got Invalid
+[90m151: [39mlue = index[nameFor([1mtent.val[j[22m[1m][22m)];
+                         ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:151+34-45]@G: No member get in MissingType
+[90m148: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:148+28]@G: Expected function type, but got Invalid
+[90m148: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:148+17-31]@G: No member get in MissingType
+[90m147: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:147+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m147: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:147+36-42]@G: Expected function type, but got Invalid
+[90m147: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:147+24-42]@G: No member length in MissingType
+[90m101: [39mnew TemperRegexNFA([1mrege[22m[1mx[22m).engine;
+                        ┗━━━┛
+[-work//engines/graph/dfa.temper:101+32-37]@G: Expected subtype of Regex, but got Top
+[90m185: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:185+20-42]@G: Expected value of type Boolean not Invalid
+[90m196: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:196+20-42]@G: Expected value of type Boolean not Invalid
+[90m208: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:208+20-42]@G: Expected value of type Boolean not Invalid
+[90m191: [39mindex[nameFor(tent.[1mke[22m[1my[22m)] = i;
+                        ┗━┛
+[-work//engines/graph/dfa.temper:191+25-28]@G: Expected function type, but got Invalid
+[90m191: [39mindex[nameFor([1mtent.ke[22m[1my[22m)] = i;
+                   ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:191+20-28]@G: No member key in MissingType
+[90m187: [39mname = nameFor(tent.[1mke[22m[1my[22m);
+                         ┗━┛
+[-work//engines/graph/dfa.temper:187+30-33]@G: Expected function type, but got Invalid
+[90m187: [39mvar name = nameFor([1mtent.ke[22m[1my[22m);
+                        ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:187+25-33]@G: No member key in MissingType
+[90m186: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:186+28]@G: Expected function type, but got Invalid
+[90m186: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:186+17-31]@G: No member get in MissingType
+[90m185: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:185+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m185: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:185+36-42]@G: Expected function type, but got Invalid
+[90m185: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:185+24-42]@G: No member length in MissingType
+[90m200: [39m} else if (tent.[1mke[22m[1my[22m[1]) {
+                     ┗━┛
+[-work//engines/graph/dfa.temper:200+22-25]@G: Expected function type, but got Invalid
+[90m200: [39m} else if ([1mtent.ke[22m[1my[22m[1]) {
+                ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:200+17-25]@G: No member key in MissingType
+[90m200: [39m} else if ([1mtent.key[1[22m[1m][22m) {
+                ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:200+17-28]@G: Expected subtype of Boolean, but got Invalid
+[90m200: [39m} else if (tent.key[1]) {
+                        ⇧
+[-work//engines/graph/dfa.temper:200+25]@G: Expected function type, but got Invalid
+[90m200: [39m} else if ([1mtent.key[1[22m[1m][22m) {
+                ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:200+17-28]@G: No member get in MissingType
+[90m197: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:197+28]@G: Expected function type, but got Invalid
+[90m197: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:197+17-31]@G: No member get in MissingType
+[90m196: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:196+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m196: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:196+36-42]@G: Expected function type, but got Invalid
+[90m196: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:196+24-42]@G: No member length in MissingType
+[90m212: [39mindex[nameFor(tent.[1mva[22m[1ml[22m[j])];
+                        ┗━┛
+[-work//engines/graph/dfa.temper:212+39-42]@G: Expected function type, but got Invalid
+[90m212: [39mlue = index[nameFor([1mtent.va[22m[1ml[22m[j])];
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:212+34-42]@G: No member val in MissingType
+[90m212: [39mdex[nameFor(tent.val[j])];
+                         ⇧
+[-work//engines/graph/dfa.temper:212+42]@G: Expected function type, but got Invalid
+[90m212: [39mlue = index[nameFor([1mtent.val[j[22m[1m][22m)];
+                         ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:212+34-45]@G: No member get in MissingType
+[90m209: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:209+28]@G: Expected function type, but got Invalid
+[90m209: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:209+17-31]@G: No member get in MissingType
+[90m208: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:208+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m208: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:208+36-42]@G: Expected function type, but got Invalid
+[90m208: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:208+24-42]@G: No member length in MissingType
+[90m242: [39mtable.table.[1mad[22m[1md[22m(ent);
+                 ┗━┛
+[-work//engines/graph/dfa.temper:242+20-23]@G: Expected function type, but got Invalid
+[90m242: [39m[1mtable.table.add(ent[22m[1m)[22m;
+     ┗━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:242+8-28]@G: No member add in MissingType
+[90m233: [39mif ([1mbv[l[22m[1m][22m) {
+         ┗━━━┛
+[-work//engines/graph/dfa.temper:233+20-25]@G: Expected subtype of Boolean, but got Invalid
+[90m233: [39mif (bv[l]) {
+           ⇧
+[-work//engines/graph/dfa.temper:233+22]@G: Expected function type, but got Invalid
+[90m233: [39mif ([1mbv[l[22m[1m][22m) {
+         ┗━━━┛
+[-work//engines/graph/dfa.temper:233+20-25]@G: No member get in MissingType
+[90m231: [39mc([k], nstates)].val[j];
+                         ⇧
+[-work//engines/graph/dfa.temper:231+53]@G: Expected function type, but got Invalid
+[90m231: [39mvar bv = [1mtable[toVec([k], nstates)].val[j[22m[1m][22m;
+              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:231+23-56]@G: No member get in MissingType
+[90m231: [39moVec([k], nstates)].[1mva[22m[1ml[22m[j];
+                         ┗━┛
+[-work//engines/graph/dfa.temper:231+50-53]@G: Expected function type, but got Invalid
+[90m231: [39mvar bv = [1mtable[toVec([k], nstates)].va[22m[1ml[22m[j];
+              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:231+23-53]@G: No member val in MissingType
+[90m338: [39mregexToStringChr(r: [1mRege[22m[1mx[22m): String {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:338+28-33]@G: Could not resolve part of function signature to a type
+[90m338: [39mregexToStringChr(r: [1mRege[22m[1mx[22m): String {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:338+28-33]@G: No declaration for Regex
+[90m339: [39meturn regexToString([1mr[22m, chr);
+                         ⇧
+[-work//engines/graph/dfa.temper:339+27-28]@G: Expected subtype of Regex, but got Top
+[90m341: [39mua(toRegexList(chr).[1mma[22m[1mp[22m(regexToStringChr), 
+                         ┗━┛
+[-work//engines/graph/dfa.temper:341+47-50]@G: Expected function type, but got Invalid
+[90m341: [39mnew TemperRegexLua([1mtoRegexList(chr).map(regexToStringChr[22m[1m)[22m, isMatch);
+                        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:341+30-68]@G: No member map in MissingType
+[90m344: [39m: fn(Int): String): [1mRege[22m[1mx[22m {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:344+40-45]@G: Could not resolve part of function signature to a type
+[90m344: [39m: fn(Int): String): [1mRege[22m[1mx[22m {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:344+40-45]@G: No declaration for Regex
+[90m345: [39mreturn [1mne[22m[1mw[22m Or(toRegexList(chr)
+            ┗━┛
+[-work//engines/graph/dfa.temper:345+11-14]@G: Expected function type, but got Invalid
+[90m345: [39mreturn new [1mO[22m[1mr[22m(toRegexList(chr));
+                ┗┛
+[-work//engines/graph/dfa.temper:345+15-17]@G: No declaration for Or
+[90m348: [39m: fn(Int): String): [1mList<Regex[22m[1m>[22m {
+                         ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:348+44-55]@G: Could not resolve part of function signature to a type
+[90m348: [39mInt): String): List<[1mRege[22m[1mx[22m> {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:348+49-54]@G: No declaration for Regex
+[90m351: [39mfor (var i = 0; [1mi < table.table.lengt[22m[1mh[22m; i++) {
+                     ┗━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:351+20-42]@G: Expected value of type Boolean not Invalid
+[90m359: [39mval = nameFor(tent.[1mva[22m[1ml[22m[j]);
+                        ┗━┛
+[-work//engines/graph/dfa.temper:359+31-34]@G: Expected function type, but got Invalid
+[90m359: [39mvar val = nameFor([1mtent.va[22m[1ml[22m[j]);
+                       ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:359+26-34]@G: No member val in MissingType
+[90m368: [39mdd("#begin", kname, [1mne[22m[1mw[22m Sequence([]));
+                         ┗━┛
+[-work//engines/graph/dfa.temper:368+37-40]@G: Expected function type, but got Invalid
+[90m368: [39m#begin", kname, new [1mSequenc[22m[1me[22m([]));
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:368+41-49]@G: No declaration for Sequence
+[90m371: [39m.add(kname, "#end", [1mne[22m[1mw[22m Sequence([]));
+                         ┗━┛
+[-work//engines/graph/dfa.temper:371+35-38]@G: Expected function type, but got Invalid
+[90m371: [39m(kname, "#end", new [1mSequenc[22m[1me[22m([]));
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:371+39-47]@G: No declaration for Sequence
+[90m379: [39ms = new ListBuilder<[1mCodePar[22m[1mt[22m>();
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:379+38-46]@G: No declaration for CodePart
+[90m405: [39m, new CodeSet(parts.[1mtoLis[22m[1mt[22m()));
+                         ┗━━━━┛
+[-work//engines/graph/dfa.temper:405+58-64]@G: Expected function type, but got Invalid
+[90m405: [39mj].key, new CodeSet([1mparts.toList([22m[1m)[22m));
+                         ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:405+52-66]@G: No member toList in MissingType
+[90m405: [39md(kname, ls[j].key, [1mne[22m[1mw[22m CodeSet(parts.toLis
+                         ┗━┛
+[-work//engines/graph/dfa.temper:405+40-43]@G: Expected function type, but got Invalid
+[90m405: [39mame, ls[j].key, new [1mCodeSe[22m[1mt[22m(parts.toList()));
+                         ┗━━━━━┛
+[-work//engines/graph/dfa.temper:405+44-51]@G: No declaration for CodeSet
+[90m398: [39mparts.[1mad[22m[1md[22m(new CodePoints(chr(
+           ┗━┛
+[-work//engines/graph/dfa.temper:398+24-27]@G: Expected function type, but got Invalid
+[90m398: [39m[1mparts.add(new CodePoints(chr(l))[22m[1m)[22m;
+     ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:398+18-51]@G: No member add in MissingType
+[90m398: [39mparts.add([1mne[22m[1mw[22m CodePoints(chr(l)))
+               ┗━┛
+[-work//engines/graph/dfa.temper:398+28-31]@G: Expected function type, but got Invalid
+[90m398: [39mparts.add(new [1mCodePoint[22m[1ms[22m(chr(l)));
+                   ┗━━━━━━━━┛
+[-work//engines/graph/dfa.temper:398+32-42]@G: No declaration for CodePoints
+[90m401: [39mparts.add([1mne[22m[1mw[22m CodeRange(s, k-1));
+               ┗━┛
+[-work//engines/graph/dfa.temper:401+26-29]@G: Expected function type, but got Invalid
+[90m401: [39mparts.add(new [1mCodeRang[22m[1me[22m(s, k-1));
+                   ┗━━━━━━━┛
+[-work//engines/graph/dfa.temper:401+30-39]@G: No declaration for CodeRange
+[90m401: [39mparts.[1mad[22m[1md[22m(new CodeRange(s, k-
+           ┗━┛
+[-work//engines/graph/dfa.temper:401+22-25]@G: Expected function type, but got Invalid
+[90m401: [39m[1mparts.add(new CodeRange(s, k-1)[22m[1m)[22m;
+     ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:401+16-48]@G: No member add in MissingType
+[90m376: [39mvar points = [1mne[22m[1mw[22m CodePoints(ls[j].va
+                  ┗━┛
+[-work//engines/graph/dfa.temper:376+23-26]@G: Expected function type, but got Invalid
+[90m376: [39mvar points = new [1mCodePoint[22m[1ms[22m(ls[j].value.join(""
+                      ┗━━━━━━━━┛
+[-work//engines/graph/dfa.temper:376+27-37]@G: No declaration for CodePoints
+[90m359: [39ml = nameFor(tent.val[j]);
+                         ⇧
+[-work//engines/graph/dfa.temper:359+34]@G: Expected function type, but got Invalid
+[90m359: [39mvar val = nameFor([1mtent.val[j[22m[1m][22m);
+                       ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:359+26-37]@G: No member get in MissingType
+[90m353: [39mname = nameFor(tent.[1mke[22m[1my[22m);
+                         ┗━┛
+[-work//engines/graph/dfa.temper:353+31-34]@G: Expected function type, but got Invalid
+[90m353: [39mvar kname = nameFor([1mtent.ke[22m[1my[22m);
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:353+26-34]@G: No member key in MissingType
+[90m352: [39mr tent = table.table[i];
+                         ⇧
+[-work//engines/graph/dfa.temper:352+28]@G: Expected function type, but got Invalid
+[90m352: [39mvar tent = [1mtable.table[i[22m[1m][22m;
+                ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:352+17-31]@G: No member get in MissingType
+[90m351: [39mfor (var i = 0; [1mi[22m < table.table.lengt
+                     ⇧
+[-work//engines/graph/dfa.temper:351+20-21]@G: Expected subtype of cmpT | Null, but got Int
+[90m351: [39m0; i < table.table.[1mlengt[22m[1mh[22m; i++) {
+                        ┗━━━━┛
+[-work//engines/graph/dfa.temper:351+36-42]@G: Expected function type, but got Invalid
+[90m351: [39mfor (var i = 0; i < [1mtable.table.lengt[22m[1mh[22m; i++) {
+                         ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:351+24-42]@G: No member length in MissingType
+[90m444: [39mpublic regex: [1mRege[22m[1mx[22m;
+                   ┗━━━┛
+[-work//engines/graph/dfa.temper:444+16-21]@G: No declaration for Regex
+[90m444: [39mpublic regex: [1mRege[22m[1mx[22m;
+                   ┗━━━┛
+[-work//engines/graph/dfa.temper:444+16-21]@G: Could not resolve part of function signature to a type
+[90m444: [39mpublic regex: [1mRege[22m[1mx[22m;
+                   ┗━━━┛
+[-work//engines/graph/dfa.temper:444+16-21]@G: No declaration for Regex
+[90m444: [39mpublic regex: [1mRege[22m[1mx[22m;
+                   ┗━━━┛
+[-work//engines/graph/dfa.temper:444+16-21]@G: Could not resolve part of function signature to a type
+[90m464: [39mtring, to: String): [1mRegex | Bubbl[22m[1me[22m {
+                         ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:464+41-55]@G: Could not resolve part of function signature to a type
+[90m471: [39m[1mreturn bubble([22m[1m)[22m;
+     ┗━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:471+4-19]@G: Cannot assign to Invalid from Never
+[90m471: [39m[1mreturn bubble([22m[1m)[22m;
+     ┗━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:471+4-19]@G: Expected subtype of Invalid, but got Never
+[90m527: [39mom.from, goesTo.to, [1mne[22m[1mw[22m Sequence([wentFrom.
+                         ┗━┛
+[-work//engines/graph/dfa.temper:527+43-46]@G: Expected function type, but got Invalid
+[90m527: [39mrom, goesTo.to, new [1mSequenc[22m[1me[22m([wentFrom.regex, go
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:527+47-55]@G: No declaration for Sequence
+[90m519: [39mce([wentFrom.regex, [1mne[22m[1mw[22m Repeat(self, 0, nul
+                         ┗━┛
+[-work//engines/graph/dfa.temper:519+73-76]@G: Expected function type, but got Invalid
+[90m519: [39mwentFrom.regex, new [1mRepea[22m[1mt[22m(self, 0, null, fals
+                         ┗━━━━┛
+[-work//engines/graph/dfa.temper:519+77-83]@G: No declaration for Repeat
+[90m519: [39mom.from, goesTo.to, [1mne[22m[1mw[22m Sequence([wentFrom.
+                         ┗━┛
+[-work//engines/graph/dfa.temper:519+43-46]@G: Expected function type, but got Invalid
+[90m519: [39mrom, goesTo.to, new [1mSequenc[22m[1me[22m([wentFrom.regex, ne
+                         ┗━━━━━━┛
+[-work//engines/graph/dfa.temper:519+47-55]@G: No declaration for Sequence
+[90m533: [39mto: String, regex: [1mRege[22m[1mx[22m): Void {
+                        ┗━━━┛
+[-work//engines/graph/dfa.temper:533+46-51]@G: Could not resolve part of function signature to a type
+[90m533: [39mto: String, regex: [1mRege[22m[1mx[22m): Void {
+                        ┗━━━┛
+[-work//engines/graph/dfa.temper:533+46-51]@G: No declaration for Regex
+[90m543: [39mblic toRegexList(): [1mList<Regex[22m[1m>[22m {
+                         ┗━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:543+24-35]@G: Could not resolve part of function signature to a type
+[90m543: [39mtoRegexList(): List<[1mRege[22m[1mx[22m> {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:543+29-34]@G: No declaration for Regex
+[90m553: [39mt = new ListBuilder<[1mRege[22m[1mx[22m>();
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:553+30-35]@G: No declaration for Regex
+[90m557: [39mret.[1mad[22m[1md[22m(cur.regex);
+         ┗━┛
+[-work//engines/graph/dfa.temper:557+12-15]@G: Expected function type, but got Invalid
+[90m557: [39m[1mret.add(cur.regex[22m[1m)[22m;
+     ┗━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:557+8-26]@G: No member add in MissingType
+[90m560: [39mreturn ret.[1mtoLis[22m[1mt[22m();
+                ┗━━━━┛
+[-work//engines/graph/dfa.temper:560+15-21]@G: Expected function type, but got Invalid
+[90m560: [39mreturn [1mret.toList([22m[1m)[22m;
+            ┗━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:560+11-23]@G: No member toList in MissingType
+[90m464: [39mtring, to: String): [1mRegex | Bubbl[22m[1me[22m {
+                         ┗━━━━━━━━━━━━┛
+[-work//engines/graph/dfa.temper:464+41-55]@G: No applicable variants in (fn (Int, Int): Int & fn (Type, Type): Type) for inputs (Invalid, Type)
+[90m464: [39mtring, to: String): [1mRege[22m[1mx[22m | Bubble {
+                         ┗━━━┛
+[-work//engines/graph/dfa.temper:464+41-46]@G: No declaration for Regex
+[90m5: [39mpublic table: [1mListBuilder<TransitionTableEntry[22m[1m>[22m;
+                 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper+70-103]: Cannot translate Cannot typify (R t#81): ❎
+[90m9: [39mtable = [1mnew ListBuilder<TransitionTableEntry>([22m[1m)[22m;
+           ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[-work//engines/graph/table.temper+170-209]: Cannot translate Invalid type: ❎
+kotlin.NotImplementedError: An operation is not implemented: TreeWrapper((Decl (L get__30) (V \method) (V \get) (V \visibility) (V \public) (V \ssa) (V void) (V \stay) (S) (V \fromType) (V TransitionTable))) not understood
+	at lang.temper.be.tmpl.TranslateTypeDeclarationKt.translateTypeDeclaration(TranslateTypeDeclaration.kt:321)
+	at lang.temper.be.tmpl.TmpLTranslator$toTopLevels$converter$1.processTopLevel(TmpLTranslator.kt:643)
+	at lang.temper.be.tmpl.TmpLTranslator$toTopLevels$converter$1.processTopLevel(TmpLTranslator.kt:622)
+	at lang.temper.be.tmpl.TmpLTranslator.toTopLevels(TmpLTranslator.kt:696)
+	at lang.temper.be.tmpl.TmpLTranslator.translateTopLevels(TmpLTranslator.kt:497)
+	at lang.temper.be.tmpl.TmpLTranslator.translate(TmpLTranslator.kt:417)
+	at lang.temper.be.tmpl.TmpLTranslator.access$translate(TmpLTranslator.kt:146)
+	at lang.temper.be.tmpl.TmpLTranslator$Companion.translateModules(TmpLTranslator.kt:242)
+	at lang.temper.be.py.PyBackend.tentativeTmpL(PyBackend.kt:346)
+	at lang.temper.compile.handlers.TranslationManager.doTentativeTmpl(TranslationManager.kt:454)
+	at lang.temper.compile.handlers.TranslationManager.access$doTentativeTmpl(TranslationManager.kt:39)
+	at lang.temper.compile.handlers.TranslationManager$startTranslationState$1$1.invoke(TranslationManager.kt:410)
+	at lang.temper.compile.handlers.TranslationManager$startTranslationState$1$1.invoke(TranslationManager.kt:409)
+	at lang.temper.compile.handlers.TranslationManager.launchOnExecutor$lambda$28(TranslationManager.kt:582)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1768)
+	at lang.temper.tooling.ExceptionDumpingExecutorService.execute$lambda$0(ExceptionDumpingExecutorService.kt:17)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:833)
+[-work/]: Error during translation of nym`temper-regex-engine` via py backend: kotlin.NotImplementedError: An operation is not implemented: TreeWrapper((Decl (L get__30) (V \method) (V \get) (V \visibility) (V \public) (V \ssa) (V void) (V \stay) (S) (V \fromType) (V TransitionTable))) not understood
+Build failed

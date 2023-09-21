@@ -1,0 +1,388 @@
+
+let ord(s: String): Int {
+  return s.codePoints.read();
+}
+
+export class Next {
+  public toState: State;
+  public matcher: Matcher;
+}
+
+export class State {
+  public id: Int;
+  public next: ListBuilder<Next>;
+  
+  public constructor(identify: Int): Void {
+    id = identify; 
+    next = new ListBuilder<Next>();
+  }
+
+  public addNext(matcher: Matcher, toState: State): Void {
+    next.add(new Next(toState, matcher));
+  }
+
+  public addNextFirst(matcher: Matcher, toState: State): Void {
+    var oldNext = next;
+    next = new ListBuilder<Next>();
+    next.add(new Next(toState, matcher));
+    for (var i = 0; i < oldNext.length; i++) {
+      next.add(oldNext[i]);
+    }
+  }
+}
+
+export interface Matcher {
+  public matches(str: List<Int>, index: Int): Boolean;
+
+  public toString(): String;
+}
+
+export class BeginMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index == 0;
+  }
+
+  public toString(): String {
+    return "^";
+  }
+}
+
+export class WordBoundaryMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code1 = str.getOr(index-1, -1);
+    var code2 = str.getOr(index, -1);
+    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
+    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
+    return isWord1 != isWord2;
+  }
+}
+
+export class WordClassMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code = str.getOr(index, -1);
+    return (48 <= code && code <= 57) // this range is 0 to 9, like above
+      || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
+      || (97 <= code && code <= 122)  // this range is a to z (lowercase)
+  }
+
+  public toString(): String {
+    return "\\w";
+  }
+}
+
+export class SpaceClassMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code = str.getOr(index, -1);
+    return code == 9 || code == 10 || code == 11 || code == 13 || code == 32;
+  }
+
+  public toString(): String {
+    return "\\s";
+  }
+}
+
+export class EndMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index == str.length;
+  }
+
+  public toString(): String {
+    return "$";
+  }
+}
+
+export class AnyMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index != str.length;
+  }
+
+  public toString(): String {
+    return ".";
+  }
+}
+
+export class RangeMatcher extends Matcher {
+  public low: Int;
+  public high: Int;
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return low <= c && c <= high;
+  }
+
+  public toString(): String {
+    return "[\\x${low.toString()}-\\x${high.toString()}]";
+  }
+}
+
+export class CharCodeMatcher extends Matcher {
+  public code: Int;
+
+  public constructor(point: Int): Void {
+    code = point;
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return c == code;
+  }
+
+  public toString(): String {
+    return "#${code.toString()}";
+  }
+}
+
+export class CharMatcher extends Matcher {
+  public char: String;
+  public code: Int;
+  
+  public constructor(str: String): Void {
+    char = str;
+    code = ord(str);
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return c == code;
+  }
+
+  public toString(): String {
+    return char;
+  }
+}
+
+export class EpsilonMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "ε";
+  }
+}
+
+interface Stack {
+  public index: Int;
+  public state: State;
+  public get next(): Stack;
+}
+
+class StackStart extends Stack {
+  public index: Int;
+  public state: State;
+
+  public constructor(): Void {
+    index = -1;
+    state = new State(-1);
+  }
+  
+  public get next(): Stack {
+    return this;
+  }
+}
+
+class StackSlot extends Stack {
+  public index: Int;
+  public state: State;
+  public slot: Stack;
+
+  public get next(): Stack {
+    return slot;
+  }
+}
+
+export class Engine {
+  public states: ListBuilder<State>;
+  public startState: State;
+  public endState: State;
+  public epsilon: EpsilonMatcher;
+
+  public constructor() {
+    states = new ListBuilder<State>();
+    startState = newState();
+    endState = newState();
+    epsilon = new EpsilonMatcher();
+  }
+
+  public opt(): Engine {
+    var cur = this;
+    cur = cur.optEpsilonEllison();
+    cur = cur.optDeadCode();
+    return cur;
+  }
+
+  public optDeadCode(): Engine {
+    var unopt = this;
+    var opt = new Engine();
+    var map = new MapBuilder<Int, Int>();
+
+    let visit(state: State): State {
+      var optId = map[state.id] orelse -1;
+      if (optId >= 0) {
+        return opt.states[optId];
+      }
+      var outState: State = if (state == unopt.startState) {
+        opt.startState
+      } else if (state == unopt.endState) {
+        opt.endState
+      } else {
+        opt.newState()
+      };
+
+      map[state.id] = outState.id;
+
+      for (var i = 0; i < state.next.length; i++) {
+        var next = state.next[i];
+        outState.addNext(next.matcher, visit(next.toState));
+      }
+      return outState;
+    }
+
+    visit(startState);
+
+    return opt;
+  }
+
+  public optEpsilonEllison(): Engine {
+    var unopt = this;
+    var opt = new Engine();
+    var map = new MapBuilder<Int, Int>();
+
+    let visit(state: State): State {
+      var optId = map[state.id] orelse -1;
+      if (optId >= 0) {
+        return opt.states[optId];
+      }
+      var outState: State = if (state == unopt.startState) {
+        opt.startState
+      } else if (state == unopt.endState) {
+        opt.endState
+      } else {
+        opt.newState()
+      };
+
+      map[state.id] = outState.id;
+
+      var added = new DenseBitVector(0);
+      var count = 0;
+
+      var isFinal = false;
+
+      let add(matcher: Matcher, toState: State): Void {
+        if (matcher == unopt.epsilon) {
+          if (added[toState.id]) {
+            return;
+          }
+          added[toState.id] = true;
+          if (toState.id == 1) {
+            isFinal = true;
+            return;
+          }
+          for (var i = 0; i < toState.next.length; i++) {
+            var next = toState.next[i];
+            add(next.matcher, next.toState);
+          }
+        } else {
+          count += 1;
+          outState.addNext(matcher, visit(toState));
+        }
+      }
+
+      for (var i = 0; i < state.next.length; i++) {
+        var next = state.next[i];
+        add(next.matcher, next.toState);
+      }
+
+      if (count == 0 || isFinal) {
+        return opt.endState;
+      }
+
+      return outState;
+    }
+
+    visit(startState);
+
+    return opt;
+  }
+
+  public newState(): State {
+    var ret = new State(states.length);
+    states.add(ret);
+    return ret;
+  }
+
+  public matches(str: String): Boolean {
+    var codePoints = str.split("").map(ord);
+    var stackStart = new StackStart();
+    var badNext = new Next(endState, epsilon);
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: Stack = new StackSlot(i, startState, stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        stack = stack.next;
+        if (state.id == endState.id) {
+          return true;
+        }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          if (matcher == epsilon) {
+            stack = new StackSlot(index, toState, stack);
+          } else if (matcher.matches(codePoints, index)) {
+            stack = new StackSlot(index + 1, toState, stack);
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public toString(): String {
+    var count = 0;
+    var inner = states.join("", fn(state: State): String {
+      var name = "q${state.id.toString()}";
+      return state.next.join("", fn(next: Next): String {
+        var line = count.toString();
+        count++;
+        var nexts = next.toState.id.toString();
+        return "\n  ${name} -> q${nexts} [label=\"${next.matcher.toString()}\"];";
+      });
+    })
+    return "digraph {\n  rankdir=\"LR\";${inner}\n}";
+  }
+
+  public toDotSub(gname: String, color: String): String {
+    var count = 0;
+    var used = new MapBuilder<Int, Boolean>();
+    var inner = states.join("", fn(state: State): String {
+      var name = "q${state.id.toString()}";
+      used[state.id] = true;
+      return state.next.join("", fn(next: Next): String {
+        var line = count.toString();
+        count++;
+        var nexts = next.toState.id.toString();
+        used[next.toState.id] = true;
+        return "\n    ${gname}_${name} -> ${gname}_q${nexts} [label=\"${next.matcher.toString()}\"];";
+      });
+    });
+    var decls = states.join("", fn(state: State): String {
+      if (used[state.id] orelse false) {
+        var name = "q${state.id.toString()}";
+        var label = if (state.id == 0) {
+          "start"
+        } else if (state.id == 1) {
+          "end"
+        } else {
+          name
+        };
+        var shape = "ellipse";
+        return "\n    ${gname}_${name} [shape=\"${shape}\"] [label=\"${label}\"];";
+      } else {
+        return "";
+      }
+    });
+    return "subgraph ${gname} {\n    node [style=filled color=\"${color}\"];\n    color=\"#E7E7E7\";\n    label=\"NFA\";\n    rankdir=\"LR\";${decls}${inner}\n  }";
+  }
+}

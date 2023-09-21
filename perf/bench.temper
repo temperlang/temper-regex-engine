@@ -1,10 +1,11 @@
 let { Regex } = import('std/regex');
-let { TemperRegex } = import('./regex');
-let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
-let { TemperRegexWalker } = import('./walk');
-let { TemperRegexNative } = import('./native');
-let { sub } = import('./parser');
-let { regexToString } = import('./tostring');
+let { TemperRegex } = import('../util/regex');
+let { TemperRegexNFA } = import('../engines/graph/nfa');
+let { TemperRegexDFA } = import('../engines/graph/dfa');
+let { TemperRegexWalker } = import('../engines/walk');
+let { TemperRegexNative } = import('../engines/native');
+let { sub } = import('../util/parser');
+let { regexToString } = import('../util/tostring');
 
 
 class Engine {
@@ -39,6 +40,20 @@ class EngineResult {
   }
 }
 
+class CustomFinderEngine extends TemperRegex {
+  private regex: AnyValue;
+  private cb: fn(AnyValue, String): Boolean;
+  
+  public constructor(re: Regex, pre: fn(Regex): AnyValue, func: fn(Regex, String): Boolean): Void {
+    regex = pre(re);
+    cb = func;
+  }
+
+  public found(str: String): Boolean {
+    return cb(regex, str);
+  }
+}
+
 export class RegexBench {
   private time: fn(): Float64;
   private chr: fn(Int): String;
@@ -57,7 +72,7 @@ export class RegexBench {
     regex = new ListBuilder<Regex>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 10.0;
+    timePerRunInternal = 20.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -72,6 +87,10 @@ export class RegexBench {
     addRegexStr("h(?:[eu]l+o|i)");
     addRegexStr("(a+a)+a");
     addRegexStr("([Hh][eu]l+l){4}");
+  }
+
+  public addCheck(str: String): Void {
+    checks.add(str);
   }
 
   public addCheckDefaults(): Void {
@@ -98,6 +117,12 @@ export class RegexBench {
     addEngineWalker();
   }
 
+  public addCustomEngine(name: String, pre: fn(Regex): AnyValue, cb: fn(AnyValue, String): Boolean): Void {
+    addEngine(name, fn(regex: Regex): TemperRegex {
+      return new CustomFinderEngine(regex, pre, cb);
+    });
+  }
+
   public addEngine(name: String, cb: fn(Regex): TemperRegex): Void {
     engines.add(new Engine(name, cb));
   }
@@ -112,7 +137,7 @@ export class RegexBench {
 
   public addEngineTemper(): Void {
     addEngine(
-      "Temper",
+      "temper default",
       fn(regex: Regex): TemperRegex {
         return new TemperRegexNative(regex);
       }
@@ -121,7 +146,7 @@ export class RegexBench {
 
   public addEngineDFA(): Void {
     addEngine(
-      "DFA",
+      "temper dfa",
       fn(regex: Regex): TemperRegex {
         return new TemperRegexDFA(regex);
       }
@@ -130,7 +155,7 @@ export class RegexBench {
 
   public addEngineNFA(): Void {
     addEngine(
-      "NFA",
+      "temper nfa",
       fn(regex: Regex): TemperRegex {
         return new TemperRegexNFA(regex);
       }
@@ -139,7 +164,7 @@ export class RegexBench {
 
   public addEngineWalker(): Void {
     addEngine(
-      "Walker",
+      "temper tree walker",
       fn(regex: Regex): TemperRegex {
         return new TemperRegexWalker(regex);
       }

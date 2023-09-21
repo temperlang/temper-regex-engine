@@ -1,38 +1,66 @@
 import time
-import sys
 import re
-from temper_regex_engine.bench import RegexBench
-import temper_regex_engine.graph as graph
+from temper_regex_engine.perf.bench import RegexBench
+from temper_regex_engine.engines.graph.dfa import TemperRegexDFA
+from temper_regex_engine.util.tostring import regex_to_string
 
 def clock_ms():
     return time.time() * 1000
 
-class CompiledRegexEngineFinal:
-    final: re.Pattern
-    __slots__ = ('final',)
+for i in range(64):
+    n = i
+    bench = RegexBench(chr, clock_ms)
+
+    bench.add_regex_str('1?'*n + "0"*n)
+    # bench.add_regex_defaults()
+
+    # bench.add_check_defaults()
+    bench.add_check('0' * n)
+
+    opt_comp = 0
+    unopt_comp = 0
+
+    def custom_opt_pre(regex):
+        global opt_comp
+        start = clock_ms()
+        res = TemperRegexDFA(regex)
+        src = res.to_regex_string(chr)
+        ret = re.compile(src)
+        opt_comp = clock_ms() - start
+        return ret
     
-    def __init__(self, final: re.Pattern):
-        self.final = final
+    def custom_unopt_pre(regex):
+        global unopt_comp
+        start = clock_ms()
+        src = regex_to_string(regex, chr)
+        ret = re.compile(src)
+        unopt_comp = clock_ms() - start
+        return ret
 
-    def found(self, str: str) -> bool:
-        return self.final.search(str) != None
+    def custom_cb(final, str: str) -> bool:
+        return final.search(str) != None
 
-bench = RegexBench(chr, clock_ms)
+    # bench.add_engine_defaults()
+    bench.add_custom_engine('opt', custom_opt_pre, custom_cb)
+    bench.add_custom_engine('unopt', custom_unopt_pre, custom_cb)
 
-bench.add_regex_defaults()
-bench.add_check_defaults()
+    opt_run = 0
+    unopt_run = 0
 
-def opt_regex_engine(regex):
-    res = graph.TemperRegexDFA(regex)
-    src = res.to_regex_string(chr)
-    final = re.compile(src)
-    return CompiledRegexEngineFinal(final)
+    @bench.on_engine_result
+    def on_engine_result(result):
+        global opt_run, unopt_run
+        if result.engine == 'opt' or result.engine == 'temper dfa':
+            opt_run = result.score
+        if result.engine == 'unopt' or result.engine == 'temper default':
+            unopt_run = result.score
 
-bench.add_engine('OptRegex', opt_regex_engine)
-bench.add_engine_defaults()
+    bench.run()
 
-@bench.on_engine_result
-def on_engine_result(result):
-    print(result.to_string())
+    n_run = int(opt_run / unopt_run * 100) / 100
+    if opt_comp != 0 and unopt_comp != 0:
+        n_comp = int(opt_comp / unopt_comp * 100) / 100
+        print(f'rep {n}: run {n_run}x faster, comp {n_comp}x slower')
+    else:
+        print(f'rep {n}: run {n_run}x faster')
 
-bench.run()
