@@ -1,0 +1,26 @@
+
+let {...} = import("std/regex");
+
+let addSeqList(builder: ListBuilder<Regex>, regex: Regex): Void {
+  match (regex) {
+    is Sequence -> do {
+      var seq = regex.as<Sequence>();
+      for (var i = 0; i < seq.items.length; i++) {
+        builder.add(seq.items[i]);
+      }
+    }
+    else -> do {
+      builder.add(regex);
+    }
+  }
+}
+
+let regexToList(regex: Regex): List<Regex> {
+  var list = new ListBuilder<Regex>();
+  addSeqList(list, regex);
+  return list.toList();
+}
+
+export let regexListOpt(list: List<Regex>): List<Regex> {
+  return list;
+}

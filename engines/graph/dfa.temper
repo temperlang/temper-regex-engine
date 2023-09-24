@@ -8,6 +8,7 @@ let {TransitionTable} = import("./table");
 let {TransitionTableEntry} = import("./tableentry");
 let {TemperRegexNFA} = import("./nfa");
 let {fromVec} = import("./vec");
+let {regexListOpt} = import("./listopt");
 
 let isValidFor(next: Matcher, sym: Int): Boolean {
   return validFor(next)[sym];
@@ -41,9 +42,6 @@ let validFor(next: Matcher): DenseBitVector {
     }
     is RangeMatcher -> do {
       validRange(next.low, next.high);
-    }
-    is CharMatcher -> do {
-      validPoint(next.code);
     }
     is CharCodeMatcher -> do {
       validPoint(next.code);
@@ -266,9 +264,6 @@ export class TemperRegexDFA extends TemperRegex {
       is CharCodeMatcher -> do {
         addCodePoint(next.code);
       }
-      is CharMatcher -> do {
-        addCodePoint(next.code);
-      }
       is AnyMatcher -> do {
         addCodePoint(9);
         addCodePoint(10);
@@ -368,42 +363,43 @@ export class TemperRegexDFA extends TemperRegex {
       if (i == 0) {
         builder.add("#begin", kname, new Sequence([]));
       }
-      if (i == 1) {
+      if (tent.key[1]) {
         builder.add(kname, "#end", new Sequence([]));
-      }
-      for (var j = 0; j < ls.length; j++) {
-        var vals = ls[j].value;
-        if (vals.length == 1) {
-          var points = new CodePoints(ls[j].value.join("", chr));
-          builder.add(kname, ls[j].key, points);
-        } else {
-          var parts = new ListBuilder<CodePart>();
-          var bits = new DenseBitVector(0);
-          var max = 0;
-          for (var k = 0; k < vals.length; k++) {
-            var chr = vals[k];
-            if (chr > max) {
-              max = chr;
-            }
-            bits[chr] = true;
-          }
-          var start = -1;
-          for (var k = 0; k <= max; k++) {
-            if (bits[k]) {
-              var s = k;
-              while (bits[k]) {
-                k += 1;
+      } else {
+        for (var j = 0; j < ls.length; j++) {
+          var vals = ls[j].value;
+          if (vals.length == 1) {
+            var points = new CodePoints(ls[j].value.join("", chr));
+            builder.add(kname, ls[j].key, points);
+          } else {
+            var parts = new ListBuilder<CodePart>();
+            var bits = new DenseBitVector(0);
+            var max = 0;
+            for (var k = 0; k < vals.length; k++) {
+              var chr = vals[k];
+              if (chr > max) {
+                max = chr;
               }
-              if (k-s <= 2) {
-                for (var l = s; l < k; l++) {
-                  parts.add(new CodePoints(chr(l)));
+              bits[chr] = true;
+            }
+            var start = -1;
+            for (var k = 0; k <= max; k++) {
+              if (bits[k]) {
+                var s = k;
+                while (bits[k]) {
+                  k += 1;
                 }
-              } else {
-                parts.add(new CodeRange(s, k-1));
+                if (k-s <= 2) {
+                  for (var l = s; l < k; l++) {
+                    parts.add(new CodePoints(chr(l)));
+                  }
+                } else {
+                  parts.add(new CodeRange(s, k-1));
+                }
               }
             }
+            builder.add(kname, ls[j].key, new CodeSet(parts.toList()));
           }
-          builder.add(kname, ls[j].key, new CodeSet(parts.toList()));
         }
       }
     }
@@ -432,11 +428,6 @@ class TemperRegexLua extends TemperRegex {
     }
     return false;
   }
-}
-
-
-let charU(i: Int): String {
-  return "\\u{${i.toString()}}";
 }
 
 class RegexBuilderEdge {
@@ -502,24 +493,9 @@ class RegexBuilder {
     var me = this;
     if (has(node, node)) {
       var self = find(node, node);
-      // var r1 = regexToString(self, charU);
       me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
-        // var r0 = regexToString(wentFrom.regex, charU);
         me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
-          // var r2 = regexToString(goesTo.regex, charU);
-          // if (r1 == r0) {
-          //   if (r1 == r2) {
-          //     me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
-          //   } else {
-          //     me.add(wentFrom.from, goesTo.to, new Sequence([new Repeat(self, 1, null, false), goesTo.regex]));
-          //   }
-          // } else {
-          //   if (r1 == r2) {
-          //     me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
-          //   } else {
           me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
-          //   }
-          // }
         });
       });
     } else {
@@ -558,6 +534,6 @@ class RegexBuilder {
         ret.add(cur.regex);
       }
     }
-    return ret.toList();
+    return regexListOpt(ret.toList());
   }
 }

@@ -35,6 +35,40 @@ export interface Matcher {
   public matches(str: List<Int>, index: Int): Boolean;
 
   public toString(): String;
+  
+  public name(): String;
+}
+
+export class CaptureBeginMatcher extends Matcher {
+  public group: String;
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "<${group}>";
+  }
+
+  public name(): String {
+    return "CaptureBegin";
+  }
+}
+
+export class CaptureEndMatcher extends Matcher {
+  public group: String;
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "</${group}>";
+  }
+
+  public name(): String {
+    return "CaptureEnd";
+  }
 }
 
 export class BeginMatcher extends Matcher {
@@ -45,6 +79,10 @@ export class BeginMatcher extends Matcher {
   public toString(): String {
     return "^";
   }
+
+  public name(): String {
+    return "Begin";
+  }
 }
 
 export class WordBoundaryMatcher extends Matcher {
@@ -54,6 +92,10 @@ export class WordBoundaryMatcher extends Matcher {
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
     return isWord1 != isWord2;
+  }
+
+  public name(): String {
+    return "WordBoundary";
   }
 }
 
@@ -68,6 +110,10 @@ export class WordClassMatcher extends Matcher {
   public toString(): String {
     return "\\w";
   }
+
+  public name(): String {
+    return "WordClass";
+  }
 }
 
 export class SpaceClassMatcher extends Matcher {
@@ -79,6 +125,10 @@ export class SpaceClassMatcher extends Matcher {
   public toString(): String {
     return "\\s";
   }
+
+  public name(): String {
+    return "SpaceClass";
+  }
 }
 
 export class EndMatcher extends Matcher {
@@ -89,6 +139,10 @@ export class EndMatcher extends Matcher {
   public toString(): String {
     return "$";
   }
+
+  public name(): String {
+    return "EndClass";
+  }
 }
 
 export class AnyMatcher extends Matcher {
@@ -98,6 +152,10 @@ export class AnyMatcher extends Matcher {
 
   public toString(): String {
     return ".";
+  }
+
+  public name(): String {
+    return "Any";
   }
 }
 
@@ -112,6 +170,10 @@ export class RangeMatcher extends Matcher {
 
   public toString(): String {
     return "[\\x${low.toString()}-\\x${high.toString()}]";
+  }
+
+  public name(): String {
+    return "Range";
   }
 }
 
@@ -130,24 +192,9 @@ export class CharCodeMatcher extends Matcher {
   public toString(): String {
     return "#${code.toString()}";
   }
-}
 
-export class CharMatcher extends Matcher {
-  public char: String;
-  public code: Int;
-  
-  public constructor(str: String): Void {
-    char = str;
-    code = ord(str);
-  }
-
-  public matches(str: List<Int>, index: Int): Boolean {
-    var c = str.getOr(index, -1);
-    return c == code;
-  }
-
-  public toString(): String {
-    return char;
+  public name(): String {
+    return "CharCode";
   }
 }
 
@@ -159,15 +206,19 @@ export class EpsilonMatcher extends Matcher {
   public toString(): String {
     return "ε";
   }
+
+  public name(): String {
+    return "Epsilon";
+  }
 }
 
-interface Stack {
+interface FoundStack {
   public index: Int;
   public state: State;
-  public get next(): Stack;
+  public get next(): FoundStack;
 }
 
-class StackStart extends Stack {
+class FoundStackStart extends FoundStack {
   public index: Int;
   public state: State;
 
@@ -176,17 +227,91 @@ class StackStart extends Stack {
     state = new State(-1);
   }
   
-  public get next(): Stack {
+  public get next(): FoundStack {
     return this;
   }
 }
 
-class StackSlot extends Stack {
+class FoundStackSlot extends FoundStack {
   public index: Int;
   public state: State;
-  public slot: Stack;
+  public slot: FoundStack;
 
-  public get next(): Stack {
+  public get next(): FoundStack {
+    return slot;
+  }
+}
+
+interface GroupStack {
+  public key: String;
+  public start: Int;
+  public stop: Int;
+
+  public get next(): GroupStack;
+}
+
+class GroupStackStart extends GroupStack {
+  public key: String;
+  public start: Int;
+  public stop: Int;
+
+  constructor() {
+    key = "";
+    start = -1;
+    stop = -1;
+  }
+  
+  public get next(): GroupStack {
+    return this;
+  }
+}
+
+class GroupStackSlot extends GroupStack {
+  public key: String;
+  public start: Int;
+  public stop: Int;
+  public nextRaw: GroupStack;
+  
+  public get next(): GroupStack {
+    return nextRaw;
+  }
+}
+
+class MatchedRange {
+  public start: Int;
+  public stop: Int;
+}
+
+interface FindStack {
+  public index: Int;
+  public state: State;
+  public groups: GroupStack;
+
+  public get next(): FindStack;
+}
+
+class FindStackStart extends FindStack {
+  public index: Int;
+  public state: State;
+  public groups: GroupStack;
+
+  public constructor(): Void {
+    index = -1;
+    state = new State(-1);
+  }
+  
+  public get next(): FindStack {
+    return this;
+  }
+}
+
+class FindStackSlot extends FindStack {
+  public index: Int;
+  public state: State;
+  public groups: GroupStack;
+  public slot: FindStack;
+
+  public get next(): FindStack {
     return slot;
   }
 }
@@ -311,12 +436,59 @@ export class Engine {
     return ret;
   }
 
-  public matches(str: String): Boolean {
+  public find(str: String): Map<String, MatchedRange> {
     var codePoints = str.split("").map(ord);
-    var stackStart = new StackStart();
+    var stackStart = new FindStackStart();
+    var badNext = new Next(endState, epsilon);
+    var groupStackStart = new GroupStackStart();
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: FindStack = new FindStackSlot(i, startState, new GroupStackSlot("full", i, -1, groupStackStart), stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        var groupStack = stack.groups;
+        stack = stack.next;
+        if (state.id == endState.id) {
+          var ret = new MapBuilder<String, MatchedRange>();
+          for (var i = groupStack; i != groupStackStart; i = i.next) {
+            var cur = i.as<GroupStackSlot>();
+            var stop = if (cur.key == "full") {
+              index
+            } else {
+              cur.stop
+            };
+            ret[cur.key] = new MatchedRange(cur.start, stop);
+          }
+          return ret.toMap();
+        }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          var type = matcher.name();
+          if (type == "Epsilon") {
+            stack = new FindStackSlot(index, toState, groupStack, stack);
+          } else if (type == "CaptureBegin") {
+            var gss = new GroupStackSlot(matcher.as<CaptureBeginMatcher>().group, index, -1, groupStack);
+            stack = new FindStackSlot(index, toState, gss, stack);
+          } else if (type == "CaptureEnd") {
+            var gss = new GroupStackSlot(matcher.as<CaptureEndMatcher>().group, groupStack.start, index, groupStack.next);
+            stack = new FindStackSlot(index, toState, gss, stack);
+          } else if (matcher.matches(codePoints, index)) {
+            stack = new FindStackSlot(index + 1, toState, groupStack, stack);
+          }
+        }
+      }
+    }
+    return bubble();
+  }
+
+  public found(str: String): Boolean {
+    var codePoints = str.split("").map(ord);
+    var stackStart = new FoundStackStart();
     var badNext = new Next(endState, epsilon);
     for (var i = 0; i < codePoints.length; i += 1) {
-      var stack: Stack = new StackSlot(i, startState, stackStart);
+      var stack: FoundStack = new FoundStackSlot(i, startState, stackStart);
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
@@ -326,12 +498,15 @@ export class Engine {
         }
         var next = state.next;
         var len =  next.length;
+        console.log("q${state.id.toString()}.next.len = ${len.toString()}");
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
-          if (matcher == epsilon) {
-            stack = new StackSlot(index, toState, stack);
+          var type = matcher.name();
+          console.log("q${state.id.toString()}: ${type}");
+          if (type == "Epsilon") {
+            stack = new FoundStackSlot(index, toState, stack);
           } else if (matcher.matches(codePoints, index)) {
-            stack = new StackSlot(index + 1, toState, stack);
+            stack = new FoundStackSlot(index + 1, toState, stack);
           }
         }
       }
@@ -373,7 +548,7 @@ export class Engine {
         var label = if (state.id == 0) {
           "start"
         } else if (state.id == 1) {
-          "end"
+          "stop"
         } else {
           name
         };

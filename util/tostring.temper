@@ -1,6 +1,10 @@
 
 let {...} = import("std/regex");
 
+export let chr(i: Int): String {
+  return "#${i.toString()}";
+}
+
 export let regexToString(base: Regex, chr: fn(Int): String): String {
   match (base) {
     is Capture -> do {

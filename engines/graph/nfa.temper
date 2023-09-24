@@ -2,6 +2,7 @@
 let {...} = import("std/regex");
 let { TemperRegex } = import("../../util/regex");
 let {...} = import("./engine");
+let {...} = import("../../util/tostring");
 
 export class TemperRegexNFA extends TemperRegex {
   public engine: Engine;
@@ -12,20 +13,23 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
-    // console.log("${input.id.toString()} -> /${regexToString(regex, charU)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
-        buildRegex(regex.item, input, output);
+        var postInput = engine.newState();
+        input.addNext(new CaptureBeginMatcher(regex.name), postInput);
+        var preOutput = engine.newState();
+        preOutput.addNext(new CaptureEndMatcher(regex.name), output);
+        buildRegex(regex.item, postInput, preOutput);
       }
       is CodePoints -> do {
         var split = regex.value.split("");
         var lastState = input;
         for (var i = 0; i < split.length ; i++) {
           if (i == split.length - 1) {
-            lastState.addNext(new CharMatcher(split[i]), output);
+            lastState.addNext(new CharCodeMatcher(split[i].codePoints.read()), output);
           } else {
             var curState = engine.newState();
-            lastState.addNext(new CharMatcher(split[i]), curState);
+            lastState.addNext(new CharCodeMatcher(split[i].codePoints.read()), curState);
             lastState = curState;
           }
         }
@@ -40,7 +44,7 @@ export class TemperRegexNFA extends TemperRegex {
             is CodePoints -> do {
               var split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
-                input.addNext(new CharMatcher(split[i]), output);
+                input.addNext(new CharCodeMatcher(split[i].codePoints.read()), output);
               }
             }
           }
@@ -109,11 +113,32 @@ export class TemperRegexNFA extends TemperRegex {
     }
   }
 
+  public find(str: String): Map<String, Group> | Bubble {
+    var ents = engine.find(str);
+    var full = ents["full"];
+    var split = str.split("");
+    var ls = ents.toList();
+    var ret = new MapBuilder<String, Group>();
+    for (var i = 0; i < ls.length; i++) {
+      var cur = ls[i];
+      var sub = new ListBuilder<String>();
+      for (var j = cur.value.start; j < cur.value.stop; j++) {
+        sub.add(split[j]);
+      }
+      ret[cur.key] = new Group(cur.key, sub.join("", idString), cur.value.start);
+    }
+    return ret.toMap();
+  }
+
   public found(str: String): Boolean {
-    return engine.matches(str);
+    return engine.found(str);
   }
 
   public toString(): String {
     return engine.toString();
   }
+}
+
+let idString(s: String): String {
+  return s;
 }
