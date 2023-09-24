@@ -1,6 +1,6 @@
 
 local sub = require('temper-regex-engine/util/parser').sub
-local nfa = require('temper-regex-engine/engines/graph/nfa').TemperRegexNFA
+local nfa = require('temper-regex-engine/graph/nfa').TemperRegexNFA
 
 local re = sub("(?thing=x)")
 

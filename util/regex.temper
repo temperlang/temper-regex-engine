@@ -1,9 +1,77 @@
 
-let { ... } = import("std/regex");
-
-export interface TemperRegex {
-  public constructor(data: Regex);
-  public found(text: String): Boolean;
-  public find(text: String): Map<String, Group> | Bubble;
+let idString(x: String): String {
+  return x;
 }
 
+export class TemperGroup {
+  public let name: String;
+  public let start: Int;
+  public let stop: Int;
+  public let src: String;
+
+  public get value(): String {
+    var strs = new ListBuilder<String>();
+    var head = src.split("");
+    for (var i = start; i < stop; i++) {
+      strs.add(head[i]);
+    }
+    return strs.join("", idString);
+  }
+}
+
+export interface TemperRegexEngine {
+  public constructor(data: TemperRegex);
+  public found(text: String): Boolean;
+  public find(text: String): Map<String, TemperGroup> | Bubble;
+}
+
+export interface TemperRegex {}
+export interface TemperSpecial extends TemperRegex {}
+
+export class TemperCapture extends TemperRegex {
+  public name: String;
+  public item: TemperRegex;
+}
+
+export interface TemperCodePart extends TemperRegex {}
+
+export class TemperCodePoints extends TemperCodePart {
+  public value: String;
+}
+
+export class TemperCodeRange extends TemperCodePart {
+  public min: Int;
+  public max: Int;
+}
+export class TemperCodeSet extends TemperRegex {
+  public items: List<TemperCodePart>;
+  public negated: Boolean = false;
+}
+
+export let TemperBegin = do { class Begin extends TemperSpecial {}; new Begin() };
+export let TemperDot = do { class Dot extends TemperSpecial {}; new Dot() };
+export let TemperEnd = do { class End extends TemperSpecial {}; new End() };
+
+export interface TemperSpecialSet extends TemperCodePart & TemperSpecial {};
+export let TemperWordBoundary = do { class WordBoundary extends TemperSpecialSet {}; new WordBoundary() };
+export let TemperWordBoundaryBegin = do { class WordBoundaryBegin extends TemperSpecialSet {}; new WordBoundaryBegin() };
+export let TemperWordBoundaryEnd = do { class WordBoundaryEnd extends TemperSpecialSet {}; new WordBoundaryEnd() };
+export let TemperDigit = do { class Digit extends TemperSpecialSet {}; new Digit() };
+export let TemperSpace = do { class Space extends TemperSpecialSet {}; new Space() };
+export let TemperWord = do { class Word extends TemperSpecialSet {}; new Word() };
+
+
+export class TemperSequence extends TemperRegex {
+  public items: List<TemperRegex>;
+}
+
+export class TemperOr extends TemperRegex {
+  public items: List<TemperRegex>;
+}
+
+export class TemperRepeat extends TemperRegex {
+  public item: TemperRegex;
+  public min: Int;
+  public max: Int | Null;
+  public reluctant: Boolean = false;
+}

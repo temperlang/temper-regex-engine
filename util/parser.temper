@@ -1,9 +1,13 @@
 
-let { ... } = import("std/regex");
+let {...} = import("./regex.temper");
 
 class Slot {
   public name: String;
-  public regex: Regex;
+  public regex: TemperRegex;
+}
+
+let idString(x: String): String {
+  return x;
 }
 
 class Parser {
@@ -20,10 +24,10 @@ class Parser {
   }
 
   public addString(name: String, text: String): Void {
-    slots.add(new Slot(name, new CodePoints(text)));
+    slots.add(new Slot(name, new TemperCodePoints(text)));
   }
 
-  public addRegex(name: String, regex: Regex): Void {
+  public addTemperRegex(name: String, regex: TemperRegex): Void {
     slots.add(new Slot(name, regex));
   }
 
@@ -62,22 +66,111 @@ class Parser {
     }
   }
 
-  public charClassBody(): Regex | Bubble {
+  public charClassBody(): TemperRegex | Bubble {
     let invert = matchChar("^");
-    let opts = new ListBuilder<CodePart>();
+    let opts = new ListBuilder<TemperCodePart>();
     while (!matchChar("]")) {
       if (isDone()) {
         bubble()
       }
-      let firstChar = read();
-      if (matchChar("-")) {
-        let secondChar = read();
-        opts.add(new CodeRange(firstChar.codePoints.read(), secondChar.codePoints.read()));
+      if (matchChar("[")) {
+        if (!matchChar(":")) {
+          error("in code [:expr:], first colon missing");
+          bubble();
+        }
+        var inList = new ListBuilder<String>();
+        while (!matchChar(":")) {
+          if (isDone()) {
+            error("in code [:expr:], second colon missing");
+            bubble();
+          }
+          inList.add(read());
+        }
+        var str = inList.join("", idString);
+        let add(start: String, end: String): Void {
+          opts.add(new TemperCodeRange(start.codePoints.read(), end.codePoints.read()));
+        }
+        if (str == "alnum") {
+          add("a", "z");
+          add("A", "Z");
+          add("0", "9");
+        } else if (str == "alnum") {
+          add("a", "z");
+          add("A", "Z");
+        } else if (str == "ascii") {
+          opts.add(new TemperCodeRange(0, 127));
+        } else if (str == "blank") {
+          opts.add(new TemperCodePoints(" \t"));
+        } else if (str == "cntrl") {
+          opts.add(new TemperCodeRange(0, 31));
+          opts.add(new TemperCodePoints("\x7F"));
+        } else if (str == "digit") {
+          add("0", "9");
+        } else if (str == "graph") {
+          opts.add(new TemperCodeRange(31, 126));
+        } else if (str == "lower") {
+          add("a", "z");
+        } else if (str == "print") {
+          opts.add(new TemperCodeRange(30, 127));
+        } else if (str == "punct") {
+          opts.add(new TemperCodePoints("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"));
+        } else if (str == "space") {
+          opts.add(new TemperCodePoints(" \t\r\n\x0B\x0C"));
+        } else if (str == "upper") {
+          add("A", "Z");
+        } else if (str == "word") {
+          add("a", "z");
+          add("A", "Z");
+          add("0", "9");
+          opts.add(new TemperCodePoints("_"));
+        } else if (str == "xdigit") {
+          add("0", "9");
+          add("a", "f");
+          add("A", "F");
+        } else if (str == "<") {
+          opts.add(TemperWordBoundaryBegin);
+        } else if (str == ">") {
+          opts.add(TemperWordBoundaryEnd);
+        } else {
+          error("unknown [:${str}:]");
+          bubble();
+        }
+        if (!matchChar("]")) {
+          error("in code [:${str}:], closing square brace missing");
+          bubble();
+        }
       } else {
-        opts.add(new CodePoints(firstChar));
+        let firstChar = read();
+        if (matchChar("\\")) {
+          var escapeCode = peek();
+          if (matchChar("b")) {
+            opts.add(TemperWordBoundary);
+          } else if (matchChar("d")) {
+            opts.add(TemperDigit);
+          } else if (matchChar("w")) {
+            opts.add(TemperWord);
+          } else if (matchChar("s")) {
+            opts.add(TemperSpace);
+          } else if (
+            matchChar("(") || matchChar(")")
+            || matchChar("[") || matchChar("]")
+            || matchChar("{") || matchChar("}")
+            || matchChar(".") || matchChar("\\")
+          ) {
+            opts.add(new TemperCodePoints(escapeCode))
+          } else {
+            error("unknown escape code: \\${peek()}");
+            bubble()
+          }
+        } else if (matchChar("-")) {
+          let secondChar = read();
+          opts.add(new TemperCodeRange(firstChar.codePoints.read(), secondChar.codePoints.read()));
+        } else {
+          opts.add(new TemperCodePoints(firstChar));
+        }
       }
     }
-    new CodeSet(opts.toList(), invert)
+    new TemperCodeSet(opts.toList(), invert)
   }
 
   public matchNum(): Int {
@@ -89,24 +182,24 @@ class Parser {
     return n;
   }
 
-  public readPostfix(exist: Regex): Regex | Bubble {
+  public readPostfix(exist: TemperRegex): TemperRegex | Bubble {
     if (matchChar("+")) {
-      return new Repeat(exist, 1, null, matchChar("?"));
+      return new TemperRepeat(exist, 1, null, matchChar("?"));
     } else if (matchChar("*")) {
-      return new Repeat(exist, 0, null, matchChar("?"));
+      return new TemperRepeat(exist, 0, null, matchChar("?"));
     } else if (matchChar("?")) {
-      return new Repeat(exist, 0, 1, matchChar("?"));
+      return new TemperRepeat(exist, 0, 1, matchChar("?"));
     } else if (matchChar("{")) {
       var min = matchNum();
       if (matchChar("}")) {
-        return new Repeat(exist, min, min, matchChar("?"));
+        return new TemperRepeat(exist, min, min, matchChar("?"));
       } else if (matchChar(",")) {
         if (matchChar("}")) {
-          return new Repeat(exist, min, null, matchChar("?"));
+          return new TemperRepeat(exist, min, null, matchChar("?"));
         } else {
           var max = matchNum();
           if (matchChar("}")) {
-            return new Repeat(exist, min, max, matchChar("?"));
+            return new TemperRepeat(exist, min, max, matchChar("?"));
           } else {
             error("expecting closing curly brace in repititon");
             return bubble();
@@ -121,7 +214,7 @@ class Parser {
     }
   }
 
-  public readSingle(): Regex | Bubble {
+  public readSingle(): TemperRegex | Bubble {
     if (matchChar("[")) {
       return charClassBody();
     } 
@@ -129,7 +222,7 @@ class Parser {
       if (matchChar("?")) {
         // non capturing group
         if (matchChar(":")) {
-          let regex = readOr();
+          let regex = readTemperOr();
           if (!matchChar(")")) {
             error("closing paren");
             bubble();
@@ -181,16 +274,16 @@ class Parser {
             str.add(read());
             while (matchChar(" ")) {}
           }
-          let regex = readOr();
+          let regex = readTemperOr();
           if (!matchChar(")")) {
             error("closing paren");
             bubble();
           }
           let name = str.join("", fn(s: String): String{s});
-          new Capture(name, regex)
+          new TemperCapture(name, regex)
         }
       } else {
-        let regex = readOr();
+        let regex = readTemperOr();
         if (!matchChar(")")) {
           error("closing paren");
           bubble();
@@ -198,48 +291,48 @@ class Parser {
         regex
       }
     } else if (matchChar("^")) {
-      Begin
+      TemperBegin
     } else if (matchChar("$")) {
-      End
+      TemperEnd
     } else if (matchChar(".")) {
-      Dot
+      TemperDot
     } else if (matchChar("\\")) {
       var escapeCode = peek();
       if (matchChar("b")) {
-        WordBoundary
+        TemperWordBoundary
       } else if (matchChar("d")) {
-        Digit
+        TemperDigit
       } else if (matchChar("w")) {
-        Word
+        TemperWord
       } else if (matchChar("s")) {
-        Space
+        TemperSpace
       } else if (
         matchChar("(") || matchChar(")")
         || matchChar("[") || matchChar("]")
         || matchChar("{") || matchChar("}")
         || matchChar(".") || matchChar("\\")
       ) {
-        new CodePoints(escapeCode)
+        new TemperCodePoints(escapeCode)
       } else {
         error("unknown escape code: \\${peek()}");
         bubble()
       }
     } else {
-      new CodePoints(read())
+      new TemperCodePoints(read())
     };
   }
 
-  public readSeq(): Regex | Bubble {
-    let seq = new ListBuilder<Regex>();
+  public readSeq(): TemperRegex | Bubble {
+    let seq = new ListBuilder<TemperRegex>();
     while (!isDone() && peek() != "|" && peek() != ")") {
       let regex = readSingle();
       seq.add(readPostfix(regex));
     }
-    new Sequence(seq.toList())
+    new TemperSequence(seq.toList())
   }
 
-  public readOr(): Regex | Bubble {
-    let ors = new ListBuilder<Regex>();
+  public readTemperOr(): TemperRegex | Bubble {
+    let ors = new ListBuilder<TemperRegex>();
     while (!isDone() && peek() != ")") {
       if (ors.length != 0 && !matchChar("|")) {
         console.log(pos.toString());
@@ -249,31 +342,20 @@ class Parser {
       let regex = readSeq();
       ors.add(regex);
     }
-    new Or(ors.toList())
+    new TemperOr(ors.toList())
   }
 }
 
-export let compileWith(src: String, keys: List<String>, values: List<Regex>): CompiledRegex | Bubble {
-  let regex = subWith(src, keys, values);
-  new Capture("full", regex).compiled()
-}
-
-export let compile(src: String): CompiledRegex | Bubble {
-  let parser = new Parser(src);
-  let regex = parser.readOr();
-  new Capture("full", regex).compiled()
-}
-
-export let subWith(src: String, keys: List<String>, values: List<Regex>): Regex | Bubble {
+export let subWith(src: String, keys: List<String>, values: List<TemperRegex>): TemperRegex | Bubble {
   let parser = new Parser(src);
   for (var i = 0; i < keys.length && i < values.length; i++) {
     let val = values[i];
-    parser.addRegex(keys[i], val);
+    parser.addTemperRegex(keys[i], val);
   }
-  parser.readOr()
+  parser.readTemperOr()
 }
 
-export let sub(src: String): Regex | Bubble {
+export let sub(src: String): TemperRegex | Bubble {
   let parser = new Parser(src);
-  parser.readOr()
+  parser.readTemperOr()
 }

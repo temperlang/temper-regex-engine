@@ -1,4 +1,6 @@
 
+let {TemperGroup} = import("../util/regex");
+
 let ord(s: String): Int {
   return s.codePoints.read();
 }
@@ -92,6 +94,34 @@ export class WordBoundaryMatcher extends Matcher {
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
     return isWord1 != isWord2;
+  }
+
+  public name(): String {
+    return "WordBoundary";
+  }
+}
+
+export class WordBoundaryBeginMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code1 = str.getOr(index-1, -1);
+    var code2 = str.getOr(index, -1);
+    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
+    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
+    return !isWord1 && isWord2;
+  }
+
+  public name(): String {
+    return "WordBoundary";
+  }
+}
+
+export class WordBoundaryEndMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code1 = str.getOr(index-1, -1);
+    var code2 = str.getOr(index, -1);
+    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
+    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
+    return isWord1 && !isWord2;
   }
 
   public name(): String {
@@ -436,7 +466,7 @@ export class Engine {
     return ret;
   }
 
-  public find(str: String): Map<String, MatchedRange> {
+  public find(str: String): Map<String, TemperGroup> {
     var codePoints = str.split("").map(ord);
     var stackStart = new FindStackStart();
     var badNext = new Next(endState, epsilon);
@@ -449,7 +479,7 @@ export class Engine {
         var groupStack = stack.groups;
         stack = stack.next;
         if (state.id == endState.id) {
-          var ret = new MapBuilder<String, MatchedRange>();
+          var ret = new MapBuilder<String, TemperGroup>();
           for (var i = groupStack; i != groupStackStart; i = i.next) {
             var cur = i.as<GroupStackSlot>();
             var stop = if (cur.key == "full") {
@@ -457,7 +487,7 @@ export class Engine {
             } else {
               cur.stop
             };
-            ret[cur.key] = new MatchedRange(cur.start, stop);
+            ret[cur.key] = new TemperGroup(cur.key, cur.start, stop, str);
           }
           return ret.toMap();
         }
