@@ -13,7 +13,7 @@ export class Next {
 export class State {
   public id: Int;
   public next: ListBuilder<Next>;
-  
+
   public constructor(identify: Int): Void {
     id = identify; 
     next = new ListBuilder<Next>();
@@ -34,18 +34,83 @@ export class State {
 }
 
 export interface Matcher {
-  public matches(str: List<Int>, index: Int): Boolean;
+  public matches(str: List<Int>, index: Int): Int;
 
   public toString(): String;
   
   public name(): String;
 }
 
+export class PromiseMatcher extends Matcher {
+  public text: String;
+  public engine: Engine;
+
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
+  }
+
+  public toString(): String {
+    return "Promise(...)";
+  }
+  
+  public name(): String {
+    return "Promise";
+  }
+}
+
+export class BackReferenceMatcher extends Matcher {
+  public group: String;
+
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
+  }
+
+  public toString(): String {
+    return "\\k<${group}>";
+  }
+  
+  public name(): String {
+    return "BackReference";
+  }
+}
+
+export class LookAheadMatcher extends Matcher {
+  public positive: Boolean;
+  public engine: Engine;
+
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
+  }
+
+  public toString(): String {
+    var c = if (positive) {"="} else {"!"};
+    return "(?${c}...)";
+  }
+  
+  public name(): String {
+    return "LookAhead";
+  }
+}
+
+export class RecurseMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
+  }
+
+  public toString(): String {
+    return "\\R"
+  }
+  
+  public name(): String {
+    return "Recurse";
+  }
+}
+
 export class CaptureBeginMatcher extends Matcher {
   public group: String;
 
-  public matches(str: List<Int>, index: Int): Boolean {
-    return true;
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
   }
 
   public toString(): String {
@@ -60,8 +125,8 @@ export class CaptureBeginMatcher extends Matcher {
 export class CaptureEndMatcher extends Matcher {
   public group: String;
 
-  public matches(str: List<Int>, index: Int): Boolean {
-    return true;
+  public matches(str: List<Int>, index: Int): Int {
+    return -2;
   }
 
   public toString(): String {
@@ -74,8 +139,12 @@ export class CaptureEndMatcher extends Matcher {
 }
 
 export class BeginMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
-    return index == 0;
+  public matches(str: List<Int>, index: Int): Int {
+    if (index == 0) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -88,12 +157,16 @@ export class BeginMatcher extends Matcher {
 }
 
 export class WordBoundaryMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var code1 = str.getOr(index-1, -1);
     var code2 = str.getOr(index, -1);
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
-    return isWord1 != isWord2;
+    if (isWord1 != isWord2) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
   public name(): String {
@@ -102,12 +175,16 @@ export class WordBoundaryMatcher extends Matcher {
 }
 
 export class WordBoundaryBeginMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var code1 = str.getOr(index-1, -1);
     var code2 = str.getOr(index, -1);
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
-    return !isWord1 && isWord2;
+    if (!isWord1 && isWord2) {
+      return 0;
+    } else {
+      return -1;
+    }
   }
 
   public name(): String {
@@ -116,12 +193,16 @@ export class WordBoundaryBeginMatcher extends Matcher {
 }
 
 export class WordBoundaryEndMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var code1 = str.getOr(index-1, -1);
     var code2 = str.getOr(index, -1);
     var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
     var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
-    return isWord1 && !isWord2;
+    if (isWord1 && !isWord2) {
+      return 0;
+    } else {
+      return -1;
+    };
   }
 
   public name(): String {
@@ -130,11 +211,16 @@ export class WordBoundaryEndMatcher extends Matcher {
 }
 
 export class WordClassMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var code = str.getOr(index, -1);
-    return (48 <= code && code <= 57) // this range is 0 to 9, like above
+    if ((48 <= code && code <= 57) // this range is 0 to 9, like above
       || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
       || (97 <= code && code <= 122)  // this range is a to z (lowercase)
+    ) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -147,9 +233,13 @@ export class WordClassMatcher extends Matcher {
 }
 
 export class SpaceClassMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var code = str.getOr(index, -1);
-    return code == 9 || code == 10 || code == 11 || code == 13 || code == 32;
+    if (code == 9 || code == 10 || code == 11 || code == 13 || code == 32) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -162,8 +252,12 @@ export class SpaceClassMatcher extends Matcher {
 }
 
 export class EndMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
-    return index == str.length;
+  public matches(str: List<Int>, index: Int): Int {
+    if (index == str.length) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -176,8 +270,12 @@ export class EndMatcher extends Matcher {
 }
 
 export class AnyMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
-    return index != str.length;
+  public matches(str: List<Int>, index: Int): Int {
+    if (index != str.length) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -193,13 +291,39 @@ export class RangeMatcher extends Matcher {
   public low: Int;
   public high: Int;
 
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var c = str.getOr(index, -1);
-    return low <= c && c <= high;
+    if (low <= c && c <= high) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
     return "[\\x${low.toString()}-\\x${high.toString()}]";
+  }
+
+  public name(): String {
+    return "Range";
+  }
+}
+
+export class NotRangeMatcher extends Matcher {
+  public low: Int;
+  public high: Int;
+
+  public matches(str: List<Int>, index: Int): Int {
+    var c = str.getOr(index, -1);
+    if (low <= c && c <= high) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  public toString(): String {
+    return "! [\\x${low.toString()}-\\x${high.toString()}]";
   }
 
   public name(): String {
@@ -214,9 +338,13 @@ export class CharCodeMatcher extends Matcher {
     code = point;
   }
 
-  public matches(str: List<Int>, index: Int): Boolean {
+  public matches(str: List<Int>, index: Int): Int {
     var c = str.getOr(index, -1);
-    return c == code;
+    if (c == code) {
+      return 1;
+    } else {
+      return -1;
+    }
   }
 
   public toString(): String {
@@ -228,9 +356,34 @@ export class CharCodeMatcher extends Matcher {
   }
 }
 
+export class NotCharCodeMatcher extends Matcher {
+  public code: Int;
+
+  public constructor(point: Int): Void {
+    code = point;
+  }
+
+  public matches(str: List<Int>, index: Int): Int {
+    var c = str.getOr(index, -1);
+    if (c == code) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  public toString(): String {
+    return "! #${code.toString()}";
+  }
+
+  public name(): String {
+    return "NotCharCode";
+  }
+}
+
 export class EpsilonMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
-    return true;
+  public matches(str: List<Int>, index: Int): Int {
+    return 0;
   }
 
   public toString(): String {
@@ -239,36 +392,6 @@ export class EpsilonMatcher extends Matcher {
 
   public name(): String {
     return "Epsilon";
-  }
-}
-
-interface FoundStack {
-  public index: Int;
-  public state: State;
-  public get next(): FoundStack;
-}
-
-class FoundStackStart extends FoundStack {
-  public index: Int;
-  public state: State;
-
-  public constructor(): Void {
-    index = -1;
-    state = new State(-1);
-  }
-  
-  public get next(): FoundStack {
-    return this;
-  }
-}
-
-class FoundStackSlot extends FoundStack {
-  public index: Int;
-  public state: State;
-  public slot: FoundStack;
-
-  public get next(): FoundStack {
-    return slot;
   }
 }
 
@@ -304,6 +427,10 @@ class GroupStackSlot extends GroupStack {
   
   public get next(): GroupStack {
     return nextRaw;
+  }
+
+  public finish(i: Int): Void {
+    stop = i;
   }
 }
 
@@ -344,6 +471,11 @@ class FindStackSlot extends FindStack {
   public get next(): FindStack {
     return slot;
   }
+}
+
+class Done {
+  public name: String;
+  public pos: Int;
 }
 
 export class Engine {
@@ -466,13 +598,13 @@ export class Engine {
     return ret;
   }
 
-  public find(str: String): Map<String, TemperGroup> {
-    var codePoints = str.split("").map(ord);
+  public findCode(str: String, codePoints: List<Int>, start: Int, stop: Int, failRecurseOn: ListBuilder<Done>): Map<String, TemperGroup> {
     var stackStart = new FindStackStart();
     var badNext = new Next(endState, epsilon);
     var groupStackStart = new GroupStackStart();
-    for (var i = 0; i < codePoints.length; i += 1) {
-      var stack: FindStack = new FindStackSlot(i, startState, new GroupStackSlot("full", i, -1, groupStackStart), stackStart);
+    for (var i = start; i < stop; i += 1) {
+      var groupStackFull = new GroupStackSlot("full", i, -1, groupStackStart);
+      var stack: FindStack = new FindStackSlot(i, startState, groupStackFull, stackStart);
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
@@ -487,6 +619,10 @@ export class Engine {
             } else {
               cur.stop
             };
+            var max = codePoints.length;
+            if (stop > codePoints.length) {
+              stop = max;
+            }
             ret[cur.key] = new TemperGroup(cur.key, cur.start, stop, str);
           }
           return ret.toMap();
@@ -496,16 +632,87 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           var type = matcher.name();
-          if (type == "Epsilon") {
-            stack = new FindStackSlot(index, toState, groupStack, stack);
-          } else if (type == "CaptureBegin") {
-            var gss = new GroupStackSlot(matcher.as<CaptureBeginMatcher>().group, index, -1, groupStack);
-            stack = new FindStackSlot(index, toState, gss, stack);
-          } else if (type == "CaptureEnd") {
-            var gss = new GroupStackSlot(matcher.as<CaptureEndMatcher>().group, groupStack.start, index, groupStack.next);
-            stack = new FindStackSlot(index, toState, gss, stack);
-          } else if (matcher.matches(codePoints, index)) {
-            stack = new FindStackSlot(index + 1, toState, groupStack, stack);
+          var k = matcher.matches(codePoints, index);
+          if (k >= 0) {
+            stack = new FindStackSlot(index + k, toState, groupStack, stack);
+          } else if (k == -2) {
+            if (type == "CaptureBegin") {
+              var gss = new GroupStackSlot(matcher.as<CaptureBeginMatcher>().group, index, -1, groupStack);
+              stack = new FindStackSlot(index, toState, gss, stack);
+            } else if (type == "CaptureEnd") {
+              var ce = matcher.as<CaptureEndMatcher>();
+              for (var i = groupStack; i != groupStackStart; i = i.next) {
+                var cur = i.as<GroupStackSlot>();
+                if (cur.key == ce.group && cur.stop == -1) {
+                  cur.finish(index);
+                  i = groupStackFull;
+                }
+              }
+              stack = new FindStackSlot(index, toState, groupStack, stack);
+            } else if (type == "LookAhead") {
+              var la = matcher.as<LookAheadMatcher>();
+              var found = do {
+                var found = la.engine.findCode(str, codePoints, index, index + 1, failRecurseOn);
+                true
+              } orelse false;
+              if (found == la.positive) {
+                stack = new FindStackSlot(index, toState, groupStack, stack);
+              }
+            } else if (type == "Promise") {
+              var pm = matcher.as<PromiseMatcher>();
+              stack = do {
+                for (var i = 0; i < failRecurseOn.length; i++) {
+                  if (failRecurseOn[i].name == pm.text && index == failRecurseOn[i].pos) {
+                    bubble();
+                  }
+                }
+                var found = pm.engine.findCode(str, codePoints, index, index + 1, failRecurseOn);
+                new FindStackSlot(found["full"].stop, toState, groupStack, stack)
+              } orelse stack;
+            } else if (type == "BackReference") {
+              var br = matcher.as<BackReferenceMatcher>();
+              for (var i = groupStack; i != groupStackStart; i = i.next) {
+                var cur = i.as<GroupStackSlot>();
+                if (cur.key == br.group) {
+                  var stop = if (cur.stop == -1) {
+                    index
+                  } else {
+                    cur.stop
+                  };
+                  var max = codePoints.length;
+                  if (stop > codePoints.length) {
+                    stop = max;
+                  }
+                  var head = index;
+                  var ok = true;
+                  for (var i = cur.start; i < stop; i++) {
+                    if (codePoints.getOr(head, -1) != codePoints.getOr(i, -2)) {
+                      ok = false;
+                      i = stop;
+                    }
+                    head += 1;
+                  }
+                  if (ok) {
+                    stack = new FindStackSlot(head, toState, groupStack, stack);
+                  }
+                }
+              }
+            } else if (type == "Recurse") {
+              stack = do {
+                for (var i = 0; i < failRecurseOn.length; i++) {
+                  if (failRecurseOn[i].name == "\\R" && index == failRecurseOn[i].pos) {
+                    bubble();
+                  }
+                }
+                failRecurseOn.add(new Done("\\R", index));
+                var found = findCode(str, codePoints, index, index + 1, failRecurseOn);
+                failRecurseOn.removeLast();
+                new FindStackSlot(found["full"].stop, toState, groupStack, stack)
+              } orelse stack;
+            } else {
+              console.log("bad matcher type: ${type}");
+              bubble();
+            }
           }
         }
       }
@@ -513,35 +720,16 @@ export class Engine {
     return bubble();
   }
 
+  public find(str: String): Map<String, TemperGroup> {
+    var codes = str.split("").map(ord);
+    return findCode(str, codes, 0, codes.length, new ListBuilder<Done>());
+  }
+
   public found(str: String): Boolean {
-    var codePoints = str.split("").map(ord);
-    var stackStart = new FoundStackStart();
-    var badNext = new Next(endState, epsilon);
-    for (var i = 0; i < codePoints.length; i += 1) {
-      var stack: FoundStack = new FoundStackSlot(i, startState, stackStart);
-      while (stack != stackStart) {
-        var index = stack.index;
-        var state = stack.state;
-        stack = stack.next;
-        if (state.id == endState.id) {
-          return true;
-        }
-        var next = state.next;
-        var len =  next.length;
-        console.log("q${state.id.toString()}.next.len = ${len.toString()}");
-        out: for (var c = 0; c < len; c += 1) {
-          let {matcher, toState} = next.getOr(c, badNext);
-          var type = matcher.name();
-          console.log("q${state.id.toString()}: ${type}");
-          if (type == "Epsilon") {
-            stack = new FoundStackSlot(index, toState, stack);
-          } else if (matcher.matches(codePoints, index)) {
-            stack = new FoundStackSlot(index + 1, toState, stack);
-          }
-        }
-      }
-    }
-    return false;
+    return do {
+      find(str);
+      true
+    } orelse false;
   }
 
   public toString(): String {

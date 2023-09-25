@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import temper_regex_engine.engines.graph.nfa as graph
+import temper_regex_engine.graph.nfa as graph
 import temper_regex_engine.util.parser as parser
 import sys
 

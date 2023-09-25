@@ -15,12 +15,14 @@ class Parser {
   public var pos: Int;
   public slots: ListBuilder<Slot>;
   public errors: ListBuilder<String>;
+  public defines: MapBuilder<String, TemperRegex>;
 
   public constructor(str: String) {
     chars = str.split("");
     pos = 0;
     slots = new ListBuilder<Slot>();
     errors = new ListBuilder<String>();
+    defines = new MapBuilder<String, TemperRegex>();
   }
 
   public addString(name: String, text: String): Void {
@@ -140,7 +142,6 @@ class Parser {
           bubble();
         }
       } else {
-        let firstChar = read();
         if (matchChar("\\")) {
           var escapeCode = peek();
           if (matchChar("b")) {
@@ -162,11 +163,14 @@ class Parser {
             error("unknown escape code: \\${peek()}");
             bubble()
           }
-        } else if (matchChar("-")) {
-          let secondChar = read();
-          opts.add(new TemperCodeRange(firstChar.codePoints.read(), secondChar.codePoints.read()));
         } else {
-          opts.add(new TemperCodePoints(firstChar));
+          let firstChar = read();
+          if (matchChar("-")) {
+            let secondChar = read();
+            opts.add(new TemperCodeRange(firstChar.codePoints.read(), secondChar.codePoints.read()));
+          } else {
+            opts.add(new TemperCodePoints(firstChar));
+          }
         }
       }
     }
@@ -222,12 +226,25 @@ class Parser {
       if (matchChar("?")) {
         // non capturing group
         if (matchChar(":")) {
-          let regex = readTemperOr();
+          let regex = readOr();
           if (!matchChar(")")) {
             error("closing paren");
             bubble();
           }
           regex
+        } else if (matchChar("&")) {
+          var parts = new ListBuilder<String>();
+          while (!isDone()) {
+            if (matchChar(")")) {
+              let str = parts.join("", idString);
+              return new TemperRegexPromise(str, fn(): TemperRegex {
+                return defines[str];
+              });
+            }
+            parts.add(read());
+          }
+          error("expecting closing paren in (?&name)");
+          bubble()
         } else if (matchChar("$")) {
           let parts = new ListBuilder<String>();
           while (!matchChar(")")) {
@@ -237,7 +254,7 @@ class Parser {
             }
             parts.add(read());
           }
-          let str = parts.join("", fn(s: String): String{s});
+          let str = parts.join("", idString);
           for (var i = 0; i < slots.length; i++) {
             let slot = slots[i];
             if (slot.name == str) {
@@ -247,8 +264,13 @@ class Parser {
           error("no such slot: ${str}");
           bubble()
         } else if (matchChar("=")) {
-          error("positive lookhead is not supported");
-          bubble()
+          return new TemperLookAhead(true, readOr());
+        } else if (matchChar("R")) {
+          if (!matchChar(")")) {
+            error("closing paren in (?R)");
+            bubble();
+          }
+          TemperRecurse
         } else if (matchChar("<")) {
           if (matchChar("=")) {
             error("positive lookbehind is not supported");
@@ -261,29 +283,38 @@ class Parser {
             bubble()
           }
         } else if (matchChar("!")) {
-          error("negative lookahead is not supported");
-          bubble()
+          return new TemperLookAhead(false, readOr());
         } else {
           let str = new ListBuilder<String>();
           while (matchChar(" ")) {}
-          while (!matchChar("=")) {
-            if (isDone()) {
-              error("missing = in (?${str.join("", fn(s: String): String{s})}=...)");
-              return bubble()
+          while (!isDone()) {
+            if (matchChar("=")) {
+              let regex = readOr();
+              if (!matchChar(")")) {
+                error("closing paren");
+                bubble();
+              }
+              let name = str.join("", idString);
+              return new TemperCapture(name, regex)
+            }
+            if (matchChar(":")) {
+              let regex = readOr();
+              if (!matchChar(")")) {
+                error("closing paren");
+                bubble();
+              }
+              let name = str.join("", idString);
+              defines[name] = regex;
+              return new TemperSequence([])
             }
             str.add(read());
             while (matchChar(" ")) {}
           }
-          let regex = readTemperOr();
-          if (!matchChar(")")) {
-            error("closing paren");
-            bubble();
-          }
-          let name = str.join("", fn(s: String): String{s});
-          new TemperCapture(name, regex)
+          error("missing = or : in (?${str.join("", idString)}=...)");
+          return bubble()
         }
       } else {
-        let regex = readTemperOr();
+        let regex = readOr();
         if (!matchChar(")")) {
           error("closing paren");
           bubble();
@@ -298,8 +329,26 @@ class Parser {
       TemperDot
     } else if (matchChar("\\")) {
       var escapeCode = peek();
-      if (matchChar("b")) {
+      if (matchChar("k")) {
+        if (!matchChar("<")) {
+          error("expected \\k<backref> but was missing <");
+          return bubble();
+        }
+        let str = new ListBuilder<String>();
+        while (matchChar(" ")) {}
+        while (!matchChar(">")) {
+          if (isDone()) {
+            error("expected \\k<${}> but was missing >");
+            return bubble();
+          }
+          str.add(read());
+          while (matchChar(" ")) {}
+        }
+        new TemperBackReference(str.join("", idString))
+      } else if (matchChar("b")) {
         TemperWordBoundary
+      } else if (matchChar("R")) {
+        TemperRecurse
       } else if (matchChar("d")) {
         TemperDigit
       } else if (matchChar("w")) {
@@ -331,7 +380,7 @@ class Parser {
     new TemperSequence(seq.toList())
   }
 
-  public readTemperOr(): TemperRegex | Bubble {
+  public readOr(): TemperRegex | Bubble {
     let ors = new ListBuilder<TemperRegex>();
     while (!isDone() && peek() != ")") {
       if (ors.length != 0 && !matchChar("|")) {
@@ -352,10 +401,10 @@ export let subWith(src: String, keys: List<String>, values: List<TemperRegex>): 
     let val = values[i];
     parser.addTemperRegex(keys[i], val);
   }
-  parser.readTemperOr()
+  parser.readOr()
 }
 
 export let sub(src: String): TemperRegex | Bubble {
   let parser = new Parser(src);
-  parser.readTemperOr()
+  parser.readOr()
 }

@@ -3,21 +3,33 @@ let {...} = import("../util/regex");
 let {...} = import("./engine");
 
 export class TemperRegexNFA extends TemperRegexEngine {
-  public engine: Engine;
+  public finalEngine: Engine;
+  public engineMap: MapBuilder<String, Engine>;
   
   public constructor(regex: TemperRegex): Void {
-    engine = new Engine();
-    buildTemperRegex(regex, engine.startState, engine.endState);
+    finalEngine = new Engine();
+    engineMap = new MapBuilder<String, Engine>();
+    engineMap["\\R"] = finalEngine;
+    buildTemperRegex(finalEngine, regex, finalEngine.startState, finalEngine.endState);
   }
 
-  public buildTemperRegex(regex: TemperRegex, input: State, output: State): Void | Bubble {
+  public buildRegexNamed(name: String, regex: TemperRegex): Engine {
+    return engineMap[name] orelse do {
+      var nextEngine = new Engine();
+      engineMap[name] = nextEngine;
+      buildTemperRegex(nextEngine, regex, nextEngine.startState, nextEngine.endState);
+      nextEngine
+    }
+  }
+
+  public buildTemperRegex(engine: Engine, regex: TemperRegex, input: State, output: State): Void | Bubble {
     match (regex) {
       is TemperCapture -> do {
         var postInput = engine.newState();
         input.addNext(new CaptureBeginMatcher(regex.name), postInput);
         var preOutput = engine.newState();
         preOutput.addNext(new CaptureEndMatcher(regex.name), output);
-        buildTemperRegex(regex.item, postInput, preOutput);
+        buildTemperRegex(engine, regex.item, postInput, preOutput);
       }
       is TemperCodePoints -> do {
         var split = regex.value.split("");
@@ -32,17 +44,51 @@ export class TemperRegexNFA extends TemperRegexEngine {
           }
         }
       }
+      is TemperBackReference -> do {
+        input.addNext(new BackReferenceMatcher(regex.name), output);
+      }
+      is TemperRegexPromise -> do {
+        input.addNext(new PromiseMatcher(regex.name, buildRegexNamed(regex.name, regex.item)), output);
+      }
+      is TemperLookAhead -> do {
+        var nextEngine = new Engine();
+        buildTemperRegex(nextEngine, regex, nextEngine.startState, nextEngine.endState);
+        input.addNext(new LookAheadMatcher(regex.negated, nextEngine), output);
+      }
       is TemperCodeSet -> do {
-        for (var j = 0; j < regex.items.length; j++) {
-          var subTemperRegex = regex.items[j];
-          match (subTemperRegex) {
-            is TemperCodeRange -> do {
-              input.addNext(new RangeMatcher(subTemperRegex.min, subTemperRegex.max), output);
+        if (regex.negated) {
+          var head = input;
+          for (var j = 0; j < regex.items.length; j++) {
+            var subTemperRegex = regex.items[j];
+            match (subTemperRegex) {
+              is TemperCodeRange -> do {
+                var cur = engine.newState();
+                head.addNext(new NotRangeMatcher(subTemperRegex.min, subTemperRegex.max), cur);
+                head = cur;
+              }
+              is TemperCodePoints -> do {
+                var cur = engine.newState();
+                var split = subTemperRegex.value.split("");
+                for (var i = 0; i < split.length ; i++) {
+                  head.addNext(new NotCharCodeMatcher(split[i].codePoints.read()), cur);
+                }
+                head = cur;
+              }
             }
-            is TemperCodePoints -> do {
-              var split = subTemperRegex.value.split("");
-              for (var i = 0; i < split.length ; i++) {
-                input.addNext(new CharCodeMatcher(split[i].codePoints.read()), output);
+          }
+          head.addNext(new AnyMatcher(), output);
+        } else {
+          for (var j = 0; j < regex.items.length; j++) {
+            var subTemperRegex = regex.items[j];
+            match (subTemperRegex) {
+              is TemperCodeRange -> do {
+                input.addNext(new RangeMatcher(subTemperRegex.min, subTemperRegex.max), output);
+              }
+              is TemperCodePoints -> do {
+                var split = subTemperRegex.value.split("");
+                for (var i = 0; i < split.length ; i++) {
+                  input.addNext(new CharCodeMatcher(split[i].codePoints.read()), output);
+                }
               }
             }
           }
@@ -50,28 +96,38 @@ export class TemperRegexNFA extends TemperRegexEngine {
       }
       is TemperOr -> do {
         for (var i = 0; i < regex.items.length; i++) {
-          buildTemperRegex(regex.items[i], input, output)
+          buildTemperRegex(engine, regex.items[i], input, output)
         }
       }
       is TemperRepeat -> do {
         var lastState = input;
         for (var i = 0; i < regex.min; i++) {
           var curState = engine.newState();
-          buildTemperRegex(regex.item, lastState, curState);
+          buildTemperRegex(engine, regex.item, lastState, curState);
           lastState = curState;
         }
         if (regex.max != null) {
           var max = regex.max.as<Int>();
           for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
-            buildTemperRegex(regex.item, lastState, curState);
-            lastState.addNext(engine.epsilon, output);
+            if (!regex.reluctant) {
+              lastState.addNext(engine.epsilon, output);
+            }
+            buildTemperRegex(engine, regex.item, lastState, curState);
+            if (regex.reluctant) {
+              lastState.addNext(engine.epsilon, output);
+            }
             lastState = curState;
           }
           lastState.addNext(engine.epsilon, output);
         } else {
-          buildTemperRegex(regex.item, lastState, lastState);
-          lastState.addNext(engine.epsilon, output);
+          if (!regex.reluctant) {
+            lastState.addNext(engine.epsilon, output);
+          }
+          buildTemperRegex(engine, regex.item, lastState, lastState);
+          if (regex.reluctant) {
+            lastState.addNext(engine.epsilon, output);
+          }
         }
       }
       is TemperSequence -> do {
@@ -82,7 +138,7 @@ export class TemperRegexNFA extends TemperRegexEngine {
           } else {
             engine.newState()
           };
-          buildTemperRegex(regex.items[j], curState, nextState);
+          buildTemperRegex(engine, regex.items[j], curState, nextState);
           nextState = curState;
         }
         if (regex.items.length == 0) {
@@ -96,6 +152,8 @@ export class TemperRegexNFA extends TemperRegexEngine {
           input.addNext(new AnyMatcher(), output);
         } else if (regex == TemperEnd) {
           input.addNext(new EndMatcher(), output);
+        } else if (regex == TemperRecurse) { 
+          input.addNext(new RecurseMatcher(), output);
         } else if (regex == TemperWordBoundary) { 
           input.addNext(new WordBoundaryMatcher(), output);
         } else if (regex == TemperWordBoundaryBegin) { 
@@ -119,15 +177,15 @@ export class TemperRegexNFA extends TemperRegexEngine {
   }
 
   public find(str: String): Map<String, TemperGroup> | Bubble {
-    return engine.find(str);
+    return finalEngine.find(str);
   }
 
   public found(str: String): Boolean {
-    return engine.found(str);
+    return finalEngine.found(str);
   }
 
   public toString(): String {
-    return engine.toString();
+    return finalEngine.toString();
   }
 }
 

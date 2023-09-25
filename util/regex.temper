@@ -48,9 +48,28 @@ export class TemperCodeSet extends TemperRegex {
   public negated: Boolean = false;
 }
 
+export class TemperRegexPromise extends TemperRegex {
+  public name: String;
+  public cb: fn(): TemperRegex;
+
+  public get item(): TemperRegex {
+    return cb();
+  }
+}
+
+export class TemperLookAhead extends TemperRegex {
+  public negated: Boolean;
+  public item: TemperRegex;
+}
+
+export class TemperBackReference extends TemperRegex {
+  public name: String;
+}
+
 export let TemperBegin = do { class Begin extends TemperSpecial {}; new Begin() };
 export let TemperDot = do { class Dot extends TemperSpecial {}; new Dot() };
 export let TemperEnd = do { class End extends TemperSpecial {}; new End() };
+export let TemperRecurse = do { class Recurse extends TemperSpecial {}; new Recurse() };
 
 export interface TemperSpecialSet extends TemperCodePart & TemperSpecial {};
 export let TemperWordBoundary = do { class WordBoundary extends TemperSpecialSet {}; new WordBoundary() };
