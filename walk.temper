@@ -6,6 +6,7 @@ let isCodePointWordChar(code: Int): Boolean {
   (48 <= code && code <= 57) // this range is 0 to 9, like above
          || (65 <= code && code <= 90) // this range is A to Z (uppercase)
          || (97 <= code && code <= 122) // this range is a to z (lowercase)
+         || (code == 95) // this is _
 }
 
 class Matcher {
