@@ -9,12 +9,12 @@ let ord(s: String): CodePoint {
   return s.codePoints.read();
 }
 
-class Next {
+export class Next {
   public toState: State;
   public matcher: Matcher;
 }
 
-class State {
+export class State {
   public id: Id;
   public next: ListBuilder<Next>;
   
@@ -37,7 +37,7 @@ class State {
   }
 }
 
-interface Matcher {
+export interface Matcher {
   public matches(str: List<CodePoint>, index: Int): Boolean;
 
   public toString(): String;
@@ -157,7 +157,7 @@ class CharMatcher extends Matcher {
   }
 }
 
-class EpsilonMatcher extends Matcher {
+export class EpsilonMatcher extends Matcher {
   public matches(str: List<CodePoint>, index: Int): Boolean {
     return true;
   }
@@ -197,7 +197,7 @@ class StackSlot extends Stack {
   }
 }
 
-class Engine {
+export class Engine {
   public states: ListBuilder<State>;
   public startState: State;
   public endState: State;
@@ -396,12 +396,12 @@ class Engine {
 export class TemperRegexNFA extends TemperRegex {
   public engine: Engine;
   
-  public constructor(regex: Regex): Void {
+  public constructor(regex: RegexNode): Void {
     engine = new Engine();
     buildRegex(regex, engine.startState, engine.endState);
   }
 
-  public buildRegex(regex: Regex, input: State, output: State): Void | Bubble {
+  public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
     // console.log("${input.id.toString()} -> /${regexToString(regex, charU)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
@@ -526,7 +526,7 @@ let fromVec(vec: DenseBitVector, size: Int): List<Int> {
   return key.toList();
 }
 
-class TransitionTableEntry {
+export class TransitionTableEntry {
   public key: DenseBitVector;
   public val: List<DenseBitVector>;
 
@@ -565,7 +565,7 @@ class TransitionTableEntry {
   }
 }
 
-class TransitionTable {
+export class TransitionTable {
   public nsyms: Int;
   public table: ListBuilder<TransitionTableEntry>;
 
@@ -725,7 +725,7 @@ export class TemperRegexDFA extends TemperRegex {
     return nfa.states.length;
   }
 
-  public constructor(regex: Regex): Void {
+  public constructor(regex: RegexNode): Void {
     nsyms = 0;
     symbols = new MapBuilder<CodePoint, Int>();
     rawNfa = new TemperRegexNFA(regex).engine;
@@ -965,17 +965,17 @@ export class TemperRegexDFA extends TemperRegex {
   }
 
   public toLua(chr: fn(Int): String, isMatch: fn(String, String): Boolean): TemperRegexLua {
-    let regexToStringChr(r: Regex): String {
+    let regexToStringChr(r: RegexNode): String {
       return regexToString(r, chr);
     }
     return new TemperRegexLua(toRegexList(chr).map(regexToStringChr), isMatch);
   }
 
-  public toRegex(chr: fn(Int): String): Regex {
+  public toRegex(chr: fn(Int): String): RegexNode {
     return new Or(toRegexList(chr));
   }
 
-  public toRegexList(chr: fn(Int): String): List<Regex> {
+  public toRegexList(chr: fn(Int): String): List<RegexNode> {
     var builder = new RegexBuilder();
     var syms = symbols.toList();
     for (var i = 0; i < table.table.length; i++) {
@@ -1044,7 +1044,7 @@ export class TemperRegexDFA extends TemperRegex {
   }
 }
 
-class TemperRegexLua extends TemperRegex {
+export class TemperRegexLua extends TemperRegex {
   public tries: List<String>;
   public check: fn(String, String): Boolean;
 
@@ -1072,7 +1072,7 @@ let charU(i: Int): String {
 class RegexBuilderEdge {
   public from: String;
   public to: String;
-  public regex: Regex;
+  public regex: RegexNode;
 }
 
 class RegexBuilder {
@@ -1092,7 +1092,7 @@ class RegexBuilder {
     return false;
   }
 
-  public find(from: String, to: String): Regex | Bubble {
+  public find(from: String, to: String): RegexNode | Bubble {
     for (var i = 0; i < list.length; i++) {
       var edge = list[i];
       if (edge.to == to && edge.from == from) {
@@ -1161,7 +1161,7 @@ class RegexBuilder {
     }
   }
 
-  public add(from: String, to: String, regex: Regex): Void {
+  public add(from: String, to: String, regex: RegexNode): Void {
     list.add(new RegexBuilderEdge(from, to, regex));
   }
 
@@ -1171,7 +1171,7 @@ class RegexBuilder {
     });
   }
 
-  public toRegexList(): List<Regex> {
+  public toRegexList(): List<RegexNode> {
     var done = new MapBuilder<String, Boolean>();
     done["#begin"] = true;
     for (var j = 0; j < list.length; j++) {
@@ -1181,7 +1181,7 @@ class RegexBuilder {
         simplify(cur.from);
       }
     }
-    var ret = new ListBuilder<Regex>();
+    var ret = new ListBuilder<RegexNode>();
     for (var j = 0; j < list.length; j++) {
       var cur = list[j];
       if (cur.from == "#begin" && cur.to == "#end") {

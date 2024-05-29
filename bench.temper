@@ -30,7 +30,7 @@ export class SingleResult {
   }
 }
 
-class EngineResult {
+export class EngineResult {
   public engine: String;
   public score: Float64;
 

@@ -32,15 +32,14 @@ class Matcher {
     head = val;
   }
 
+  public join(begin: Int, end: Int): String {
+    str.slice(begin, end).join("") { (s);; s }
+  }
+
   public matchCapture(regex: Capture): Boolean {
     var begin = head;
     if (matchRegex(regex.item)) {
-      var end = head;
-      var list = new ListBuilder<String>();
-      for (var i = begin; i < end; i++) {
-        list.add(str[i]);
-      }
-      var text = list.join("", fn(s: String): String{s});
+      var text = join(begin, head);
       groups[regex.name] = new Group(regex.name, text, begin);
       return true;
     } else {
@@ -283,13 +282,26 @@ export class TemperRegexWalker extends TemperRegex {
   
   public find(text: String): Map<String, Group> | Bubble {
     for (var i = 0; i < text.codePoints.length; i++) {
-      var m = new Matcher(text);
+      let m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
-        return m.groups.toMap();
+        var groups = m.groups;
+        if (!groups.has("full")) {
+          groups = new MapBuilder();
+          groups["full"] = new Group("full", m.join(i, m.head), i);
+          // Copy after full to put implied full first. TODO Prescan tree?
+          m.groups.forEach { (k, v);; groups[k] = v }
+        }
+        return groups.toMap();
       }
     }
     bubble()
   }
+}
+
+test("full") {
+    let ownFull = new Sequence([Dot, new Capture("full", Dot)]);
+    let result = new TemperRegexWalker(ownFull).find("ab");
+    // assert(new TemperRegexWalker(ownFull).find("ab")["full"].value == "b");
 }
