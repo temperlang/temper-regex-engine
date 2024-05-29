@@ -1,7 +1,7 @@
 
 let {...} = import("std/regex");
 
-export let regexToString(base: Regex, chr: fn(Int): String): String {
+export let regexToString(base: RegexNode, chr: fn(Int): String): String {
   match (base) {
     is Capture -> do {
       var regex = base.as<Capture>();
@@ -32,7 +32,7 @@ export let regexToString(base: Regex, chr: fn(Int): String): String {
     is Or -> do {
       var regex = base.as<Or>();
       var ret = new MapBuilder<String, Boolean>();
-      let add(ent: Regex): Void {
+      let add(ent: RegexNode): Void {
         match (ent) {
           is Or -> do {
             for (var i = 0; i < ent.items.length; i++) {
@@ -98,7 +98,7 @@ export let regexToString(base: Regex, chr: fn(Int): String): String {
       } else if (regex.items.length == 1) {
         return regexToString(regex.items[0], chr);
       } else {
-        let rec(r: Regex): String {
+        let rec(r: RegexNode): String {
           return regexToString(r, chr);
         }
         var inner = regex.items.join("", rec);

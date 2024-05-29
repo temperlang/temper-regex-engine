@@ -3,10 +3,10 @@ let { ... } = import("std/regex");
 let { TemperRegex } = import("./regex");
 
 export class TemperRegexNative extends TemperRegex {
-  public data: CompiledRegex;
+  public data: Regex;
 
-  public constructor(re: Regex) {
-    data = new CompiledRegex(re);
+  public constructor(re: RegexNode) {
+    data = new Regex(re);
   }
 
   public found(text: String): Boolean {

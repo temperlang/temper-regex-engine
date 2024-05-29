@@ -3,7 +3,7 @@ let { ... } = import("std/regex");
 
 class Slot {
   public name: String;
-  public regex: Regex;
+  public regex: RegexNode;
 }
 
 class Parser {
@@ -23,7 +23,7 @@ class Parser {
     slots.add(new Slot(name, new CodePoints(text)));
   }
 
-  public addRegex(name: String, regex: Regex): Void {
+  public addRegex(name: String, regex: RegexNode): Void {
     slots.add(new Slot(name, regex));
   }
 
@@ -62,7 +62,7 @@ class Parser {
     }
   }
 
-  public charClassBody(): Regex | Bubble {
+  public charClassBody(): RegexNode | Bubble {
     let invert = matchChar("^");
     let opts = new ListBuilder<CodePart>();
     while (!matchChar("]")) {
@@ -89,7 +89,7 @@ class Parser {
     return n;
   }
 
-  public readPostfix(exist: Regex): Regex | Bubble {
+  public readPostfix(exist: RegexNode): RegexNode | Bubble {
     if (matchChar("+")) {
       return new Repeat(exist, 1, null, matchChar("?"));
     } else if (matchChar("*")) {
@@ -121,7 +121,7 @@ class Parser {
     }
   }
 
-  public readSingle(): Regex | Bubble {
+  public readSingle(): RegexNode | Bubble {
     if (matchChar("[")) {
       return charClassBody();
     } 
@@ -229,8 +229,8 @@ class Parser {
     };
   }
 
-  public readSeq(): Regex | Bubble {
-    let seq = new ListBuilder<Regex>();
+  public readSeq(): RegexNode | Bubble {
+    let seq = new ListBuilder<RegexNode>();
     while (!isDone() && peek() != "|" && peek() != ")") {
       let regex = readSingle();
       seq.add(readPostfix(regex));
@@ -238,8 +238,8 @@ class Parser {
     new Sequence(seq.toList())
   }
 
-  public readOr(): Regex | Bubble {
-    let ors = new ListBuilder<Regex>();
+  public readOr(): RegexNode | Bubble {
+    let ors = new ListBuilder<RegexNode>();
     while (!isDone() && peek() != ")") {
       if (ors.length != 0 && !matchChar("|")) {
         console.log(pos.toString());
@@ -253,18 +253,18 @@ class Parser {
   }
 }
 
-export let compileWith(src: String, keys: List<String>, values: List<Regex>): CompiledRegex | Bubble {
+export let compileWith(src: String, keys: List<String>, values: List<RegexNode>): Regex | Bubble {
   let regex = subWith(src, keys, values);
   new Capture("full", regex).compiled()
 }
 
-export let compile(src: String): CompiledRegex | Bubble {
+export let compile(src: String): Regex | Bubble {
   let parser = new Parser(src);
   let regex = parser.readOr();
   new Capture("full", regex).compiled()
 }
 
-export let subWith(src: String, keys: List<String>, values: List<Regex>): Regex | Bubble {
+export let subWith(src: String, keys: List<String>, values: List<RegexNode>): RegexNode | Bubble {
   let parser = new Parser(src);
   for (var i = 0; i < keys.length && i < values.length; i++) {
     let val = values[i];
@@ -273,7 +273,7 @@ export let subWith(src: String, keys: List<String>, values: List<Regex>): Regex 
   parser.readOr()
 }
 
-export let sub(src: String): Regex | Bubble {
+export let sub(src: String): RegexNode | Bubble {
   let parser = new Parser(src);
   parser.readOr()
 }

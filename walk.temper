@@ -225,7 +225,7 @@ class Matcher {
     return true;
   }
 
-  public matchRegex(regex: Regex): Boolean {
+  public matchRegex(regex: RegexNode): Boolean {
     match (regex) {
       is Capture -> matchCapture(regex);
       is CodePoints -> matchCodePoints(regex);
@@ -239,7 +239,7 @@ class Matcher {
     }
   }
 
-  public resetGroups(regex: Regex): Void {
+  public resetGroups(regex: RegexNode): Void {
     match (regex) {
       is Capture -> do {
         groups[regex.name] = new Group(regex.name, "", -1);
@@ -262,9 +262,9 @@ class Matcher {
 }
 
 export class TemperRegexWalker extends TemperRegex {
-  public data: Regex;
+  public data: RegexNode;
 
-  public constructor(re: Regex) {
+  public constructor(re: RegexNode) {
     data = re;
   }
 

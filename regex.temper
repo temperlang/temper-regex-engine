@@ -2,7 +2,7 @@
 let { ... } = import("std/regex");
 
 export interface TemperRegex {
-  public constructor(data: Regex);
+  public constructor(data: RegexNode);
   public found(text: String): Boolean;
   public find(text: String): Map<String, Group> | Bubble;
 }
