@@ -1,4 +1,4 @@
-let { Regex } = import('std/regex');
+let { RegexNode } = import('std/regex');
 let { TemperRegex } = import('./regex');
 let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
 let { TemperRegexWalker } = import('./walk');
@@ -9,9 +9,9 @@ let { regexToString } = import('./tostring');
 
 class Engine {
   public name: String;
-  public cons: fn(Regex): TemperRegex;
+  public cons: fn(RegexNode): TemperRegex;
 
-  public invoke(re: Regex): TemperRegex {
+  public invoke(re: RegexNode): TemperRegex {
     return cons(re);
   }
 }
@@ -44,7 +44,7 @@ export class RegexBench {
   private chr: fn(Int): String;
   private engines: ListBuilder<Engine>;
   private checks: ListBuilder<String>;
-  private regex: ListBuilder<Regex>;
+  private regex: ListBuilder<RegexNode>;
   private onSingleResultCallback: fn(SingleResult): Void;
   private onEngineResultCallback: fn(EngineResult): Void;
   private timePerRunInternal: Float64;
@@ -54,7 +54,7 @@ export class RegexBench {
     time = getTime;
     engines = new ListBuilder<Engine>();
     checks = new ListBuilder<String>();
-    regex = new ListBuilder<Regex>();
+    regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
     timePerRunInternal = 10.0;
@@ -98,7 +98,7 @@ export class RegexBench {
     addEngineWalker();
   }
 
-  public addEngine(name: String, cb: fn(Regex): TemperRegex): Void {
+  public addEngine(name: String, cb: fn(RegexNode): TemperRegex): Void {
     engines.add(new Engine(name, cb));
   }
 
@@ -106,14 +106,14 @@ export class RegexBench {
     addRegex(sub(str));
   }
 
-  public addRegex(re: Regex): Void {
+  public addRegex(re: RegexNode): Void {
     regex.add(re);
   }
 
   public addEngineTemper(): Void {
     addEngine(
       "Temper",
-      fn(regex: Regex): TemperRegex {
+      fn(regex: RegexNode): TemperRegex {
         return new TemperRegexNative(regex);
       }
     );
@@ -122,7 +122,7 @@ export class RegexBench {
   public addEngineDFA(): Void {
     addEngine(
       "DFA",
-      fn(regex: Regex): TemperRegex {
+      fn(regex: RegexNode): TemperRegex {
         return new TemperRegexDFA(regex);
       }
     );
@@ -131,7 +131,7 @@ export class RegexBench {
   public addEngineNFA(): Void {
     addEngine(
       "NFA",
-      fn(regex: Regex): TemperRegex {
+      fn(regex: RegexNode): TemperRegex {
         return new TemperRegexNFA(regex);
       }
     );
@@ -140,7 +140,7 @@ export class RegexBench {
   public addEngineWalker(): Void {
     addEngine(
       "Walker",
-      fn(regex: Regex): TemperRegex {
+      fn(regex: RegexNode): TemperRegex {
         return new TemperRegexWalker(regex);
       }
     );
