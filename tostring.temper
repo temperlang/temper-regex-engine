@@ -102,12 +102,7 @@ export let regexToString(base: RegexNode, chr: fn(Int): String): String {
           return regexToString(r, chr);
         }
         var inner = regex.items.join("", rec);
-        for (var i = 0; i < regex.items.length; i++) {
-          match (regex.items[i]) {
-            is Or -> return "(${inner})";
-          }
-        }
-        return inner;
+        return "(${inner})";
       }
     }
     is Special -> do {

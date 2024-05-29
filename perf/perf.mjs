@@ -1,5 +1,5 @@
-import {RegexBench} from 'temper-regex-engine/bench.js';
-import {TemperRegexDFA} from 'temper-regex-engine/graph.js';
+import {RegexBench} from 'temper-regex-engine/bench';
+import {TemperRegexDFA} from 'temper-regex-engine/graph';
 
 const init = new Date();
 

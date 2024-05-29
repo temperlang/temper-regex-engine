@@ -3,7 +3,7 @@ let { TemperRegex } = import('./regex');
 let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
 let { TemperRegexWalker } = import('./walk');
 let { TemperRegexNative } = import('./native');
-let { sub } = import('./parser');
+let { parse } = import('./temper-regex-parser');
 let { regexToString } = import('./tostring');
 
 
@@ -103,7 +103,7 @@ export class RegexBench {
   }
 
   public addRegexStr(str: String): Void {
-    addRegex(sub(str));
+    addRegex(parse(str));
   }
 
   public addRegex(re: RegexNode): Void {
