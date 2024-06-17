@@ -9,7 +9,6 @@ It does the naive aproach to regex. Not very fast, but works on backends without
 ### Windows PowerShell
 
 ```
-temper-regex-engine> git submodule update --init --recursive
 temper-regex-engine> npm i
 
 added 4 packages, and audited 6 packages in 2s
