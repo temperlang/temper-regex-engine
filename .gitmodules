@@ -1,3 +1,0 @@
-[submodule "temper-regex-parser"]
-	path = temper-regex-parser
-	url = https://github.com/temperlang/temper-regex-parser.git
