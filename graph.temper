@@ -6,7 +6,7 @@ let CodePoint = Int;
 let Id = Int;
 
 let ord(s: String): CodePoint {
-  return s.codePoints.read();
+  return s.codeAt(String.start);
 }
 
 class Next {
@@ -922,34 +922,24 @@ export class TemperRegexDFA extends TemperRegex {
     }
   }
 
-  public foundAfter(slice: CodePointStringSlice): Boolean {
+  public foundAfter(str: String, i: StringIndex): Boolean {
     var state = 1;
-    while (true) {
-      if (state == 0) {
-        return false
+    for (var i = i; i < str.end; i = str.next(i)) {
+      state = map.getOr(state, emptyList).getOr(str.codeAt(i), 0);
+      match (state) {
+        0 -> return false;
+        2 -> return true;
       }
-      if (state == 2) {
-        return true;
-      }
-      if (slice.isEmpty) {
-        return false;
-      }
-      state = map.getOr(state, emptyList).getOr(slice.read(), 0);
-      slice = slice.advance(1);
     }
   }
 
   public found(str: String): Boolean {
-    var slice = str.codePoints;
-    while (true) {
-      if (foundAfter(slice)) {
+    for (var i = String.start; i < str.end; i = str.next(i)) {
+      if (foundAfter(str, i)) {
         return true;
       }
-      if (slice.isEmpty) {
-        return false;
-      }
-      slice = slice.advance(1);
     }
+    return false;
   }
 
   public toMarkdownTable(): String {
