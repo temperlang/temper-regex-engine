@@ -227,7 +227,7 @@ class Matcher {
   public resetGroups(regex: RegexNode): Void {
     match (regex) {
       is Capture -> do {
-        groups[regex.name] = new Group(regex.name, "", -1);
+        groups[regex.name] = new Group(regex.name, "", String.start);
         resetGroups(regex.item);
       }
       is Repeat -> resetGroups(regex.item);

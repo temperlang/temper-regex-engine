@@ -922,15 +922,16 @@ export class TemperRegexDFA extends TemperRegex {
     }
   }
 
-  public foundAfter(str: String, i: StringIndex): Boolean {
+  public foundAfter(str: String, var i: StringIndex): Boolean {
     var state = 1;
-    for (var i = i; i < str.end; i = str.next(i)) {
+    for (; i < str.end; i = str.next(i)) {
       state = map.getOr(state, emptyList).getOr(str.codeAt(i), 0);
       match (state) {
         0 -> return false;
         2 -> return true;
       }
     }
+    false
   }
 
   public found(str: String): Boolean {
