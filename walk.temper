@@ -12,12 +12,14 @@ let isCodePointWordChar(code: Int): Boolean {
 class Matcher {
   public str: String;
   public head: StringIndex;
+  public groupMatched: MapBuilder<String, Boolean>;
   public groups: MapBuilder<String, Group>;
   public depth: Int;
 
   constructor(src: String): Void {
     str = src;
     head = String.start;
+    groupMatched = new MapBuilder<String, Boolean>();
     groups = new MapBuilder<String, Group>();
     depth = 0;
   }
@@ -36,6 +38,7 @@ class Matcher {
     var begin = head;
     if (matchRegex(regex.item)) {
       var text = str.substring(begin, head);
+      groupMatched[regex.name] = true;
       groups[regex.name] = new Group(regex.name, text, begin);
       return true;
     } else {
@@ -228,6 +231,7 @@ class Matcher {
   public resetGroups(regex: RegexNode): Void {
     match (regex) {
       is Capture -> do {
+        groupMatched[regex.name] = false;
         groups[regex.name] = new Group(regex.name, "", String.start);
         resetGroups(regex.item);
       }
@@ -255,8 +259,8 @@ export class TemperRegexWalker extends TemperRegex {
   }
 
   public found(text: String): Boolean {
+    let m = new Matcher(text);
     for (var i = String.start; i < text.end; i = text.next(i)) {
-      let m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
@@ -265,16 +269,38 @@ export class TemperRegexWalker extends TemperRegex {
     }
     return false;
   }
-  
+
   public find(text: String): Map<String, Group> | Bubble {
-    // TODO Implied "full" group.
-    for (var i = String.start; i < text.end; i = text.next(i)) {
-      let m = new Matcher(text);
+    findEx(text, String.start).groups
+  }
+
+  public findEx(
+    text: String,
+    start: StringIndex = String.start,
+  ): FindExResult {
+    let m = new Matcher(text);
+    for (var i = start; i < text.end; i = text.next(i)) {
       m.setHead(i);
       m.resetGroups(data);
-      if (m.matchRegex(data)) {
-        return m.groups.toMap();
+      if (!m.matchRegex(data)) {
+        continue;
       }
+      // Make a copy, with default full first if needed.
+      let groups = new MapBuilder<String, Group>();
+      if (!m.groups.has("full")) {
+        groups["full"] = new Group("full", text.substring(i, m.head), i);
+      };
+      m.groups.forEach { (name, group);;
+        if (m.groupMatched[name]) {
+          groups[name] = group;
+        }
+      }
+      return new FindExResult(
+        groups = groups.toMap(),
+        // These are *sometimes* available from default "full".
+        start = i,
+        stop = m.head,
+      );
     }
     bubble()
   }
@@ -285,20 +311,26 @@ export class TemperRegexWalker extends TemperRegex {
     let end = text.end;
     while (true) {
       let original = m.head;
-      var start = original;
+      var i = original;
       var found = false;
-      for (; start < end; start = text.next(start)) {
-        m.setHead(start);
+      for (; i < end; i = text.next(i)) {
+        m.setHead(i);
         found = m.matchRegex(data);
         if (found) {
           break;
         }
       }
-      parts.add(text.substring(original, start));
+      parts.add(text.substring(original, i));
       if (!found) {
         break;
       }
     }
     parts.toList()
   }
+}
+
+export class FindExResult {
+  public groups: Map<String, Group>;
+  public start: StringIndex;
+  public stop: StringIndex;
 }
