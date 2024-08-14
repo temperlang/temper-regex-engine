@@ -17,14 +17,14 @@ class CompiledRegexEngineFinal:
     def found(self, str: str) -> bool:
         return self.final.search(str) != None
 
-bench = RegexBench(chr, clock_ms)
+bench = RegexBench(clock_ms)
 
 bench.add_regex_defaults()
 bench.add_check_defaults()
 
 def opt_regex_engine(regex):
     res = graph.TemperRegexDFA(regex)
-    src = res.to_regex_string(chr)
+    src = res.to_regex_string()
     final = re.compile(src)
     return CompiledRegexEngineFinal(final)
 

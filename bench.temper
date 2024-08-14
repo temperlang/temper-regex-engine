@@ -3,9 +3,8 @@ let { TemperRegex } = import('./regex');
 let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
 let { TemperRegexWalker } = import('./walk');
 let { TemperRegexNative } = import('./native');
-let { parse } = import('temper-regex-parser');
+let { parse } = import('./temper-regex-parser');
 let { regexToString } = import('./tostring');
-
 
 class Engine {
   public name: String;
@@ -41,7 +40,6 @@ class EngineResult {
 
 export class RegexBench {
   private time: fn(): Float64;
-  private chr: fn(Int): String;
   private engines: ListBuilder<Engine>;
   private checks: ListBuilder<String>;
   private regex: ListBuilder<RegexNode>;
@@ -49,8 +47,7 @@ export class RegexBench {
   private onEngineResultCallback: fn(EngineResult): Void;
   private timePerRunInternal: Float64;
 
-  public constructor(intChr: fn(Int): String, getTime: fn(): Float64): Void {
-    chr = intChr;
+  public constructor(getTime: fn(): Float64): Void {
     time = getTime;
     engines = new ListBuilder<Engine>();
     checks = new ListBuilder<String>();
@@ -172,7 +169,7 @@ export class RegexBench {
           var score = iters.toFloat64() / ms;
           count += 1.0;
           total += score;
-          var thisRun = new SingleResult(engine.name, check, regexToString(re, chr), found, score);
+          var thisRun = new SingleResult(engine.name, check, regexToString(re), found, score);
           onSingleResultCallback(thisRun);
           runs.add(thisRun);
         }

@@ -6,7 +6,11 @@ let CodePoint = Int;
 let Id = Int;
 
 let ord(s: String): CodePoint {
-  return s.codePoints.read();
+  return s.codeAt(String.start);
+}
+
+let chr(i: CodePoint): String {
+  return String.fromCodePoint(i);
 }
 
 class Next {
@@ -402,7 +406,6 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
-    // console.log("${input.id.toString()} -> /${regexToString(regex, charU)}/ -> ${output.id.toString()}");
     match (regex) {
       is Capture -> do {
         buildRegex(regex.item, input, output);
@@ -922,7 +925,7 @@ export class TemperRegexDFA extends TemperRegex {
     }
   }
 
-  public foundAfter(slice: CodePointStringSlice): Boolean {
+  public foundAfter(str: String, place: StringIndex): Boolean {
     var state = 1;
     while (true) {
       if (state == 0) {
@@ -931,24 +934,24 @@ export class TemperRegexDFA extends TemperRegex {
       if (state == 2) {
         return true;
       }
-      if (slice.isEmpty) {
+      if (str.hasIndex(place)) {
         return false;
       }
-      state = map.getOr(state, emptyList).getOr(slice.read(), 0);
-      slice = slice.advance(1);
+      state = map.getOr(state, emptyList).getOr(str.codeAt(place), 0);
+      place = str.next(place);
     }
   }
 
   public found(str: String): Boolean {
-    var slice = str.codePoints;
+    var place = String.start;
     while (true) {
-      if (foundAfter(slice)) {
+      if (foundAfter(str, place)) {
         return true;
-      }
-      if (slice.isEmpty) {
+      } else if (str.hasIndex(place)) {
+        place = str.next(place);
+      } else {
         return false;
       }
-      slice = slice.advance(1);
     }
   }
 
@@ -964,18 +967,20 @@ export class TemperRegexDFA extends TemperRegex {
     return "digraph {\n  ${nfaDot1}\n  ${nfaDot2}\n  table[shape=none label=<${tableDot}>];\n  ${dfaDot}\n}\n";
   }
 
-  public toLua(chr: fn(Int): String, isMatch: fn(String, String): Boolean): TemperRegexLua {
+  public toPatterns(isMatch: fn(String, String): Boolean): TemperRegexPatterns {
     let regexToStringChr(r: RegexNode): String {
-      return regexToString(r, chr);
+      return regexToString(r);
     }
-    return new TemperRegexLua(toRegexList(chr).map(regexToStringChr), isMatch);
+    return new TemperRegexPatterns(toRegexList().map(regexToStringChr), isMatch);
   }
 
-  public toRegex(chr: fn(Int): String): RegexNode {
-    return new Or(toRegexList(chr));
+  public 
+
+  public toRegex(): RegexNode {
+    return new Or(toRegexList());
   }
 
-  public toRegexList(chr: fn(Int): String): List<RegexNode> {
+  public toRegexList(): List<RegexNode> {
     var builder = new RegexBuilder();
     var syms = symbols.toList();
     for (var i = 0; i < table.table.length; i++) {
@@ -1010,11 +1015,11 @@ export class TemperRegexDFA extends TemperRegex {
           var bits = new DenseBitVector(0);
           var max = 0;
           for (var k = 0; k < vals.length; k++) {
-            var chr = vals[k];
-            if (chr > max) {
-              max = chr;
+            var chrv = vals[k];
+            if (chrv > max) {
+              max = chrv;
             }
-            bits[chr] = true;
+            bits[chrv] = true;
           }
           var start = -1;
           for (var k = 0; k <= max; k++) {
@@ -1025,7 +1030,7 @@ export class TemperRegexDFA extends TemperRegex {
               }
               if (k-s <= 2) {
                 for (var l = s; l < k; l++) {
-                  parts.add(new CodePoints(chr(l)));
+                  parts.add(new CodePoints(String.fromCodePoint(l)));
                 }
               } else {
                 parts.add(new CodeRange(s, k-1));
@@ -1039,12 +1044,12 @@ export class TemperRegexDFA extends TemperRegex {
     return builder.toRegexList();
   } 
 
-  public toRegexString(chr: fn(Int): String): String {
-    return regexToString(toRegex(chr), chr);
+  public toRegexString(): String {
+    return regexToString(toRegex());
   }
 }
 
-class TemperRegexLua extends TemperRegex {
+class TemperRegexPatterns extends TemperRegex {
   public tries: List<String>;
   public check: fn(String, String): Boolean;
 
@@ -1064,10 +1069,6 @@ class TemperRegexLua extends TemperRegex {
 }
 
 let {regexToString} = import("./tostring.temper");
-
-let charU(i: Int): String {
-  return "\\u{${i.toString()}}";
-}
 
 class RegexBuilderEdge {
   public from: String;
@@ -1132,11 +1133,11 @@ class RegexBuilder {
     var me = this;
     if (has(node, node)) {
       var self = find(node, node);
-      var r1 = regexToString(self, charU);
+      var r1 = regexToString(self);
       me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
-        var r0 = regexToString(wentFrom.regex, charU);
+        var r0 = regexToString(wentFrom.regex);
         me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
-          var r2 = regexToString(goesTo.regex, charU);
+          var r2 = regexToString(goesTo.regex);
           if (r1 == r0) {
             if (r1 == r2) {
               me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
@@ -1165,9 +1166,9 @@ class RegexBuilder {
     list.add(new RegexBuilderEdge(from, to, regex));
   }
 
-  public dumpInternal(chr: fn(Int): String): String {
+  public dumpInternal(): String {
     return list.join("\n", fn(cur: RegexBuilderEdge): String {
-      return "${cur.from} -> /${regexToString(cur.regex, chr)}/ -> ${cur.to}";
+      return "${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}";
     });
   }
 

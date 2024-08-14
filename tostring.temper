@@ -1,36 +1,30 @@
 
 let {...} = import("std/regex");
 
-export let regexToString(base: RegexNode, chr: fn(Int): String): String {
+export let regexToString(base: RegexNode): String {
   match (base) {
     is Capture -> do {
-      var regex = base.as<Capture>();
-      return "(?${regex.name}=${regexToString(regex.item, chr)})";
+      return "(?${base.name}=${regexToString(base.item)})";
     }
     is CodePoints -> do {
-      var regex = base.as<CodePoints>();
-      return regex.value;
+      return base.value;
     }
     is CodeSet -> do {
-      var regex = base.as<CodeSet>();
       var ret = new ListBuilder<String>();
-      for (var j = 0; j < regex.items.length; j++) {
-        var subBase = regex.items[j];
+      for (var j = 0; j < base.items.length; j++) {
+        var subBase = base.items[j];
         match (subBase) {
           is CodeRange -> do {
-            var subRegex = subBase.as<CodeRange>();
-            ret.add("${chr(subRegex.min)}-${chr(subRegex.max)}");
+            ret.add("${String.fromCodePoint(subBase.min)}-${String.fromCodePoint(subBase.max)}");
           }
           is CodePoints -> do {
-            var subRegex = subBase.as<CodePoints>();
-            ret.add(subRegex.value);
+            ret.add(subBase.value);
           }
         }
       }
       return "[${ret.join("", fn(s: String): String{s})}]";
     }
     is Or -> do {
-      var regex = base.as<Or>();
       var ret = new MapBuilder<String, Boolean>();
       let add(ent: RegexNode): Void {
         match (ent) {
@@ -40,45 +34,44 @@ export let regexToString(base: RegexNode, chr: fn(Int): String): String {
             }
           }
           else -> do {
-            ret[regexToString(ent, chr)] = true;
+            ret[regexToString(ent)] = true;
           }
         }
       }
-      for (var i = 0; i < regex.items.length; i++) {
-        add(regex.items[i]);
+      for (var i = 0; i < base.items.length; i++) {
+        add(base.items[i]);
       }
       return ret.toList().join("|", fn(p: Pair<String, Boolean>): String {
         return p.key;
       });
     }
     is Repeat -> do {
-      var regex = base.as<Repeat>();
-      var mod = if (regex.min == 0 && regex.max == 1) {
+      var mod = if (base.min == 0 && base.max == 1) {
         "?"
-      } else if (regex.min == 0 && regex.max == null) {
+      } else if (base.min == 0 && base.max == null) {
         "*"
-      } else if (regex.min == 1 && regex.max == null) {
+      } else if (base.min == 1 && base.max == null) {
         "+"
-      } else if (regex.min == regex.max) {
-        "{${regex.min.toString()}}"
-      } else if (regex.max == null) {
-        "{${regex.min.toString()},}"
+      } else if (base.min == base.max) {
+        "{${base.min.toString()}}"
+      } else if (base.max == null) {
+        "{${base.min.toString()},}"
       } else {
-        "{${regex.min.toString()},${regex.max.as<Int>().toString()}}"
+        "{${base.min.toString()},${base.max.as<Int>().toString()}}"
       };
-      var q = if (regex.reluctant) {
+      var q = if (base.reluctant) {
         "?"
       } else {
         ""
       };
-      var str = regexToString(regex.item, chr);
+      var str = regexToString(base.item);
       var pat = "%";
-      match (regex.item) {
+      match (base.item) {
         is CodeSet -> do {
           pat = str;
         }
         is CodePoints -> do {
-          var points = regex.item.as<CodePoints>();
+          var points = base.item.as<CodePoints>();
           if (points.value.split("").length == 1) {
             pat = str;
           } else {
@@ -92,34 +85,32 @@ export let regexToString(base: RegexNode, chr: fn(Int): String): String {
       return "${pat}${mod}${q}";
     }
     is Sequence -> do {
-      var regex = base.as<Sequence>();
-      if (regex.items.length == 0) {
+      if (base.items.length == 0) {
         return "";
-      } else if (regex.items.length == 1) {
-        return regexToString(regex.items[0], chr);
+      } else if (base.items.length == 1) {
+        return regexToString(base.items[0]);
       } else {
         let rec(r: RegexNode): String {
-          return regexToString(r, chr);
+          return regexToString(r);
         }
-        var inner = regex.items.join("", rec);
+        var inner = base.items.join("", rec);
         return "(${inner})";
       }
     }
     is Special -> do {
-      var regex = base.as<Special>();
-      if (regex == Begin) {
+      if (base == Begin) {
         return "^";
-      } else if (regex == Dot) { 
+      } else if (base == Dot) { 
         return ".";
-      } else if (regex == End) {
+      } else if (base == End) {
         return "$";
-      } else if (regex == WordBoundary) { 
+      } else if (base == WordBoundary) { 
         return "\\b";
-      } else if (regex == Digit) {
+      } else if (base == Digit) {
         return "\\d";
-      } else if(regex == Space) {
+      } else if(base == Space) {
         return "\\s";
-      } else if (regex == Word) {
+      } else if (base == Word) {
         return "\\w";
       } else {
         return bubble();

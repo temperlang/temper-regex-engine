@@ -9,25 +9,23 @@ let isCodePointWordChar(code: Int): Boolean {
 }
 
 class Matcher {
-  public str: List<String>;
-  public head: Int;
+  public str: String;
+  public head: StringIndex;
   public groups: MapBuilder<String, Group>;
   public depth: Int;
 
   constructor(src: String): Void {
-    str = src.split("");
-    head = 0;
+    str = src;
+    head = String.start;
     groups = new MapBuilder<String, Group>();
     depth = 0;
   }
 
   public advance(): Void {
-    // console.log("${head.toString()} next");
-    head += 1;
+    head = str.next(head);
   }
 
-  public setHead(val: Int): Void {
-    // console.log("${head.toString()} to ${val.toString()}");
+  public setHead(val: StringIndex): Void {
     head = val;
   }
 
@@ -35,12 +33,12 @@ class Matcher {
     var begin = head;
     if (matchRegex(regex.item)) {
       var end = head;
-      var list = new ListBuilder<String>();
-      for (var i = begin; i < end; i++) {
-        list.add(str[i]);
+      var list = new ListBuilder<Int>();
+      for (var i = begin; i < end; i = str.next(i)) {
+        list.add(str.codeAt(i));
       }
-      var text = list.join("", fn(s: String): String{s});
-      groups[regex.name] = new Group(regex.name, text, begin);
+      var text = String.fromCodePoints(list);
+      groups[regex.name] = new Group(regex.name, text, str.countBetween(String.start, begin));
       return true;
     } else {
       setHead(begin);
@@ -50,30 +48,40 @@ class Matcher {
 
   public matchCodePoints(regex: CodePoints): Boolean {
     if (depth == 0) {
-      var split = regex.value.split("");
-      for (var i = 0; i < split.length ; i++) {
-        if ((str[head+i] orelse "") != split[i]) {
-          return false;
-        }
-      }
-      for (var i = 0; i < split.length; i++) {
-        advance();
-      }
-      return true;
-    } else {
-      var split = regex.value.split("");
-      for (var i = 0; i < split.length ; i++) {
-        if ((str[head] orelse "") == split[i]) {
-          advance();
+      let value = regex.value;
+      let init = head;
+      var sHead = String.start;
+      while (true) {
+        let c = value.codeAt(sHead);
+        if (c == 0) {
           return true;
         }
+        if (str.codeAt(head) != c) {
+          setHead(init);
+          return false;
+        }
+        head = str.next(head);
+        sHead = value.next(sHead);
       }
-      return false;
+    } else {
+      let value = regex.value;
+      var sHead = String.start;
+      while (true) {
+        let c = value.codeAt(sHead);
+        if (c == 0) {
+          head = str.next(head);
+          return true;
+        }
+        if (str.codeAt(head) != c) {
+          return false;
+        }
+        sHead = value.next(sHead);
+      }
     }
   }
 
   public matchDot(): Boolean {
-    return if (head < str.length) {
+    return if (str.hasIndex(head)) {
       advance();
       true
     } else {
@@ -82,11 +90,11 @@ class Matcher {
   }
 
   public matchDigit(): Boolean {
-    if (head >= str.length) {
+    if (str.hasIndex(head)) {
       return false;
     }
-    var code = str[head].codePoints.read();
-    return if (48 <= code && code <= 57) {
+    var code = str.codeAt(head);
+    return if (char'0' <= code && code <= char'9') {
       advance();
       true
     } else {
@@ -95,7 +103,7 @@ class Matcher {
   }
 
   public matchWord(): Boolean {
-    if (isCodePointWordChar(str[head].codePoints.read() orelse 0)) {
+    if (isCodePointWordChar(str.codeAt(head))) {
       advance();
       return true;
     } else {
@@ -104,28 +112,31 @@ class Matcher {
   }
 
   public matchWordBoundary(): Boolean {
-    return isCodePointWordChar(str[head-1].codePoints.read() orelse 0)
-        != isCodePointWordChar(str[head].codePoints.read() orelse 0);
+    return isCodePointWordChar(str.codeAt(str.prev(head)))
+        != isCodePointWordChar(str.codeAt(head));
   }
 
   public matchSpecial(regex: Special): Boolean {
     if (regex == Begin) {
-      return head == 0;
+      return head.compareTo(String.start) == 0;
     } else if (regex == Dot) { 
       return matchDot();
     } else if (regex == End) {
-      return head >= str.length;
+      if (str.hasIndex(head)) {
+        return false;
+      } else {
+        return true;
+      }
     } else if (regex == WordBoundary) { 
       return matchWordBoundary();
     } else if (regex == Digit) {
       return matchDigit();
     } else if(regex == Space) {
-      return head < str.length && (
-        str[head] == ' '
-        || str[head] == '\t'
-        || str[head] == '\r'
-        || str[head] == '\n'
-      );
+      let c = str.codeAt(head);
+      return c == char' '
+          || c == char'\t'
+          || c == char'\r'
+          || c == char'\n';
     } else if (regex == Word) {
       return matchWord();
     } else {
@@ -134,10 +145,10 @@ class Matcher {
   }
 
   public matchCodeRange(regex: CodeRange): Boolean {
-    if (head >= str.length) {
+    var n = str.codeAt(head);
+    if (n == 0) {
       return false;
     }
-    var n = str[head].codePoints.read();
     if (regex.min <= n && n <= regex.max) {
       advance();
       return true;
@@ -269,7 +280,7 @@ export class TemperRegexWalker extends TemperRegex {
   }
 
   public found(text: String): Boolean {
-    for (var i = 0; i < text.codePoints.length; i++) {
+    for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
@@ -281,7 +292,7 @@ export class TemperRegexWalker extends TemperRegex {
   }
   
   public find(text: String): Map<String, Group> | Bubble {
-    for (var i = 0; i < text.codePoints.length; i++) {
+    for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);

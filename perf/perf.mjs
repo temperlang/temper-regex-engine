@@ -3,10 +3,9 @@ import {TemperRegexDFA} from 'temper-regex-engine/graph';
 
 const init = new Date();
 
-const chr = (c) => String.fromCharCode(c);
 const clock = () => new Date() - init;
 
-const bench = new RegexBench(chr, clock);
+const bench = new RegexBench(clock);
 
 bench.addRegexDefaults();
 bench.addCheckDefaults();
