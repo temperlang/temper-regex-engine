@@ -12,14 +12,12 @@ export let regexToString(regex: RegexNode, chr: fn(Int): String): String {
     is CodeSet -> do {
       var ret = new ListBuilder<String>();
       for (var j = 0; j < regex.items.length; j++) {
-        var subBase = regex.items[j];
-        match (subBase) {
+        var subRegex = regex.items[j];
+        match (subRegex) {
           is CodeRange -> do {
-            var subRegex = subBase.as<CodeRange>();
             ret.add("${chr(subRegex.min)}-${chr(subRegex.max)}");
           }
           is CodePoints -> do {
-            var subRegex = subBase.as<CodePoints>();
             ret.add(subRegex.value);
           }
         }
