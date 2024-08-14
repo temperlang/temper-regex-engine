@@ -3,9 +3,10 @@ let { ... } = import("std/regex");
 let { TemperRegex } = import("./regex");
 
 let isCodePointWordChar(code: Int): Boolean {
-  (48 <= code && code <= 57) // this range is 0 to 9, like above
-         || (65 <= code && code <= 90) // this range is A to Z (uppercase)
-         || (97 <= code && code <= 122) // this range is a to z (lowercase)
+  (char'0' <= code && code <= char'9')
+  || (char'A' <= code && code <= char'Z')
+  || code == char'_'
+  || (char'a' <= code && code <= char'z')
 }
 
 class Matcher {
@@ -255,7 +256,7 @@ export class TemperRegexWalker extends TemperRegex {
 
   public found(text: String): Boolean {
     for (var i = String.start; i < text.end; i = text.next(i)) {
-      var m = new Matcher(text);
+      let m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
@@ -266,8 +267,9 @@ export class TemperRegexWalker extends TemperRegex {
   }
   
   public find(text: String): Map<String, Group> | Bubble {
+    // TODO Implied "full" group.
     for (var i = String.start; i < text.end; i = text.next(i)) {
-      var m = new Matcher(text);
+      let m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
@@ -275,5 +277,28 @@ export class TemperRegexWalker extends TemperRegex {
       }
     }
     bubble()
+  }
+
+  public split(text: String): List<String> {
+    let parts = new ListBuilder<String>();
+    let m = new Matcher(text);
+    let end = text.end;
+    while (true) {
+      let original = m.head;
+      var start = original;
+      var found = false;
+      for (; start < end; start = text.next(start)) {
+        m.setHead(start);
+        found = m.matchRegex(data);
+        if (found) {
+          break;
+        }
+      }
+      parts.add(text.substring(original, start));
+      if (!found) {
+        break;
+      }
+    }
+    parts.toList()
   }
 }
