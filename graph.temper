@@ -13,6 +13,19 @@ let chr(i: CodePoint): String {
   return String.fromCodePoint(i);
 }
 
+let slice(s: String, start: Int, end: Int): String {
+  var p = String.start;
+  for (var i = 0; i < start; i++) {
+    p = s.next(p);
+  }
+  let r = new ListBuilder<CodePoint>();
+  for (var i = start; i < end; i++) {
+    r.add(s.codeAt(p));
+    p = s.next(p);
+  }
+  return r.join("", chr);
+}
+
 class Next {
   public toState: State;
   public matcher: Matcher;
@@ -139,6 +152,38 @@ class CharCodeMatcher extends Matcher {
 
   public toString(): String {
     return "#${code.toString()}";
+  }
+}
+
+class StartGroupMatcher extends Matcher {
+  public name: String;
+
+  public constructor(str: String): Void {
+    name = str;
+  }
+
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "(?<${name}>";
+  }
+}
+
+class EndGroupMatcher extends Matcher {
+  public name: String;
+
+  public constructor(str: String): Void {
+    name = str;
+  }
+
+  public matches(str: List<CodePoint>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return ")";
   }
 }
 
@@ -349,6 +394,58 @@ class Engine {
     return false;
   }
 
+  public groups(str: String): Mapped<String, Group> | Bubble {
+    let groups = new MapBuilder<String, Pair<Int, Int>>();
+    var codePoints = str.split("").map(ord);
+    var stackStart = new StackStart();
+    var badNext = new Next(endState, epsilon);
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: Stack = new StackSlot(i, startState, stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        stack = stack.next;
+        if (state.id == endState.id) {
+          let ret = new MapBuilder<String, Group>();
+          let keys = groups.keys;
+          for (var i = 0; i < keys.length; i++) {
+            let key = keys[i];
+            let val = groups[key];
+            if (val.value < 0) {
+              continue;
+            }
+            ret[key] = new Group(key, slice(str, val.key, val.value), val.key);
+          }
+          ret["full"] = new Group("full", slice(str, i, index), i);
+          return ret;
+        }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          if (matcher == epsilon) {
+            stack = new StackSlot(index, toState, stack);
+          } else if (matcher.matches(codePoints, index)) {
+            match (matcher) {
+              is StartGroupMatcher -> do {
+                groups[matcher.name] = new Pair(index, -1);
+                stack = new StackSlot(index, toState, stack);
+              }
+              is EndGroupMatcher -> do {
+                groups[matcher.name] = new Pair(groups[matcher.name].key, index);
+                stack = new StackSlot(index, toState, stack);
+              }
+              else -> do {
+                stack = new StackSlot(index + 1, toState, stack);
+              }
+            }
+          }
+        }
+      }
+    }
+    bubble();
+  }
+
   public toString(): String {
     var count = 0;
     var inner = states.join("", fn(state: State): String {
@@ -408,7 +505,11 @@ export class TemperRegexNFA extends TemperRegex {
   public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
     match (regex) {
       is Capture -> do {
-        buildRegex(regex.item, input, output);
+        var mid1 = engine.newState();
+        var mid2 = engine.newState();
+        input.addNext(new StartGroupMatcher(regex.name), mid1);
+        buildRegex(regex.item, mid1, mid2);
+        mid2.addNext(new EndGroupMatcher(regex.name), output);
       }
       is CodePoints -> do {
         var split = regex.value.split("");
@@ -504,6 +605,10 @@ export class TemperRegexNFA extends TemperRegex {
 
   public found(str: String): Boolean {
     return engine.matches(str);
+  }
+
+  public find(text: String): Mapped<String, Group> | Bubble {
+    return engine.groups(text);
   }
 
   public toString(): String {

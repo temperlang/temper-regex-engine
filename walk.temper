@@ -291,13 +291,13 @@ export class TemperRegexWalker extends TemperRegex {
     return false;
   }
   
-  public find(text: String): Map<String, Group> | Bubble {
+  public find(text: String): Mapped<String, Group> | Bubble {
     for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
-        return m.groups.toMap();
+        return m.groups;
       }
     }
     bubble()

@@ -13,7 +13,7 @@ export class TemperRegexNative extends TemperRegex {
     return data.found(text);
   }
   
-  public find(text: String): Map<String, Group> | Bubble {
+  public find(text: String): Mapped<String, Group> | Bubble {
     return data.find(text);
   }
 }

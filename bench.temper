@@ -54,7 +54,7 @@ export class RegexBench {
     regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 10.0;
+    timePerRunInternal = 50.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -143,6 +143,10 @@ export class RegexBench {
     );
   }
 
+  public isFound(tcre: TemperRegex, check: String): Boolean {
+    return do { tcre.find(check); true } orelse false;
+  }
+
   public run(): Void {
     var runs = new ListBuilder<SingleResult>();
 
@@ -156,11 +160,11 @@ export class RegexBench {
         for (var k = 0; k < checks.length; k++) {
           var check = checks[k];
           var iters = 1;
-          var found = tcre.found(check);
+          var found = isFound(tcre, check);
           var beginTime = time();
           do {
             for (var l = 0; l < iters; l++) {
-              found = tcre.found(check);
+              found = isFound(tcre, check);
             }
             iters += iters;
           } while (time() - beginTime < timePerRunInternal);
