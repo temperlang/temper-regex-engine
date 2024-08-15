@@ -14,14 +14,12 @@ class Matcher {
   public head: StringIndex;
   public groupMatched: MapBuilder<String, Boolean>;
   public groups: MapBuilder<String, Group>;
-  public depth: Int;
 
   constructor(src: String): Void {
     str = src;
     head = String.start;
     groupMatched = new MapBuilder<String, Boolean>();
     groups = new MapBuilder<String, Group>();
-    depth = 0;
   }
 
   public advance(): Void {
@@ -60,6 +58,18 @@ class Matcher {
     true
   }
 
+  public matchCodePartPoints(regex: CodePoints): Boolean {
+    let c = str.codeAt(head);
+    let wanted = regex.value;
+    for (var i = String.start; i < wanted.end; i = wanted.next(i)) {
+      if (c == wanted.codeAt(i)) {
+        advance();
+        return true;
+      }
+    }
+    false
+  }
+
   public matchDot(): Boolean {
     return if (head < str.end) {
       advance();
@@ -74,7 +84,7 @@ class Matcher {
       return false;
     }
     var code = str.codeAt(head);
-    return if (48 <= code && code <= 57) {
+    return if (char'0' <= code && code <= char'9') {
       advance();
       true
     } else {
@@ -98,7 +108,7 @@ class Matcher {
 
   public matchSpecial(regex: Special): Boolean {
     if (regex == Begin) {
-      return head == 0;
+      return head == String.start;
     } else if (regex == Dot) { 
       return matchDot();
     } else if (regex == End) {
@@ -135,13 +145,18 @@ class Matcher {
     }
   }
 
+  public matchCodePart(regex: CodePart): Boolean {
+    match (regex) {
+      is CodePoints -> matchCodePartPoints(regex);
+      else -> matchRegex(regex);
+    }
+  }
+
   public matchCodeSet(regex: CodeSet): Boolean {
     var begin = head;
     if (regex.negated) {
       for (var i = 0; i < regex.items.length; i++) {
-        depth += 1;
-        var res = matchRegex(regex.items[i]);
-        depth -= 1;
+        var res = matchCodePart(regex.items[i]);
         if (res) {
           return false
         }
@@ -151,9 +166,7 @@ class Matcher {
       return true;
     } else {
       for (var i = 0; i < regex.items.length; i++) {
-        depth += 1;
-        var res = matchRegex(regex.items[i]);
-        depth -= 1;
+        var res = matchCodePart(regex.items[i]);
         if (res) {
           return true;
         }
