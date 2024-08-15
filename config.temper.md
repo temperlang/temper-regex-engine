@@ -6,6 +6,6 @@
     // import("./temper-regex-parser");
 
     import("./engines/nfa/nfa.temper");
-    import("./test.temper");
-    import("./bench.temper");
+    // import("./test.temper");
+    // import("./bench.temper");
 

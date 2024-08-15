@@ -20,6 +20,7 @@ export class TemperRegexNFA extends TemperRegex {
       is Capture -> do {
         var mid1 = engine.newState();
         var mid2 = engine.newState();
+        engine.baseGroups[regex.name] = new Group(regex.name, "", -1);
         input.addNext(new StartGroupMatcher(regex.name), mid1);
         buildRegex(regex.item, mid1, mid2);
         mid2.addNext(new EndGroupMatcher(regex.name), output);

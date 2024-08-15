@@ -2,30 +2,15 @@
 let {...} = import("std/regex");
 let {TemperRegexNFA} = import("./engines/nfa/nfa.temper");
 
-/*
-test() {
-  let catcher = /(a|b)+/.data;
+let catcher = /a+(?intro=b+)c((?option1=d)|(?alphaOption2=e))+/.data;
 
-  let nfa = new TemperRegexNFA(catcher);
-
-  assert(nfa.found("a"));
-  assert(nfa.found("b"));
-}
-*/
-
-let idStart = /a|b|c/.data;
-let idNumber = /1|2|3/.data;
-let word = new Sequence([
-  WordBoundary,
-  idStart,
-  idNumber,
-  WordBoundary,
-]);
-
-let nfa = new TemperRegexNFA(word);
-
-console.log(nfa.toString());
-
-let expected = "b2";
-let found = word.find("1a ${expected} c3")["full"].value;
-console.log("Found id: ${found}");
+// let replaced = catcher.replace<Result>("🌍aaabbceef") { (result);; ... }
+let replaced = new TemperRegexNFA(catcher).replace("🌍aaabbcee🌎abcd🌏") { (groups);;
+  // Can we compile-time convert callbacks to simple template as applicable?
+  let begin = groups["full"].codePointsBegin.toString();
+  "-${groups["option1"].value orelse ""}${groups["alphaOption2"].value orelse ""}${begin}-"
+};
+console.log("replaced: ${replaced}");
+// Also check a no-match case.
+let notReplaced = catcher.replace("nope") { (groups);; "hi" };
+console.log("not replaced: ${notReplaced}");

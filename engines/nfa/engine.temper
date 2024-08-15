@@ -10,24 +10,27 @@ export class Engine {
   public startState: State;
   public endState: State;
   public epsilon: EpsilonMatcher;
+  public baseGroups: MapBuilder<String, Group>;
 
   public constructor() {
     states = new ListBuilder<State>();
     startState = newState();
     endState = newState();
     epsilon = new EpsilonMatcher();
+    baseGroups = new MapBuilder<String, Group>();
   }
 
   public opt(): Engine {
     var cur = this;
     // cur = cur.optEpsilonEllison();
-    cur = cur.optDeadCode();
+    // cur = cur.optDeadCode();
     return cur;
   }
 
   public optDeadCode(): Engine {
     var unopt = this;
     var opt = new Engine();
+    opt.baseGroups = unopt.baseGroups;
     var map = new MapBuilder<Int, Int>();
 
     let visit(state: State): State {
@@ -60,6 +63,7 @@ export class Engine {
   public optEpsilonEllison(): Engine {
     var unopt = this;
     var opt = new Engine();
+    opt.baseGroups = unopt.baseGroups;
     var map = new MapBuilder<Int, Int>();
 
     let visit(state: State): State {
@@ -133,12 +137,12 @@ export class Engine {
     var badNext = new Next(endState, epsilon);
     var last = 0;
     let ret = new ListBuilder<String>();
-    let fulls = new ListBuilder<Group>();
     for (var i = 0; i < codePoints.length; i += 1) {
-      var stack: Stack = new StackSlot(i, startState, stackStart);
+      var stack: Stack = new StackSlot(i, startState, stackStart, []);
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
+        var sgroups = stack.groups;
         stack = stack.next;
         if (state.id == endState.id) {
           let cur = new ListBuilder<Int>();
@@ -147,11 +151,29 @@ export class Engine {
           }
           ret.add(cur.join("", chr));
           
-          let str = new ListBuilder<Int>();
-          for (var j = i; j < index; j++) {
-            str.add(codePoints.getOr(j, 0));
+          let groups = baseGroups.toMapBuilder();
+          if (!groups.has("full")) {
+            let str = new ListBuilder<Int>();
+            for (var j = i; j < index; j++) {
+              str.add(codePoints.getOr(j, 0));
+            }
+            groups["full"] = new Group("full", str.join("", chr), i);
           }
-          fulls.add(new Group("full", str.join("", chr), i));
+          let keys = pairs.keys;
+          for (var i = 0; i < keys.length; i++) {
+            let key = keys[i];
+            let val = pairs[key];
+            let str = new ListBuilder<Int>();
+            for (var j = val.key; j < val.value; j++) {
+              str.add(codePoints.getOr(j, 0));
+            }
+            for (var s = 0; s < sgroups.length; s++) {
+              if (key == sgroups.getOr(s, "")) {
+                groups[key] = new Group(key, str.join("", chr), val.key);
+              }
+            }
+          }
+          ret.add(replace(groups));
 
           i = index - 1;
           last = index;
@@ -165,13 +187,19 @@ export class Engine {
             match (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
+                stack = new StackSlot(index + matcher.width(), toState, stack, sgroups);
               }
               is EndGroupMatcher -> do {
                 pairs[matcher.name] = new Pair(pending[matcher.name], index);
+                let next = new ListBuilder<String>();
+                next.add(matcher.name);
+                next.addAll(sgroups);
+                stack = new StackSlot(index + matcher.width(), toState, stack, next);
               }
-              else -> do {}
+              else -> do {
+                stack = new StackSlot(index + matcher.width(), toState, stack, sgroups);
+              }
             }
-            stack = new StackSlot(index + matcher.width(), toState, stack);
           }
         }
       }
@@ -181,25 +209,7 @@ export class Engine {
       cur.add(codePoints.getOr(j, 0));
     }
     ret.add(cur.join("", chr));
-    let groups = new MapBuilder<String, Group>();
-    let keys = pairs.keys;
-    for (var i = 0; i < keys.length; i++) {
-      let key = keys[i];
-      let val = pairs[key];
-      let str = new ListBuilder<Int>();
-      for (var j = val.key; j < val.value; j++) {
-        str.add(codePoints.getOr(j, 0));
-      }
-      groups[key] = new Group(key, str.join("", chr), val.key);
-    }
-    let out = new ListBuilder<String>();
-    out.add(ret[0]);
-    for (var i = 1; i < ret.length; i++) {
-      groups["full"] = fulls[i-1];
-      out.add(replace(groups));
-      out.add(ret[i]);
-    }
-    return out.join("", idString);
+    return ret.join("", idString);
   }
 
   public split(str: String): Listed<String> {
@@ -279,9 +289,17 @@ export class Engine {
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
+        var sgroups = stack.groups;
         stack = stack.next;
         if (state.id == endState.id) {
-          let ret = new MapBuilder<String, Group>();
+          let groups = baseGroups.toMapBuilder();
+          if (!groups.has("full")) {
+            let str = new ListBuilder<Int>();
+            for (var j = i; j < index; j++) {
+              str.add(codePoints.getOr(j, 0));
+            }
+            groups["full"] = new Group("full", str.join("", chr), i);
+          }
           let keys = pairs.keys;
           for (var i = 0; i < keys.length; i++) {
             let key = keys[i];
@@ -290,16 +308,9 @@ export class Engine {
             for (var j = val.key; j < val.value; j++) {
               str.add(codePoints.getOr(j, 0));
             }
-            ret[key] = new Group(key, str.join("", chr), val.key);
+            groups[key] = new Group(key, str.join("", chr), val.key);
           }
-          if (!ret.has("full")) {
-            let str = new ListBuilder<Int>();
-            for (var j = i; j < index; j++) {
-              str.add(codePoints.getOr(j, 0));
-            }
-            ret["full"] = new Group("full", str.join("", chr), i);
-          }
-          return ret;
+          return groups;
         }
         var next = state.next;
         var len =  next.length;
@@ -309,13 +320,19 @@ export class Engine {
             match (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
+                stack = new StackSlot(index + matcher.width(), toState, stack, sgroups);
               }
               is EndGroupMatcher -> do {
                 pairs[matcher.name] = new Pair(pending[matcher.name], index);
+                let next = new ListBuilder<String>();
+                next.add(matcher.name);
+                next.addAll(sgroups);
+                stack = new StackSlot(index + matcher.width(), toState, stack, next);
               }
-              else -> do {}
+              else -> do {
+                stack = new StackSlot(index + matcher.width(), toState, stack, sgroups);
+              }
             }
-            stack = new StackSlot(index + matcher.width(), toState, stack);
           }
         }
       }
