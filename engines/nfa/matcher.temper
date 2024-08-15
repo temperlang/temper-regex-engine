@@ -1,0 +1,176 @@
+
+let { ord } = import("../../util.temper");
+
+export interface Matcher {
+  public matches(str: List<Int>, index: Int): Boolean;
+
+  public toString(): String;
+
+  public special(): Boolean {
+    return false;
+  }
+}
+
+export class BeginMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index == 0;
+  }
+
+  public toString(): String {
+    return "^";
+  }
+}
+
+export class WordBoundaryMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code1 = str.getOr(index-1, -1);
+    var code2 = str.getOr(index, -1);
+    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
+    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
+    return isWord1 != isWord2;
+  }
+}
+
+export class WordClassMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code = str.getOr(index, -1);
+    return (48 <= code && code <= 57) // this range is 0 to 9, like above
+      || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
+      || (97 <= code && code <= 122)  // this range is a to z (lowercase)
+  }
+
+  public toString(): String {
+    return "\\w";
+  }
+}
+
+export class SpaceClassMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    var code = str.getOr(index, -1);
+    return code == 9 || code == 10 || code == 11 || code == 13 || code == 32;
+  }
+
+  public toString(): String {
+    return "\\s";
+  }
+}
+
+export class EndMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index == str.length;
+  }
+
+  public toString(): String {
+    return "$";
+  }
+}
+
+export class AnyMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index != str.length;
+  }
+
+  public toString(): String {
+    return ".";
+  }
+}
+
+export class RangeMatcher extends Matcher {
+  public low: Int;
+  public high: Int;
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return low <= c && c <= high;
+  }
+
+  public toString(): String {
+    return "[\\x${low.toString()}-\\x${high.toString()}]";
+  }
+}
+
+export class CharCodeMatcher extends Matcher {
+  public code: Int;
+
+  public constructor(point: Int): Void {
+    code = point;
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return c == code;
+  }
+
+  public toString(): String {
+    return "#${code.toString()}";
+  }
+}
+
+export class StartGroupMatcher extends Matcher {
+  public name: String;
+
+  public constructor(str: String): Void {
+    name = str;
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "(?<${name}>";
+  }
+
+  public special(): Boolean {
+    return true;
+  }
+}
+
+export class EndGroupMatcher extends Matcher {
+  public name: String;
+
+  public constructor(str: String): Void {
+    name = str;
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return ")";
+  }
+
+  public special(): Boolean {
+    return true;
+  }
+}
+
+export class CharMatcher extends Matcher {
+  public char: String;
+  public code: Int;
+  
+  public constructor(str: String): Void {
+    char = str;
+    code = ord(str);
+  }
+
+  public matches(str: List<Int>, index: Int): Boolean {
+    var c = str.getOr(index, -1);
+    return c == code;
+  }
+
+  public toString(): String {
+    return char;
+  }
+}
+
+export class EpsilonMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return true;
+  }
+
+  public toString(): String {
+    return "ε";
+  }
+}

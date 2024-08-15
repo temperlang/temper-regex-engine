@@ -1,5 +1,5 @@
 
-local libgraph = require('temper-regex-engine/graph')
+local libgraph = require('temper-regex-engin./graph/graph')
 
 local libparse = require('temper-regex-parser')
 

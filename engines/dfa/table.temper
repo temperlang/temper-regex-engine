@@ -1,0 +1,133 @@
+
+let { TemperRegex } = import("../../regex.temper");
+let { ... } = import("../nfa/matcher.temper");
+
+export let toVec(ls: List<Int>, size: Int): DenseBitVector {
+  var vec = new DenseBitVector(0);
+  for (var i = 0; i < ls.length; i++) {
+    vec[ls[i]] = true;
+  }
+  return vec;
+}
+
+export let fromVec(vec: DenseBitVector, size: Int): List<Int> {
+  var key = new ListBuilder<Int>();
+  for (var i = 0; i < size; i++) {
+    if (vec[i]) {
+      key.add(i);
+    }
+  }
+  return key.toList();
+}
+
+export class TransitionTableEntry {
+  public key: DenseBitVector;
+  public val: List<DenseBitVector>;
+
+  public toMarkdownWith(nsyms: Int): String {
+    var keyStr = fromVec(key, nsyms).join(",", fn(id: Int): String {
+      return "q${id.toString()}";
+    });
+    var valStrs = val.join(" | ", fn(vec: DenseBitVector): String {
+      var vec = fromVec(vec, nsyms);
+      if (vec.length == 0) {
+        return "-";
+      } else {
+        return vec.join(",", fn(id: Int): String {
+          return "q${id.toString()}";
+        });
+      }
+    });
+    return "| ${keyStr} | ${valStrs} |"
+  }
+
+  public toDotWith(nsyms: Int): String {
+    var keyStr = fromVec(key, nsyms).join("", fn(id: Int): String {
+      return "q${id.toString()}";
+    });
+    var valStrs = val.join("", fn(vec: DenseBitVector): String {
+      var vec = fromVec(vec, nsyms);
+      if (vec.length == 0) {
+        return "<TD>-</TD>";
+      } else {
+        return "<TD>${vec.join(",", fn(id: Int): String {
+          return "q${id.toString()}";
+        })}</TD>";
+      }
+    });
+    return "<TR><TD>${keyStr}</TD>${valStrs}</TR>"
+  }
+}
+
+export class TransitionTable {
+  public nsyms: Int;
+  public table: ListBuilder<TransitionTableEntry>;
+
+  public constructor(size: Int) {
+    nsyms = size;
+    table = new ListBuilder<TransitionTableEntry>();
+  }
+
+  public has(key: DenseBitVector): Boolean {
+    return do { get(key); true } orelse false;
+  }
+
+  public get(key: DenseBitVector): TransitionTableEntry | Bubble {
+    outer: for (var i = 0; i < table.length; i++) {
+      var cur = table[i];
+      var ret = true;
+      for (var j = 0; j < nsyms; j++) {
+        if (key[j] != cur.key[j]) {
+          ret = false;
+          break;
+        }
+      }
+      if (ret) {
+        return cur;
+      }
+    }
+    return bubble();
+  }
+
+  public toMarkdownWith(map: MapBuilder<Int, Int>): String {
+    var l = map.toList();
+    var size = nsyms;
+    var inner = table.join("\n", fn(ent: TransitionTableEntry): String {
+      return ent.toMarkdownWith(size);
+    });
+    var header = new ListBuilder<String>();
+    header.add("state");
+    for (var i = 0; i < nsyms; i++) {
+      header.add("");
+    }
+    var ls = map.toList();
+    for (var i = 0; i < ls.length; i++) {
+      var ent = ls[i];
+      header[ent.value + 1] = "#${ent.key.toString()}";
+    }
+    var noop = fn(s: String): String{s}
+    var dash = fn(s: String): String{ "---" }
+    return "\n|${header.join("|", noop)}|\n|${header.join("|", dash)}|\n${inner}\n"
+  }
+
+  public toDotWith(map: MapBuilder<Int, Int>, color: String): String {
+    var l = map.toList();
+    var size = nsyms;
+    var inner = table.join("", fn(ent: TransitionTableEntry): String {
+      return ent.toDotWith(size);
+    });
+    var header = new ListBuilder<String>();
+    header.add("<TD>state</TD>");
+    for (var i = 0; i < nsyms; i++) {
+      header.add("");
+    }
+    var ls = map.toList();
+    for (var i = 0; i < ls.length; i++) {
+      var ent = ls[i];
+      header[ent.value + 1] = "<TD>#${ent.key.toString()}</TD>";
+    }
+    var noop = fn(s: String): String{s}
+    var dash = fn(s: String): String{ "---" }
+    return "<TABLE border=\"0\" cellspacing=\"5\" bgcolor=\"${color}\"><TR>${header.join("", noop)}</TR>${inner}</TABLE>"
+  }
+}

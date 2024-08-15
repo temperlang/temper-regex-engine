@@ -4,6 +4,6 @@ let { ... } = import("std/regex");
 export interface TemperRegex {
   public constructor(data: RegexNode);
   public found(text: String): Boolean;
-  public find(text: String): Mapped<String, Group> | Bubble;
+  public find(text: String): Mapped<String, Group>;
 }
 

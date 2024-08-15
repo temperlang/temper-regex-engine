@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 
-local graph = require('temper-regex-engine/graph')
+local graph = require('temper-regex-engin./graph/graph')
 local parser = require('temper-regex-engine/parser')
 
 local regex = parser.sub(arg[1])

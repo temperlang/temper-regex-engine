@@ -1,10 +1,14 @@
-let { RegexNode } = import('std/regex');
-let { TemperRegex } = import('./regex');
-let { TemperRegexNFA, TemperRegexDFA } = import('./graph');
-let { TemperRegexWalker } = import('./walk');
-let { TemperRegexNative } = import('./native');
-let { parse } = import('./temper-regex-parser');
-let { regexToString } = import('./tostring');
+let { RegexNode } = import("std/regex");
+
+let { parse } = import("./temper-regex-parser");
+
+let { TemperRegex } = import("./regex.temper");
+let { regexToString } = import("./util.temper");
+
+let { TemperRegexNFA } = import("./engines/nfa/nfa.temper");
+let { TemperRegexDFA } = import("./engines/dfa/dfa.temper");
+let { TemperRegexWalker } = import("./engines/walk.temper");
+let { TemperRegexNative } = import("./engines/native.temper");
 
 class Engine {
   public name: String;
@@ -54,7 +58,7 @@ export class RegexBench {
     regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 50.0;
+    timePerRunInternal = 10.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -72,20 +76,20 @@ export class RegexBench {
   }
 
   public addCheckDefaults(): Void {
-    checks.add(('hello'));
-    checks.add(('hi'));
-    checks.add(('helo'));
-    checks.add(('hullo'));
-    checks.add(('hulo'));
-    checks.add(('i am going to say hello'));
-    checks.add(('abcdefghijklmnopqrstuvwxyz'));
-    checks.add(('test'));
-    checks.add(('Hell, MI'));
-    checks.add(('hydrogen helium carbon nitrognen'));
+    checks.add("hello");
+    checks.add("hi");
+    checks.add("helo");
+    checks.add("hullo");
+    checks.add("hulo");
+    checks.add("i am going to say hello");
+    checks.add("abcdefghijklmnopqrstuvwxyz");
+    checks.add("test");
+    checks.add("Hell, MI");
+    checks.add("hydrogen helium carbon nitrognen");
     var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
-    checks.add((many_a));
-    checks.add((many_h));
+    checks.add(many_a);
+    checks.add(many_h);
   }
 
   public addEngineDefaults(): Void {
@@ -144,7 +148,7 @@ export class RegexBench {
   }
 
   public isFound(tcre: TemperRegex, check: String): Boolean {
-    return do { tcre.find(check); true } orelse false;
+    return tcre.find(check).has("full");
   }
 
   public run(): Void {

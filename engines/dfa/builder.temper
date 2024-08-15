@@ -1,0 +1,127 @@
+
+let {...} = import("std/regex");
+let { TemperRegex } = import("../../regex.temper");
+let { regexToString } = import("../../util.temper");
+
+export class RegexBuilderEdge {
+  public from: String;
+  public to: String;
+  public regex: RegexNode;
+}
+
+export class RegexBuilder {
+  public list: ListBuilder<RegexBuilderEdge>;
+
+  constructor(): Void {
+    list = new ListBuilder<RegexBuilderEdge>();
+  }
+
+  public has(from: String, to: String): Boolean {
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to && edge.from == from) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public find(from: String, to: String): RegexNode | Bubble {
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to && edge.from == from) {
+        return edge.regex;
+      }
+    }
+    return bubble();
+  }
+
+  public forEachWentFrom(to: String, cb: fn(RegexBuilderEdge): Void): Void {
+    var ls = new ListBuilder<RegexBuilderEdge>();
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.to == to && edge.from != to) {
+        ls.add(edge);
+      }
+    }
+    for (var i = 0; i < ls.length; i++) {
+      cb(ls[i]);
+    }
+  }
+
+  public forEachGoesTo(from: String, cb: fn(RegexBuilderEdge): Void): Void {
+    var ls = new ListBuilder<RegexBuilderEdge>();
+    for (var i = 0; i < list.length; i++) {
+      var edge = list[i];
+      if (edge.from == from && edge.to != from) {
+        ls.add(edge);
+      }
+    }
+    for (var i = 0; i < ls.length; i++) {
+      cb(ls[i]);
+    }
+  }
+
+  public simplify(node: String): Void {
+    var me = this;
+    if (has(node, node)) {
+      var self = find(node, node);
+      var r1 = regexToString(self);
+      me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
+        var r0 = regexToString(wentFrom.regex);
+        me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
+          var r2 = regexToString(goesTo.regex);
+          if (r1 == r0) {
+            if (r1 == r2) {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+            } else {
+              me.add(wentFrom.from, goesTo.to, new Sequence([new Repeat(self, 1, null, false), goesTo.regex]));
+            }
+          } else {
+            if (r1 == r2) {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+            } else {
+              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
+            }
+          }
+        });
+      });
+    } else {
+      me.forEachWentFrom(node, fn(wentFrom: RegexBuilderEdge): Void {
+        me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
+          me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, goesTo.regex]));
+        });
+      });
+    }
+  }
+
+  public add(from: String, to: String, regex: RegexNode): Void {
+    list.add(new RegexBuilderEdge(from, to, regex));
+  }
+
+  public dumpInternal(): String {
+    return list.join("\n", fn(cur: RegexBuilderEdge): String {
+      return "${cur.from} -> /${regexToString(cur.regex)}/ -> ${cur.to}";
+    });
+  }
+
+  public toRegexList(): List<RegexNode> {
+    var done = new MapBuilder<String, Boolean>();
+    done["#begin"] = true;
+    for (var j = 0; j < list.length; j++) {
+      var cur = list[j];
+      if (!(done[cur.from] orelse false)) {
+        done[cur.from] = true;
+        simplify(cur.from);
+      }
+    }
+    var ret = new ListBuilder<RegexNode>();
+    for (var j = 0; j < list.length; j++) {
+      var cur = list[j];
+      if (cur.from == "#begin" && cur.to == "#end") {
+        ret.add(cur.regex);
+      }
+    }
+    return ret.toList();
+  }
+}

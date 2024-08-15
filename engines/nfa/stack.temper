@@ -1,0 +1,32 @@
+
+let { State } = import("./state.temper");
+
+export interface Stack {
+  public index: Int;
+  public state: State;
+  public get next(): Stack;
+}
+
+export class StackStart extends Stack {
+  public index: Int;
+  public state: State;
+
+  public constructor(): Void {
+    index = -1;
+    state = new State(-1);
+  }
+  
+  public get next(): Stack {
+    return this;
+  }
+}
+
+export class StackSlot extends Stack {
+  public index: Int;
+  public state: State;
+  public slot: Stack;
+
+  public get next(): Stack {
+    return slot;
+  }
+}

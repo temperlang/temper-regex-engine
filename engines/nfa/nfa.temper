@@ -1,0 +1,129 @@
+
+let {...} = import("std/regex");
+let { TemperRegex } = import("../../regex.temper");
+let { Engine } = import("./engine.temper");
+let { State } = import("./state.temper");
+let { ... } = import("./matcher.temper");
+
+export class TemperRegexNFA extends TemperRegex {
+  public engine: Engine;
+  
+  public constructor(regex: RegexNode): Void {
+    engine = new Engine();
+    buildRegex(regex, engine.startState, engine.endState);
+    engine = engine.opt();
+  }
+
+  public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
+    match (regex) {
+      is Capture -> do {
+        var mid1 = engine.newState();
+        var mid2 = engine.newState();
+        input.addNext(new StartGroupMatcher(regex.name), mid1);
+        buildRegex(regex.item, mid1, mid2);
+        mid2.addNext(new EndGroupMatcher(regex.name), output);
+      }
+      is CodePoints -> do {
+        var split = regex.value.split("");
+        var lastState = input;
+        for (var i = 0; i < split.length ; i++) {
+          if (i == split.length - 1) {
+            lastState.addNext(new CharMatcher(split[i]), output);
+          } else {
+            var curState = engine.newState();
+            lastState.addNext(new CharMatcher(split[i]), curState);
+            lastState = curState;
+          }
+        }
+      }
+      is CodeSet -> do {
+        for (var j = 0; j < regex.items.length; j++) {
+          var subRegex = regex.items[j];
+          match (subRegex) {
+            is CodeRange -> do {
+              input.addNext(new RangeMatcher(subRegex.min, subRegex.max), output);
+            }
+            is CodePoints -> do {
+              var split = subRegex.value.split("");
+              for (var i = 0; i < split.length ; i++) {
+                input.addNext(new CharMatcher(split[i]), output);
+              }
+            }
+          }
+        }
+      }
+      is Or -> do {
+        for (var i = 0; i < regex.items.length; i++) {
+          buildRegex(regex.items[i], input, output)
+        }
+      }
+      is Repeat -> do {
+        var lastState = input;
+        for (var i = 0; i < regex.min; i++) {
+          var curState = engine.newState();
+          buildRegex(regex.item, lastState, curState);
+          lastState = curState;
+        }
+        if (regex.max != null) {
+          var max = regex.max.as<Int>();
+          for (var i = regex.min; i < max; i++) {
+            var curState = engine.newState();
+            buildRegex(regex.item, lastState, curState);
+            lastState.addNext(engine.epsilon, output);
+            lastState = curState;
+          }
+          lastState.addNext(engine.epsilon, output);
+        } else {
+          buildRegex(regex.item, lastState, lastState);
+          lastState.addNext(engine.epsilon, output);
+        }
+      }
+      is Sequence -> do {
+        var nextState = output; 
+        for (var j = regex.items.length - 1; j >= 0; j--) {
+          var curState = if (j == 0) {
+            input
+          } else {
+            engine.newState()
+          };
+          buildRegex(regex.items[j], curState, nextState);
+          nextState = curState;
+        }
+        if (regex.items.length == 0) {
+          input.addNext(engine.epsilon, nextState);
+        }
+      }
+      is Special -> do {
+        if (regex == Begin) {
+          input.addNext(new BeginMatcher(), output);
+        } else if (regex == Dot) { 
+          input.addNext(new AnyMatcher(), output);
+        } else if (regex == End) {
+          input.addNext(new EndMatcher(), output);
+        } else if (regex == WordBoundary) { 
+          input.addNext(new WordBoundaryMatcher(), output);
+        } else if (regex == Digit) {
+          input.addNext(new RangeMatcher(48, 57), output);
+        } else if(regex == Space) {
+          input.addNext(new SpaceClassMatcher(), output);
+        } else if (regex == Word) {
+          input.addNext(new WordClassMatcher(), output);
+        } else {
+          bubble();
+        }
+      }
+    }
+  }
+
+  public found(str: String): Boolean {
+    return engine.matches(str);
+  }
+
+  public find(text: String): Mapped<String, Group> {
+    return engine.groups(text);
+  }
+
+  public toString(): String {
+    return engine.toString();
+  }
+}

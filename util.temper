@@ -119,3 +119,24 @@ export let regexToString(base: RegexNode): String {
     else -> return bubble();
   }
 }
+
+export let ord(s: String): Int {
+  return s.codeAt(String.start);
+}
+
+export let chr(i: Int): String {
+  return String.fromCodePoint(i);
+}
+
+export let slice(s: String, start: Int, end: Int): String {
+  var p = String.start;
+  for (var i = 0; i < start; i++) {
+    p = s.next(p);
+  }
+  let r = new ListBuilder<Int>();
+  for (var i = start; i < end; i++) {
+    r.add(s.codeAt(p));
+    p = s.next(p);
+  }
+  return r.join("", chr);
+}

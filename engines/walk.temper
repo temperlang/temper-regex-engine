@@ -1,6 +1,6 @@
 
 let { ... } = import("std/regex");
-let { TemperRegex } = import("./regex");
+let { TemperRegex } = import("../regex");
 
 let isCodePointWordChar(code: Int): Boolean {
   (48 <= code && code <= 57) // this range is 0 to 9, like above
@@ -8,7 +8,7 @@ let isCodePointWordChar(code: Int): Boolean {
          || (97 <= code && code <= 122) // this range is a to z (lowercase)
 }
 
-class Matcher {
+export class Matcher {
   public str: String;
   public head: StringIndex;
   public groups: MapBuilder<String, Group>;
@@ -291,7 +291,7 @@ export class TemperRegexWalker extends TemperRegex {
     return false;
   }
   
-  public find(text: String): Mapped<String, Group> | Bubble {
+  public find(text: String): Mapped<String, Group> {
     for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
@@ -300,6 +300,6 @@ export class TemperRegexWalker extends TemperRegex {
         return m.groups;
       }
     }
-    bubble()
+    return new Map<String, Group>([]);
   }
 }
