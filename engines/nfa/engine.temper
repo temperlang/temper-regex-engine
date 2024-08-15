@@ -125,6 +125,83 @@ export class Engine {
     return ret;
   }
 
+  public replace(str: String, replace: fn(Mapped<String, Group>): String): String {
+    let pairs = new MapBuilder<String, Pair<Int, Int>>();
+    let pending = new MapBuilder<String, Int>();
+    var codePoints = str.split("").map(ord);
+    var stackStart = new StackStart();
+    var badNext = new Next(endState, epsilon);
+    var last = 0;
+    let ret = new ListBuilder<String>();
+    let fulls = new ListBuilder<Group>();
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: Stack = new StackSlot(i, startState, stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        stack = stack.next;
+        if (state.id == endState.id) {
+          let cur = new ListBuilder<Int>();
+          for (var j = last; j < i; j++) {
+            cur.add(codePoints.getOr(j, 0));
+          }
+          ret.add(cur.join("", chr));
+          
+          let str = new ListBuilder<Int>();
+          for (var j = i; j < index; j++) {
+            str.add(codePoints.getOr(j, 0));
+          }
+          fulls.add(new Group("full", str.join("", chr), i));
+
+          i = index - 1;
+          last = index;
+          break;
+        }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          if (matcher.matches(codePoints, index)) {
+            match (matcher) {
+              is StartGroupMatcher -> do {
+                pending[matcher.name] = index;
+              }
+              is EndGroupMatcher -> do {
+                pairs[matcher.name] = new Pair(pending[matcher.name], index);
+              }
+              else -> do {}
+            }
+            stack = new StackSlot(index + matcher.width(), toState, stack);
+          }
+        }
+      }
+    }
+    let cur = new ListBuilder<Int>();
+    for (var j = last; j < codePoints.length; j++) {
+      cur.add(codePoints.getOr(j, 0));
+    }
+    ret.add(cur.join("", chr));
+    let groups = new MapBuilder<String, Group>();
+    let keys = pairs.keys;
+    for (var i = 0; i < keys.length; i++) {
+      let key = keys[i];
+      let val = pairs[key];
+      let str = new ListBuilder<Int>();
+      for (var j = val.key; j < val.value; j++) {
+        str.add(codePoints.getOr(j, 0));
+      }
+      groups[key] = new Group(key, str.join("", chr), val.key);
+    }
+    let out = new ListBuilder<String>();
+    out.add(ret[0]);
+    for (var i = 1; i < ret.length; i++) {
+      groups["full"] = fulls[i-1];
+      out.add(replace(groups));
+      out.add(ret[i]);
+    }
+    return out.join("", idString);
+  }
+
   public split(str: String): Listed<String> {
     var codePoints = str.split("").map(ord);
     var stackStart = new StackStart();
@@ -192,7 +269,7 @@ export class Engine {
   }
 
   public find(str: String): Mapped<String, Group> {
-    let groups = new MapBuilder<String, Pair<Int, Int>>();
+    let pairs = new MapBuilder<String, Pair<Int, Int>>();
     let pending = new MapBuilder<String, Int>();
     var codePoints = str.split("").map(ord);
     var stackStart = new StackStart();
@@ -205,24 +282,21 @@ export class Engine {
         stack = stack.next;
         if (state.id == endState.id) {
           let ret = new MapBuilder<String, Group>();
-          let keys = groups.keys;
+          let keys = pairs.keys;
           for (var i = 0; i < keys.length; i++) {
             let key = keys[i];
-            let val = groups[key];
-            if (val.value < 0) {
-              continue;
-            }
+            let val = pairs[key];
             let str = new ListBuilder<Int>();
             for (var j = val.key; j < val.value; j++) {
               str.add(codePoints.getOr(j, 0));
             }
             ret[key] = new Group(key, str.join("", chr), val.key);
           }
-          let str = new ListBuilder<Int>();
-          for (var j = i; j < index; j++) {
-            str.add(codePoints.getOr(j, 0));
-          }
           if (!ret.has("full")) {
+            let str = new ListBuilder<Int>();
+            for (var j = i; j < index; j++) {
+              str.add(codePoints.getOr(j, 0));
+            }
             ret["full"] = new Group("full", str.join("", chr), i);
           }
           return ret;
@@ -237,7 +311,7 @@ export class Engine {
                 pending[matcher.name] = index;
               }
               is EndGroupMatcher -> do {
-                groups[matcher.name] = new Pair(pending[matcher.name], index);
+                pairs[matcher.name] = new Pair(pending[matcher.name], index);
               }
               else -> do {}
             }

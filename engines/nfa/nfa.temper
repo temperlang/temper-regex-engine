@@ -134,12 +134,16 @@ export class TemperRegexNFA extends TemperRegex {
     }
   }
 
-  public split(str: String): Listed<String> {
-    return engine.split(str);
+  public replace(text: String, format: fn(Mapped<String, Group>): String): String {
+    return engine.replace(text, format);
   }
 
-  public found(str: String): Boolean {
-    return engine.found(str);
+  public split(text: String): Listed<String> {
+    return engine.split(text);
+  }
+
+  public found(text: String): Boolean {
+    return engine.found(text);
   }
 
   public find(text: String): Mapped<String, Group> {

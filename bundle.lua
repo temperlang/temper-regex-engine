@@ -43,18 +43,21 @@ package.preload["temper-regex-engine/regex"] = function()
   Space = temper.import('std/regex', 'Space');
   Word = temper.import('std/regex', 'Word');
   TemperRegex = temper.type('TemperRegex');
-  TemperRegex.constructor = function(this__0, data__33)
+  TemperRegex.constructor = function(this__0, data__35)
     temper.virtual();
     return nil;
   end;
-  TemperRegex.methods.split = function(this__1, text__36, replace__37)
-    return__5 = temper.virtual();
-  end;
-  TemperRegex.methods.found = function(this__2, text__40)
+  TemperRegex.methods.replace = function(this__1, text__38, format__39)
     return__6 = temper.virtual();
   end;
-  TemperRegex.methods.find = function(this__3, text__43)
+  TemperRegex.methods.split = function(this__2, text__42)
     return__7 = temper.virtual();
+  end;
+  TemperRegex.methods.found = function(this__3, text__45)
+    return__8 = temper.virtual();
+  end;
+  TemperRegex.methods.find = function(this__4, text__48)
+    return__9 = temper.virtual();
   end;
   exports = {};
   exports.TemperRegex = TemperRegex;
@@ -115,12 +118,12 @@ package.preload["temper-regex-engine/bench"] = function()
   end;
   EngineResult__8 = temper.type('EngineResult__8');
   EngineResult__8.methods.toString = function(this__9)
-    local t_434, t_435, t_436, t_437;
-    t_434 = this__9.engine__86;
-    t_435 = temper.float64_toint(temper.mul(this__9.score__87, 100.0));
-    t_436 = temper.int_tofloat64(t_435);
-    t_437 = temper.fdiv(t_436, 100.0);
-    return temper.concat(t_434, ': ', temper.float64_tostring(t_437));
+    local t_453, t_454, t_455, t_456;
+    t_453 = this__9.engine__86;
+    t_454 = temper.float64_toint(temper.mul(this__9.score__87, 100.0));
+    t_455 = temper.int_tofloat64(t_454);
+    t_456 = temper.fdiv(t_455, 100.0);
+    return temper.concat(t_453, ': ', temper.float64_tostring(t_456));
   end;
   EngineResult__8.constructor = function(this__32, engine__91, score__92)
     this__32.engine__86 = engine__91;
@@ -135,14 +138,14 @@ package.preload["temper-regex-engine/bench"] = function()
   end;
   RegexBench = temper.type('RegexBench');
   RegexBench.constructor = function(this__10, getTime__101)
-    local t_438, t_439, t_440, fn__540, fn__539;
+    local t_457, t_458, t_459, fn__540, fn__539;
     this__10.time__93 = getTime__101;
-    t_438 = temper.listbuilder_constructor();
-    this__10.engines__94 = t_438;
-    t_439 = temper.listbuilder_constructor();
-    this__10.checks__95 = t_439;
-    t_440 = temper.listbuilder_constructor();
-    this__10.regex__96 = t_440;
+    t_457 = temper.listbuilder_constructor();
+    this__10.engines__94 = t_457;
+    t_458 = temper.listbuilder_constructor();
+    this__10.checks__95 = t_458;
+    t_459 = temper.listbuilder_constructor();
+    this__10.regex__96 = t_459;
     fn__540 = function(r__103)
       return nil;
     end;
@@ -198,9 +201,9 @@ package.preload["temper-regex-engine/bench"] = function()
     return nil;
   end;
   RegexBench.methods.addRegexStr = function(this__17, str__126)
-    local t_441;
-    t_441 = parse(str__126);
-    this__17:addRegex(t_441);
+    local t_460;
+    t_460 = parse(str__126);
+    this__17:addRegex(t_460);
     return nil;
   end;
   RegexBench.methods.addRegex = function(this__18, re__129)
@@ -243,51 +246,51 @@ package.preload["temper-regex-engine/bench"] = function()
     return temper.mapped_has(tcre__148:find(check__149), 'full');
   end;
   RegexBench.methods.run = function(this__24)
-    local t_442, t_443, t_444, t_445, t_446, t_447, t_448, t_449, t_450, t_451, t_452, t_453, t_454, runs__153, i__154;
+    local t_461, t_462, t_463, t_464, t_465, t_466, t_467, t_468, t_469, t_470, t_471, t_472, t_473, runs__153, i__154;
     runs__153 = temper.listbuilder_constructor();
     i__154 = 0.0;
     while true do
       local engine__155, count__156, total__157, j__158;
-      t_442 = temper.listbuilder_length(this__24.engines__94);
-      if not (i__154 < t_442) then
+      t_461 = temper.listbuilder_length(this__24.engines__94);
+      if not (i__154 < t_461) then
         break;
       else
       end
-      t_448 = temper.listed_get(this__24.engines__94, i__154);
-      engine__155 = t_448;
+      t_467 = temper.listed_get(this__24.engines__94, i__154);
+      engine__155 = t_467;
       count__156 = 0.0;
       total__157 = 0.0;
       j__158 = 0.0;
       while true do
         local re__159, tcre__160, k__161;
-        t_443 = temper.listbuilder_length(this__24.regex__96);
-        if not (j__158 < t_443) then
+        t_462 = temper.listbuilder_length(this__24.regex__96);
+        if not (j__158 < t_462) then
           break;
         else
         end
-        t_449 = temper.listed_get(this__24.regex__96, j__158);
-        re__159 = t_449;
+        t_468 = temper.listed_get(this__24.regex__96, j__158);
+        re__159 = t_468;
         tcre__160 = engine__155:invoke(re__159);
         k__161 = 0.0;
         while true do
           local check__162, iters__163, found__164, beginTime__165, endTime__167, ms__168, score__169, thisRun__170;
-          t_444 = temper.listbuilder_length(this__24.checks__95);
-          if not (k__161 < t_444) then
+          t_463 = temper.listbuilder_length(this__24.checks__95);
+          if not (k__161 < t_463) then
             break;
           else
           end
-          t_450 = temper.listed_get(this__24.checks__95, k__161);
-          check__162 = t_450;
+          t_469 = temper.listed_get(this__24.checks__95, k__161);
+          check__162 = t_469;
           iters__163 = 1.0;
-          t_445 = this__24:isFound(tcre__160, check__162);
-          found__164 = t_445;
+          t_464 = this__24:isFound(tcre__160, check__162);
+          found__164 = t_464;
           beginTime__165 = this__24.time__93();
           while true do
             local l__166;
             l__166 = 0.0;
             while (l__166 < iters__163) do
-              t_446 = this__24:isFound(tcre__160, check__162);
-              found__164 = t_446;
+              t_465 = this__24:isFound(tcre__160, check__162);
+              found__164 = t_465;
               l__166 = (l__166 + 1.0);
             end
             iters__163 = (iters__163 + iters__163);
@@ -298,9 +301,9 @@ package.preload["temper-regex-engine/bench"] = function()
           end
           endTime__167 = this__24.time__93();
           ms__168 = temper.sub(endTime__167, beginTime__165);
-          t_451 = temper.int_tofloat64(iters__163);
-          t_452 = temper.fdiv(t_451, ms__168);
-          score__169 = t_452;
+          t_470 = temper.int_tofloat64(iters__163);
+          t_471 = temper.fdiv(t_470, ms__168);
+          score__169 = t_471;
           count__156 = temper.add(count__156, 1.0);
           total__157 = temper.add(total__157, score__169);
           thisRun__170 = SingleResult(engine__155.name, check__162, regexToString(re__159), found__164, score__169);
@@ -310,10 +313,10 @@ package.preload["temper-regex-engine/bench"] = function()
         end
         j__158 = (j__158 + 1.0);
       end
-      t_454 = this__24.onEngineResultCallback__98;
-      t_447 = engine__155.name;
-      t_453 = temper.fdiv(total__157, count__156);
-      t_454(EngineResult__8(t_447, t_453));
+      t_473 = this__24.onEngineResultCallback__98;
+      t_466 = engine__155.name;
+      t_472 = temper.fdiv(total__157, count__156);
+      t_473(EngineResult__8(t_466, t_472));
       i__154 = (i__154 + 1.0);
     end
     temper.listbuilder_tolist(runs__153);
@@ -327,7 +330,7 @@ package.preload["temper-regex-engine/bench"] = function()
 end
 package.preload["temper-regex-engine/test"] = function()
   local temper = require('temper-core');
-  local RegexNode, Capture, CodePart, Special, SpecialSet, CodeRange, ItemizedRegex, CodeSet, Repeat, entire, oneOrMore, optional, Group, Regex, Begin, Dot, End, Digit, Space, Word, CodePoints, Or, Sequence, WordBoundary, TemperRegexNFA, t_455, idStart__25, idNumber__26, word__27, nfa__28, t_456, t_457, found__30, exports;
+  local RegexNode, Capture, CodePart, Special, SpecialSet, CodeRange, ItemizedRegex, CodeSet, Repeat, entire, oneOrMore, optional, Group, Regex, Begin, Dot, End, Digit, Space, Word, CodePoints, Or, Sequence, WordBoundary, TemperRegexNFA, t_474, idStart__25, idNumber__26, word__27, nfa__28, t_475, t_476, found__30, exports;
   RegexNode = temper.import('std/regex', 'RegexNode');
   Capture = temper.import('std/regex', 'Capture');
   CodePart = temper.import('std/regex', 'CodePart');
@@ -353,17 +356,17 @@ package.preload["temper-regex-engine/test"] = function()
   Sequence = temper.import('std/regex', 'Sequence');
   WordBoundary = temper.import('std/regex', 'WordBoundary');
   TemperRegexNFA = temper.import('temper-regex-engine/engines/nfa/nfa', 'TemperRegexNFA');
-  t_455 = 0.0;
+  t_474 = 0.0;
   idStart__25 = (Or(temper.listof(CodePoints('a'), CodePoints('b'), CodePoints('c'))):compiled()).data;
   idNumber__26 = (Or(temper.listof(CodePoints('1'), CodePoints('2'), CodePoints('3'))):compiled()).data;
   word__27 = Sequence(temper.listof(WordBoundary, idStart__25, idNumber__26, WordBoundary));
   nfa__28 = TemperRegexNFA(word__27);
   temper.log(nfa__28:toString());
-  t_456 = nil;
-  t_456 = word__27:find('1a b2 c3');
-  t_457 = nil;
-  t_457 = temper.mapped_get(t_456, 'full');
-  found__30 = t_457.value;
+  t_475 = nil;
+  t_475 = word__27:find('1a b2 c3');
+  t_476 = nil;
+  t_476 = temper.mapped_get(t_475, 'full');
+  found__30 = t_476.value;
   temper.log(temper.concat('Found id: ', found__30));
   exports = {};
   return exports;
@@ -1286,25 +1289,25 @@ package.preload["temper-regex-engine/engines/patterns"] = function()
     return nil;
   end;
   TemperRegexPatterns.methods.found = function(this__2, str__13)
-    local return__4, t_258, t_259, t_260, i__15;
-    ::continue_31::i__15 = 0.0;
+    local return__4, t_277, t_278, t_279, i__15;
+    ::continue_29::i__15 = 0.0;
     while true do
-      t_258 = temper.list_length(this__2.tries__6);
-      if not (i__15 < t_258) then
+      t_277 = temper.list_length(this__2.tries__6);
+      if not (i__15 < t_277) then
         break;
       else
       end
-      t_260 = this__2.check__7;
-      t_259 = temper.list_get(this__2.tries__6, i__15);
-      if t_260(str__13, t_259) then
+      t_279 = this__2.check__7;
+      t_278 = temper.list_get(this__2.tries__6, i__15);
+      if t_279(str__13, t_278) then
         return__4 = true;
-        goto break_30;
+        goto break_28;
       else
       end
       i__15 = (i__15 + 1.0);
     end
     return__4 = false;
-    ::break_30::return return__4;
+    ::break_28::return return__4;
   end;
   TemperRegexPatterns.get.tries = function(this__18)
     return this__18.tries__6;
@@ -1366,513 +1369,645 @@ package.preload["temper-regex-engine/engines/nfa/engine"] = function()
   CharCodeMatcher = temper.import('temper-regex-engine/engines/nfa/matcher', 'CharCodeMatcher');
   CharMatcher = temper.import('temper-regex-engine/engines/nfa/matcher', 'CharMatcher');
   Engine = temper.type('Engine');
-  Engine.constructor = function(this__22)
+  Engine.constructor = function(this__29)
     local t_111, t_112, t_113, t_114;
     t_111 = temper.listbuilder_constructor();
-    this__22.states__96 = t_111;
-    t_112 = this__22:newState();
-    this__22.startState__97 = t_112;
-    t_113 = this__22:newState();
-    this__22.endState__98 = t_113;
+    this__29.states__105 = t_111;
+    t_112 = this__29:newState();
+    this__29.startState__106 = t_112;
+    t_113 = this__29:newState();
+    this__29.endState__107 = t_113;
     t_114 = EpsilonMatcher();
-    this__22.epsilon__99 = t_114;
+    this__29.epsilon__108 = t_114;
     return nil;
   end;
-  Engine.methods.opt = function(this__23)
-    local cur__104, t_115;
-    cur__104 = this__23;
-    t_115 = cur__104:optDeadCode();
-    cur__104 = t_115;
-    return cur__104;
+  Engine.methods.opt = function(this__30)
+    local cur__113, t_115;
+    cur__113 = this__30;
+    t_115 = cur__113:optDeadCode();
+    cur__113 = t_115;
+    return cur__113;
   end;
-  Engine.methods.optDeadCode = function(this__24)
-    local unopt__108, opt__109, map__110, visit__107;
-    unopt__108 = this__24;
-    opt__109 = Engine();
-    map__110 = temper.mapbuilder_constructor();
-    visit__107 = function(state__111)
-      local return__35, t_116, t_117, t_118, t_119, t_120, t_121, t_122, t_123, t_124, t_125, t_126, t_127, t_128, t_129, t_130, optId__113, local_131, local_132, local_133, outState__114, i__115;
+  Engine.methods.optDeadCode = function(this__31)
+    local unopt__117, opt__118, map__119, visit__116;
+    unopt__117 = this__31;
+    opt__118 = Engine();
+    map__119 = temper.mapbuilder_constructor();
+    visit__116 = function(state__120)
+      local return__43, t_116, t_117, t_118, t_119, t_120, t_121, t_122, t_123, t_124, t_125, t_126, t_127, t_128, t_129, t_130, optId__122, local_131, local_132, local_133, outState__123, i__124;
       ::continue_19::local_131, local_132, local_133 = temper.pcall(function()
-        t_116 = state__111.id;
-        t_129 = temper.mapped_get(map__110, t_116);
-        optId__113 = t_129;
+        t_116 = state__120.id;
+        t_129 = temper.mapped_get(map__119, t_116);
+        optId__122 = t_129;
       end);
       if local_131 then
       else
-        optId__113 = -1.0;
+        optId__122 = -1.0;
       end
-      if (optId__113 >= 0.0) then
-        t_117 = opt__109.states;
-        return__35 = temper.listed_get(t_117, optId__113);
+      if (optId__122 >= 0.0) then
+        t_117 = opt__118.states;
+        return__43 = temper.listed_get(t_117, optId__122);
         goto break_18;
       else
       end
-      t_118 = unopt__108.startState;
-      if temper.generic_eq(state__111, t_118) then
-        t_119 = opt__109.startState;
-        outState__114 = t_119;
+      t_118 = unopt__117.startState;
+      if temper.generic_eq(state__120, t_118) then
+        t_119 = opt__118.startState;
+        outState__123 = t_119;
       else
-        t_120 = unopt__108.endState;
-        if temper.generic_eq(state__111, t_120) then
-          t_121 = opt__109.endState;
-          outState__114 = t_121;
+        t_120 = unopt__117.endState;
+        if temper.generic_eq(state__120, t_120) then
+          t_121 = opt__118.endState;
+          outState__123 = t_121;
         else
-          t_122 = opt__109:newState();
-          outState__114 = t_122;
+          t_122 = opt__118:newState();
+          outState__123 = t_122;
         end
       end
-      t_123 = state__111.id;
-      t_124 = outState__114.id;
-      temper.mapbuilder_set(map__110, t_123, t_124);
-      i__115 = 0.0;
+      t_123 = state__120.id;
+      t_124 = outState__123.id;
+      temper.mapbuilder_set(map__119, t_123, t_124);
+      i__124 = 0.0;
       while true do
-        local next__116;
-        t_125 = temper.listbuilder_length(state__111.next);
-        if not (i__115 < t_125) then
+        local next__125;
+        t_125 = temper.listbuilder_length(state__120.next);
+        if not (i__124 < t_125) then
           break;
         else
         end
-        t_130 = temper.listed_get(state__111.next, i__115);
-        next__116 = t_130;
-        t_126 = next__116.matcher;
-        t_127 = next__116.toState;
-        t_128 = visit__107(t_127);
-        outState__114:addNext(t_126, t_128);
-        i__115 = (i__115 + 1.0);
+        t_130 = temper.listed_get(state__120.next, i__124);
+        next__125 = t_130;
+        t_126 = next__125.matcher;
+        t_127 = next__125.toState;
+        t_128 = visit__116(t_127);
+        outState__123:addNext(t_126, t_128);
+        i__124 = (i__124 + 1.0);
       end
-      return__35 = outState__114;
-      ::break_18::return return__35;
+      return__43 = outState__123;
+      ::break_18::return return__43;
     end;
-    visit__107(this__24.startState__97);
-    return opt__109;
+    visit__116(this__31.startState__106);
+    return opt__118;
   end;
-  Engine.methods.optEpsilonEllison = function(this__25)
-    local unopt__120, opt__121, map__122, visit__119;
-    unopt__120 = this__25;
-    opt__121 = Engine();
-    map__122 = temper.mapbuilder_constructor();
-    visit__119 = function(state__123)
-      local return__37, t_135, t_136, t_137, t_138, t_139, t_140, t_141, t_142, t_143, t_144, t_145, t_146, t_147, t_148, optId__126, local_149, local_150, local_151, outState__127, added__128, count__129, isFinal__130, add__125, i__136;
+  Engine.methods.optEpsilonEllison = function(this__32)
+    local unopt__129, opt__130, map__131, visit__128;
+    unopt__129 = this__32;
+    opt__130 = Engine();
+    map__131 = temper.mapbuilder_constructor();
+    visit__128 = function(state__132)
+      local return__45, t_135, t_136, t_137, t_138, t_139, t_140, t_141, t_142, t_143, t_144, t_145, t_146, t_147, t_148, optId__135, local_149, local_150, local_151, outState__136, added__137, count__138, isFinal__139, add__134, i__145;
       ::continue_21::local_149, local_150, local_151 = temper.pcall(function()
-        t_135 = state__123.id;
-        t_145 = temper.mapped_get(map__122, t_135);
-        optId__126 = t_145;
+        t_135 = state__132.id;
+        t_145 = temper.mapped_get(map__131, t_135);
+        optId__135 = t_145;
       end);
       if local_149 then
       else
-        optId__126 = -1.0;
+        optId__135 = -1.0;
       end
-      if (optId__126 >= 0.0) then
-        t_136 = opt__121.states;
-        return__37 = temper.listed_get(t_136, optId__126);
+      if (optId__135 >= 0.0) then
+        t_136 = opt__130.states;
+        return__45 = temper.listed_get(t_136, optId__135);
         goto break_20;
       else
       end
-      t_137 = unopt__120.startState;
-      if temper.generic_eq(state__123, t_137) then
-        t_138 = opt__121.startState;
+      t_137 = unopt__129.startState;
+      if temper.generic_eq(state__132, t_137) then
+        t_138 = opt__130.startState;
         t_146 = t_138;
       else
-        t_139 = unopt__120.endState;
-        if temper.generic_eq(state__123, t_139) then
-          t_140 = opt__121.endState;
+        t_139 = unopt__129.endState;
+        if temper.generic_eq(state__132, t_139) then
+          t_140 = opt__130.endState;
           t_146 = t_140;
         else
-          t_141 = opt__121:newState();
+          t_141 = opt__130:newState();
           t_146 = t_141;
         end
       end
-      outState__127 = t_146;
-      t_142 = state__123.id;
-      t_143 = outState__127.id;
-      temper.mapbuilder_set(map__122, t_142, t_143);
-      added__128 = temper.densebitvector_constructor(0.0);
-      count__129 = 0.0;
-      isFinal__130 = false;
-      add__125 = function(matcher__131, toState__132)
-        local return__38, t_153, t_154, t_155, t_156, t_157, t_158, t_159, t_160;
-        ::continue_23::t_153 = unopt__120.epsilon;
-        if temper.generic_eq(matcher__131, t_153) then
-          local i__134;
-          t_154 = toState__132.id;
-          if temper.densebitvector_get(added__128, t_154) then
-            return__38 = nil;
+      outState__136 = t_146;
+      t_142 = state__132.id;
+      t_143 = outState__136.id;
+      temper.mapbuilder_set(map__131, t_142, t_143);
+      added__137 = temper.densebitvector_constructor(0.0);
+      count__138 = 0.0;
+      isFinal__139 = false;
+      add__134 = function(matcher__140, toState__141)
+        local return__46, t_153, t_154, t_155, t_156, t_157, t_158, t_159, t_160;
+        ::continue_23::t_153 = unopt__129.epsilon;
+        if temper.generic_eq(matcher__140, t_153) then
+          local i__143;
+          t_154 = toState__141.id;
+          if temper.densebitvector_get(added__137, t_154) then
+            return__46 = nil;
             goto break_22;
           else
           end
-          t_155 = toState__132.id;
-          temper.densebitvector_set(added__128, t_155, true);
-          if (toState__132.id == 1.0) then
-            isFinal__130 = true;
-            return__38 = nil;
+          t_155 = toState__141.id;
+          temper.densebitvector_set(added__137, t_155, true);
+          if (toState__141.id == 1.0) then
+            isFinal__139 = true;
+            return__46 = nil;
             goto break_22;
           else
           end
-          i__134 = 0.0;
+          i__143 = 0.0;
           while true do
-            local next__135;
-            t_156 = temper.listbuilder_length(toState__132.next);
-            if not (i__134 < t_156) then
+            local next__144;
+            t_156 = temper.listbuilder_length(toState__141.next);
+            if not (i__143 < t_156) then
               break;
             else
             end
-            t_160 = temper.listed_get(toState__132.next, i__134);
-            next__135 = t_160;
-            t_157 = next__135.matcher;
-            t_158 = next__135.toState;
-            add__125(t_157, t_158);
-            i__134 = (i__134 + 1.0);
+            t_160 = temper.listed_get(toState__141.next, i__143);
+            next__144 = t_160;
+            t_157 = next__144.matcher;
+            t_158 = next__144.toState;
+            add__134(t_157, t_158);
+            i__143 = (i__143 + 1.0);
           end
         else
-          count__129 = (count__129 + 1.0);
-          t_159 = visit__119(toState__132);
-          outState__127:addNext(matcher__131, t_159);
+          count__138 = (count__138 + 1.0);
+          t_159 = visit__128(toState__141);
+          outState__136:addNext(matcher__140, t_159);
         end
-        return__38 = nil;
-        ::break_22::return return__38;
+        return__46 = nil;
+        ::break_22::return return__46;
       end;
-      i__136 = 0.0;
+      i__145 = 0.0;
       while true do
-        local next__137;
-        t_144 = temper.listbuilder_length(state__123.next);
-        if not (i__136 < t_144) then
+        local next__146;
+        t_144 = temper.listbuilder_length(state__132.next);
+        if not (i__145 < t_144) then
           break;
         else
         end
-        t_147 = temper.listed_get(state__123.next, i__136);
-        next__137 = t_147;
-        add__125(next__137.matcher, next__137.toState);
-        i__136 = (i__136 + 1.0);
+        t_147 = temper.listed_get(state__132.next, i__145);
+        next__146 = t_147;
+        add__134(next__146.matcher, next__146.toState);
+        i__145 = (i__145 + 1.0);
       end
-      if (count__129 == 0.0) then
+      if (count__138 == 0.0) then
         t_148 = true;
       else
-        t_148 = isFinal__130;
+        t_148 = isFinal__139;
       end
       if t_148 then
-        return__37 = opt__121.endState;
+        return__45 = opt__130.endState;
         goto break_20;
       else
       end
-      return__37 = outState__127;
-      ::break_20::return return__37;
+      return__45 = outState__136;
+      ::break_20::return return__45;
     end;
-    visit__119(this__25.startState__97);
-    return opt__121;
+    visit__128(this__32.startState__106);
+    return opt__130;
   end;
-  Engine.methods.newState = function(this__26)
-    local ret__140;
-    ret__140 = State(temper.listbuilder_length(this__26.states__96));
-    temper.listbuilder_add(this__26.states__96, ret__140);
-    return ret__140;
+  Engine.methods.newState = function(this__33)
+    local ret__149;
+    ret__149 = State(temper.listbuilder_length(this__33.states__105));
+    temper.listbuilder_add(this__33.states__105, ret__149);
+    return ret__149;
   end;
-  Engine.methods.split = function(this__27, str__142)
-    local t_161, t_162, t_163, t_164, t_165, t_166, codePoints__144, stackStart__145, badNext__146, last__147, ret__148, i__149, cur__161, j__162;
-    codePoints__144 = temper.listed_map(temper.string_split(str__142, ''), ord);
-    stackStart__145 = StackStart();
-    badNext__146 = Next(this__27.endState__98, this__27.epsilon__99);
-    last__147 = 0.0;
-    ret__148 = temper.listbuilder_constructor();
-    i__149 = 0.0;
+  Engine.methods.replace = function(this__34, str__151, replace__152)
+    local t_161, t_162, t_163, t_164, t_165, t_166, t_167, t_168, t_169, t_170, t_171, t_172, t_173, t_174, t_175, t_176, t_177, t_178, pairs__154, pending__155, codePoints__156, stackStart__157, badNext__158, last__159, ret__160, fulls__161, i__162, cur__176, j__177, groups__178, keys__179, i__180, out__185, t_179, i__186;
+    pairs__154 = temper.mapbuilder_constructor();
+    pending__155 = temper.mapbuilder_constructor();
+    codePoints__156 = temper.listed_map(temper.string_split(str__151, ''), ord);
+    stackStart__157 = StackStart();
+    badNext__158 = Next(this__34.endState__107, this__34.epsilon__108);
+    last__159 = 0.0;
+    ret__160 = temper.listbuilder_constructor();
+    fulls__161 = temper.listbuilder_constructor();
+    i__162 = 0.0;
     while true do
-      local stack__150;
-      t_161 = temper.list_length(codePoints__144);
-      if not (i__149 < t_161) then
+      local stack__163;
+      t_161 = temper.list_length(codePoints__156);
+      if not (i__162 < t_161) then
         break;
       else
       end
-      t_162 = StackSlot(i__149, this__27.startState__97, stackStart__145);
-      stack__150 = t_162;
-      while temper.generic_ne(stack__150, stackStart__145) do
-        local index__151, state__152, next__155, len__156, c__157;
-        index__151 = stack__150.index;
-        state__152 = stack__150.state;
-        t_163 = stack__150.next;
-        stack__150 = t_163;
-        if (state__152.id == this__27.endState__98.id) then
-          local cur__153, j__154;
-          cur__153 = temper.listbuilder_constructor();
-          j__154 = last__147;
-          while (j__154 < i__149) do
-            temper.listbuilder_add(cur__153, temper.listed_getor(codePoints__144, j__154, 0.0));
-            j__154 = (j__154 + 1.0);
+      t_162 = StackSlot(i__162, this__34.startState__106, stackStart__157);
+      stack__163 = t_162;
+      while temper.generic_ne(stack__163, stackStart__157) do
+        local index__164, state__165, next__170, len__171, c__172;
+        index__164 = stack__163.index;
+        state__165 = stack__163.state;
+        t_163 = stack__163.next;
+        stack__163 = t_163;
+        if (state__165.id == this__34.endState__107.id) then
+          local cur__166, j__167, str__168, j__169;
+          cur__166 = temper.listbuilder_constructor();
+          j__167 = last__159;
+          while (j__167 < i__162) do
+            temper.listbuilder_add(cur__166, temper.listed_getor(codePoints__156, j__167, 0.0));
+            j__167 = (j__167 + 1.0);
           end
-          i__149 = (index__151 - 1.0);
-          last__147 = index__151;
-          temper.listbuilder_add(ret__148, temper.listed_join(cur__153, '', chr));
+          temper.listbuilder_add(ret__160, temper.listed_join(cur__166, '', chr));
+          str__168 = temper.listbuilder_constructor();
+          j__169 = i__162;
+          while (j__169 < index__164) do
+            temper.listbuilder_add(str__168, temper.listed_getor(codePoints__156, j__169, 0.0));
+            j__169 = (j__169 + 1.0);
+          end
+          temper.listbuilder_add(fulls__161, Group('full', temper.listed_join(str__168, '', chr), i__162));
+          i__162 = index__164;
+          last__159 = index__164;
           break;
         else
         end
-        next__155 = state__152.next;
-        len__156 = temper.listbuilder_length(next__155);
-        c__157 = 0.0;
-        while (c__157 < len__156) do
-          local matcher__159, toState__160;
-          t_164 = temper.listed_getor(next__155, c__157, badNext__146);
-          matcher__159 = t_164.matcher;
-          toState__160 = t_164.toState;
-          if matcher__159:matches(codePoints__144, index__151) then
-            t_165 = StackSlot((index__151 + matcher__159:width()), toState__160, stack__150);
-            stack__150 = t_165;
+        next__170 = state__165.next;
+        len__171 = temper.listbuilder_length(next__170);
+        c__172 = 0.0;
+        while (c__172 < len__171) do
+          local matcher__174, toState__175;
+          t_164 = temper.listed_getor(next__170, c__172, badNext__158);
+          matcher__174 = t_164.matcher;
+          toState__175 = t_164.toState;
+          if matcher__174:matches(codePoints__156, index__164) then
+            if temper.instance_of(matcher__174, StartGroupMatcher) then
+              t_172 = temper.cast_to(matcher__174, StartGroupMatcher);
+              temper.mapbuilder_set(pending__155, t_172.name, index__164);
+            elseif temper.instance_of(matcher__174, EndGroupMatcher) then
+              t_173 = temper.cast_to(matcher__174, EndGroupMatcher);
+              t_165 = t_173.name;
+              t_174 = temper.mapped_get(pending__155, t_173.name);
+              temper.mapbuilder_set(pairs__154, t_165, temper.pair_constructor(t_174, index__164));
+            else
+            end
+            t_166 = StackSlot((index__164 + matcher__174:width()), toState__175, stack__163);
+            stack__163 = t_166;
           else
           end
-          c__157 = (c__157 + 1.0);
+          c__172 = (c__172 + 1.0);
         end
       end
-      i__149 = (i__149 + 1.0);
+      i__162 = (i__162 + 1.0);
     end
-    cur__161 = temper.listbuilder_constructor();
-    j__162 = last__147;
+    cur__176 = temper.listbuilder_constructor();
+    j__177 = last__159;
     while true do
-      t_166 = temper.list_length(codePoints__144);
-      if not (j__162 < t_166) then
+      t_167 = temper.list_length(codePoints__156);
+      if not (j__177 < t_167) then
         break;
       else
       end
-      temper.listbuilder_add(cur__161, temper.listed_getor(codePoints__144, j__162, 0.0));
-      j__162 = (j__162 + 1.0);
+      temper.listbuilder_add(cur__176, temper.listed_getor(codePoints__156, j__177, 0.0));
+      j__177 = (j__177 + 1.0);
     end
-    temper.listbuilder_add(ret__148, temper.listed_join(cur__161, '', chr));
-    return ret__148;
+    temper.listbuilder_add(ret__160, temper.listed_join(cur__176, '', chr));
+    groups__178 = temper.mapbuilder_constructor();
+    keys__179 = temper.mapped_keys(pairs__154);
+    i__180 = 0.0;
+    while true do
+      local key__181, val__182, str__183, j__184;
+      t_168 = temper.listed_length(keys__179);
+      if not (i__180 < t_168) then
+        break;
+      else
+      end
+      t_175 = temper.listed_get(keys__179, i__180);
+      key__181 = t_175;
+      t_176 = temper.mapped_get(pairs__154, key__181);
+      val__182 = t_176;
+      str__183 = temper.listbuilder_constructor();
+      t_169 = val__182.key;
+      j__184 = t_169;
+      while true do
+        t_170 = val__182.value;
+        if not (j__184 < t_170) then
+          break;
+        else
+        end
+        temper.listbuilder_add(str__183, temper.listed_getor(codePoints__156, j__184, 0.0));
+        j__184 = (j__184 + 1.0);
+      end
+      temper.mapbuilder_set(groups__178, key__181, Group(key__181, temper.listed_join(str__183, '', chr), val__182.key));
+      i__180 = (i__180 + 1.0);
+    end
+    out__185 = temper.listbuilder_constructor();
+    t_179 = temper.listed_get(ret__160, 0.0);
+    temper.listbuilder_add(out__185, t_179);
+    i__186 = 1.0;
+    while true do
+      t_171 = temper.listbuilder_length(ret__160);
+      if not (i__186 < t_171) then
+        break;
+      else
+      end
+      t_177 = temper.listed_get(fulls__161, (i__186 - 1.0));
+      temper.mapbuilder_set(groups__178, 'full', t_177);
+      temper.listbuilder_add(out__185, replace__152(groups__178));
+      t_178 = temper.listed_get(ret__160, i__186);
+      temper.listbuilder_add(out__185, t_178);
+      i__186 = (i__186 + 1.0);
+    end
+    return temper.listed_join(out__185, '', idString);
   end;
-  Engine.methods.found = function(this__28, str__164)
-    local return__41, t_167, t_168, t_169, t_170, t_171, codePoints__166, stackStart__167, badNext__168, i__169;
-    ::continue_25::codePoints__166 = temper.listed_map(temper.string_split(str__164, ''), ord);
-    stackStart__167 = StackStart();
-    badNext__168 = Next(this__28.endState__98, this__28.epsilon__99);
-    i__169 = 0.0;
+  Engine.methods.split = function(this__35, str__188)
+    local t_180, t_181, t_182, t_183, t_184, t_185, codePoints__190, stackStart__191, badNext__192, last__193, ret__194, i__195, cur__207, j__208;
+    codePoints__190 = temper.listed_map(temper.string_split(str__188, ''), ord);
+    stackStart__191 = StackStart();
+    badNext__192 = Next(this__35.endState__107, this__35.epsilon__108);
+    last__193 = 0.0;
+    ret__194 = temper.listbuilder_constructor();
+    i__195 = 0.0;
     while true do
-      local stack__170;
-      t_167 = temper.list_length(codePoints__166);
-      if not (i__169 < t_167) then
+      local stack__196;
+      t_180 = temper.list_length(codePoints__190);
+      if not (i__195 < t_180) then
         break;
       else
       end
-      t_168 = StackSlot(i__169, this__28.startState__97, stackStart__167);
-      stack__170 = t_168;
-      while temper.generic_ne(stack__170, stackStart__167) do
-        local index__171, state__172, next__173, len__174, c__175;
-        index__171 = stack__170.index;
-        state__172 = stack__170.state;
-        t_169 = stack__170.next;
-        stack__170 = t_169;
-        if (state__172.id == this__28.endState__98.id) then
-          return__41 = true;
+      t_181 = StackSlot(i__195, this__35.startState__106, stackStart__191);
+      stack__196 = t_181;
+      while temper.generic_ne(stack__196, stackStart__191) do
+        local index__197, state__198, next__201, len__202, c__203;
+        index__197 = stack__196.index;
+        state__198 = stack__196.state;
+        t_182 = stack__196.next;
+        stack__196 = t_182;
+        if (state__198.id == this__35.endState__107.id) then
+          local cur__199, j__200;
+          cur__199 = temper.listbuilder_constructor();
+          j__200 = last__193;
+          while (j__200 < i__195) do
+            temper.listbuilder_add(cur__199, temper.listed_getor(codePoints__190, j__200, 0.0));
+            j__200 = (j__200 + 1.0);
+          end
+          i__195 = (index__197 - 1.0);
+          last__193 = index__197;
+          temper.listbuilder_add(ret__194, temper.listed_join(cur__199, '', chr));
+          break;
+        else
+        end
+        next__201 = state__198.next;
+        len__202 = temper.listbuilder_length(next__201);
+        c__203 = 0.0;
+        while (c__203 < len__202) do
+          local matcher__205, toState__206;
+          t_183 = temper.listed_getor(next__201, c__203, badNext__192);
+          matcher__205 = t_183.matcher;
+          toState__206 = t_183.toState;
+          if matcher__205:matches(codePoints__190, index__197) then
+            t_184 = StackSlot((index__197 + matcher__205:width()), toState__206, stack__196);
+            stack__196 = t_184;
+          else
+          end
+          c__203 = (c__203 + 1.0);
+        end
+      end
+      i__195 = (i__195 + 1.0);
+    end
+    cur__207 = temper.listbuilder_constructor();
+    j__208 = last__193;
+    while true do
+      t_185 = temper.list_length(codePoints__190);
+      if not (j__208 < t_185) then
+        break;
+      else
+      end
+      temper.listbuilder_add(cur__207, temper.listed_getor(codePoints__190, j__208, 0.0));
+      j__208 = (j__208 + 1.0);
+    end
+    temper.listbuilder_add(ret__194, temper.listed_join(cur__207, '', chr));
+    return ret__194;
+  end;
+  Engine.methods.found = function(this__36, str__210)
+    local return__50, t_186, t_187, t_188, t_189, t_190, codePoints__212, stackStart__213, badNext__214, i__215;
+    ::continue_25::codePoints__212 = temper.listed_map(temper.string_split(str__210, ''), ord);
+    stackStart__213 = StackStart();
+    badNext__214 = Next(this__36.endState__107, this__36.epsilon__108);
+    i__215 = 0.0;
+    while true do
+      local stack__216;
+      t_186 = temper.list_length(codePoints__212);
+      if not (i__215 < t_186) then
+        break;
+      else
+      end
+      t_187 = StackSlot(i__215, this__36.startState__106, stackStart__213);
+      stack__216 = t_187;
+      while temper.generic_ne(stack__216, stackStart__213) do
+        local index__217, state__218, next__219, len__220, c__221;
+        index__217 = stack__216.index;
+        state__218 = stack__216.state;
+        t_188 = stack__216.next;
+        stack__216 = t_188;
+        if (state__218.id == this__36.endState__107.id) then
+          return__50 = true;
           goto break_24;
         else
         end
-        next__173 = state__172.next;
-        len__174 = temper.listbuilder_length(next__173);
-        c__175 = 0.0;
-        while (c__175 < len__174) do
-          local matcher__177, toState__178;
-          t_170 = temper.listed_getor(next__173, c__175, badNext__168);
-          matcher__177 = t_170.matcher;
-          toState__178 = t_170.toState;
-          if matcher__177:matches(codePoints__166, index__171) then
-            t_171 = StackSlot((index__171 + matcher__177:width()), toState__178, stack__170);
-            stack__170 = t_171;
+        next__219 = state__218.next;
+        len__220 = temper.listbuilder_length(next__219);
+        c__221 = 0.0;
+        while (c__221 < len__220) do
+          local matcher__223, toState__224;
+          t_189 = temper.listed_getor(next__219, c__221, badNext__214);
+          matcher__223 = t_189.matcher;
+          toState__224 = t_189.toState;
+          if matcher__223:matches(codePoints__212, index__217) then
+            t_190 = StackSlot((index__217 + matcher__223:width()), toState__224, stack__216);
+            stack__216 = t_190;
           else
           end
-          c__175 = (c__175 + 1.0);
+          c__221 = (c__221 + 1.0);
         end
       end
-      i__169 = (i__169 + 1.0);
+      i__215 = (i__215 + 1.0);
     end
-    return__41 = false;
-    ::break_24::return return__41;
+    return__50 = false;
+    ::break_24::return return__50;
   end;
-  Engine.methods.find = function(this__29, str__180)
-    local return__42, t_172, t_173, t_174, t_175, t_176, t_177, t_178, t_179, t_180, t_181, t_182, t_183, t_184, t_185, groups__182, pending__183, codePoints__184, stackStart__185, badNext__186, i__187;
-    ::continue_27::groups__182 = temper.mapbuilder_constructor();
-    pending__183 = temper.mapbuilder_constructor();
-    codePoints__184 = temper.listed_map(temper.string_split(str__180, ''), ord);
-    stackStart__185 = StackStart();
-    badNext__186 = Next(this__29.endState__98, this__29.epsilon__99);
-    i__187 = 0.0;
+  Engine.methods.find = function(this__37, str__226)
+    local return__51, t_191, t_192, t_193, t_194, t_195, t_196, t_197, t_198, t_199, t_200, t_201, t_202, t_203, t_204, pairs__228, pending__229, codePoints__230, stackStart__231, badNext__232, i__233;
+    ::continue_27::pairs__228 = temper.mapbuilder_constructor();
+    pending__229 = temper.mapbuilder_constructor();
+    codePoints__230 = temper.listed_map(temper.string_split(str__226, ''), ord);
+    stackStart__231 = StackStart();
+    badNext__232 = Next(this__37.endState__107, this__37.epsilon__108);
+    i__233 = 0.0;
     while true do
-      local stack__188;
-      t_172 = temper.list_length(codePoints__184);
-      if not (i__187 < t_172) then
+      local stack__234;
+      t_191 = temper.list_length(codePoints__230);
+      if not (i__233 < t_191) then
         break;
       else
       end
-      t_173 = StackSlot(i__187, this__29.startState__97, stackStart__185);
-      stack__188 = t_173;
-      while temper.generic_ne(stack__188, stackStart__185) do
-        local index__189, state__190, next__200, len__201, c__202;
-        index__189 = stack__188.index;
-        state__190 = stack__188.state;
-        t_174 = stack__188.next;
-        stack__188 = t_174;
-        if (state__190.id == this__29.endState__98.id) then
-          local ret__191, keys__192, i__193, str__198, j__199;
-          ret__191 = temper.mapbuilder_constructor();
-          keys__192 = temper.mapped_keys(groups__182);
-          i__193 = 0.0;
+      t_192 = StackSlot(i__233, this__37.startState__106, stackStart__231);
+      stack__234 = t_192;
+      while temper.generic_ne(stack__234, stackStart__231) do
+        local index__235, state__236, next__246, len__247, c__248;
+        index__235 = stack__234.index;
+        state__236 = stack__234.state;
+        t_193 = stack__234.next;
+        stack__234 = t_193;
+        if (state__236.id == this__37.endState__107.id) then
+          local ret__237, keys__238, i__239;
+          ret__237 = temper.mapbuilder_constructor();
+          keys__238 = temper.mapped_keys(pairs__228);
+          i__239 = 0.0;
           while true do
-            local key__194, val__195, str__196, j__197;
-            ::continue_29::t_175 = temper.listed_length(keys__192);
-            if not (i__193 < t_175) then
+            local key__240, val__241, str__242, j__243;
+            t_194 = temper.listed_length(keys__238);
+            if not (i__239 < t_194) then
               break;
             else
             end
-            t_181 = temper.listed_get(keys__192, i__193);
-            key__194 = t_181;
-            t_182 = temper.mapped_get(groups__182, key__194);
-            val__195 = t_182;
-            if (val__195.value < 0.0) then
-              goto break_28;
-            else
-            end
-            str__196 = temper.listbuilder_constructor();
-            t_176 = val__195.key;
-            j__197 = t_176;
+            t_200 = temper.listed_get(keys__238, i__239);
+            key__240 = t_200;
+            t_201 = temper.mapped_get(pairs__228, key__240);
+            val__241 = t_201;
+            str__242 = temper.listbuilder_constructor();
+            t_195 = val__241.key;
+            j__243 = t_195;
             while true do
-              t_177 = val__195.value;
-              if not (j__197 < t_177) then
+              t_196 = val__241.value;
+              if not (j__243 < t_196) then
                 break;
               else
               end
-              temper.listbuilder_add(str__196, temper.listed_getor(codePoints__184, j__197, 0.0));
-              j__197 = (j__197 + 1.0);
+              temper.listbuilder_add(str__242, temper.listed_getor(codePoints__230, j__243, 0.0));
+              j__243 = (j__243 + 1.0);
             end
-            temper.mapbuilder_set(ret__191, key__194, Group(key__194, temper.listed_join(str__196, '', chr), val__195.key));
-            ::break_28::i__193 = (i__193 + 1.0);
+            temper.mapbuilder_set(ret__237, key__240, Group(key__240, temper.listed_join(str__242, '', chr), val__241.key));
+            i__239 = (i__239 + 1.0);
           end
-          str__198 = temper.listbuilder_constructor();
-          j__199 = i__187;
-          while (j__199 < index__189) do
-            temper.listbuilder_add(str__198, temper.listed_getor(codePoints__184, j__199, 0.0));
-            j__199 = (j__199 + 1.0);
-          end
-          if not temper.mapped_has(ret__191, 'full') then
-            temper.mapbuilder_set(ret__191, 'full', Group('full', temper.listed_join(str__198, '', chr), i__187));
+          if not temper.mapped_has(ret__237, 'full') then
+            local str__244, j__245;
+            str__244 = temper.listbuilder_constructor();
+            j__245 = i__233;
+            while (j__245 < index__235) do
+              temper.listbuilder_add(str__244, temper.listed_getor(codePoints__230, j__245, 0.0));
+              j__245 = (j__245 + 1.0);
+            end
+            temper.mapbuilder_set(ret__237, 'full', Group('full', temper.listed_join(str__244, '', chr), i__233));
           else
           end
-          return__42 = ret__191;
+          return__51 = ret__237;
           goto break_26;
         else
         end
-        next__200 = state__190.next;
-        len__201 = temper.listbuilder_length(next__200);
-        c__202 = 0.0;
-        while (c__202 < len__201) do
-          local matcher__204, toState__205;
-          t_178 = temper.listed_getor(next__200, c__202, badNext__186);
-          matcher__204 = t_178.matcher;
-          toState__205 = t_178.toState;
-          if matcher__204:matches(codePoints__184, index__189) then
-            if temper.instance_of(matcher__204, StartGroupMatcher) then
-              t_183 = temper.cast_to(matcher__204, StartGroupMatcher);
-              temper.mapbuilder_set(pending__183, t_183.name, index__189);
-            elseif temper.instance_of(matcher__204, EndGroupMatcher) then
-              t_184 = temper.cast_to(matcher__204, EndGroupMatcher);
-              t_179 = t_184.name;
-              t_185 = temper.mapped_get(pending__183, t_184.name);
-              temper.mapbuilder_set(groups__182, t_179, temper.pair_constructor(t_185, index__189));
+        next__246 = state__236.next;
+        len__247 = temper.listbuilder_length(next__246);
+        c__248 = 0.0;
+        while (c__248 < len__247) do
+          local matcher__250, toState__251;
+          t_197 = temper.listed_getor(next__246, c__248, badNext__232);
+          matcher__250 = t_197.matcher;
+          toState__251 = t_197.toState;
+          if matcher__250:matches(codePoints__230, index__235) then
+            if temper.instance_of(matcher__250, StartGroupMatcher) then
+              t_202 = temper.cast_to(matcher__250, StartGroupMatcher);
+              temper.mapbuilder_set(pending__229, t_202.name, index__235);
+            elseif temper.instance_of(matcher__250, EndGroupMatcher) then
+              t_203 = temper.cast_to(matcher__250, EndGroupMatcher);
+              t_198 = t_203.name;
+              t_204 = temper.mapped_get(pending__229, t_203.name);
+              temper.mapbuilder_set(pairs__228, t_198, temper.pair_constructor(t_204, index__235));
             else
             end
-            t_180 = StackSlot((index__189 + matcher__204:width()), toState__205, stack__188);
-            stack__188 = t_180;
+            t_199 = StackSlot((index__235 + matcher__250:width()), toState__251, stack__234);
+            stack__234 = t_199;
           else
           end
-          c__202 = (c__202 + 1.0);
+          c__248 = (c__248 + 1.0);
         end
       end
-      i__187 = (i__187 + 1.0);
+      i__233 = (i__233 + 1.0);
     end
-    return__42 = temper.map_constructor(temper.listof());
-    ::break_26::return return__42;
+    return__51 = temper.map_constructor(temper.listof());
+    ::break_26::return return__51;
   end;
-  Engine.methods.toString = function(this__30)
-    local count__208, t_186, fn__1066, inner__209;
-    count__208 = 0.0;
-    t_186 = this__30.states__96;
-    fn__1066 = function(state__210)
-      local name__212, t_187, fn__1059;
-      name__212 = temper.concat('q', temper.int_tostring(state__210.id));
-      t_187 = state__210.next;
-      fn__1059 = function(next__213)
-        local line__215, nexts__216, t_188;
-        line__215 = temper.int_tostring(count__208);
-        count__208 = (count__208 + 1.0);
-        nexts__216 = temper.int_tostring(next__213.toState.id);
-        t_188 = next__213.matcher:toString();
-        return temper.concat('\n  ', name__212, ' -> q', nexts__216, ' [label="', t_188, '"];');
+  Engine.methods.toString = function(this__38)
+    local count__254, t_205, fn__1333, inner__255;
+    count__254 = 0.0;
+    t_205 = this__38.states__105;
+    fn__1333 = function(state__256)
+      local name__258, t_206, fn__1326;
+      name__258 = temper.concat('q', temper.int_tostring(state__256.id));
+      t_206 = state__256.next;
+      fn__1326 = function(next__259)
+        local line__261, nexts__262, t_207;
+        line__261 = temper.int_tostring(count__254);
+        count__254 = (count__254 + 1.0);
+        nexts__262 = temper.int_tostring(next__259.toState.id);
+        t_207 = next__259.matcher:toString();
+        return temper.concat('\n  ', name__258, ' -> q', nexts__262, ' [label="', t_207, '"];');
       end;
-      return temper.listed_join(t_187, '', fn__1059);
+      return temper.listed_join(t_206, '', fn__1326);
     end;
-    inner__209 = temper.listed_join(t_186, '', fn__1066);
-    return temper.concat('digraph {\n  rankdir="LR";', inner__209, '\n}');
+    inner__255 = temper.listed_join(t_205, '', fn__1333);
+    return temper.concat('digraph {\n  rankdir="LR";', inner__255, '\n}');
   end;
-  Engine.methods.toDotSub = function(this__31, gname__218, color__219)
-    local count__221, used__222, t_189, fn__1042, inner__223, t_194, fn__1041, decls__231;
-    count__221 = 0.0;
-    used__222 = temper.mapbuilder_constructor();
-    t_189 = this__31.states__96;
-    fn__1042 = function(state__224)
-      local name__226, t_190, t_191, fn__1032;
-      name__226 = temper.concat('q', temper.int_tostring(state__224.id));
-      t_190 = state__224.id;
-      temper.mapbuilder_set(used__222, t_190, true);
-      t_191 = state__224.next;
-      fn__1032 = function(next__227)
-        local line__229, nexts__230, t_192, t_193;
-        line__229 = temper.int_tostring(count__221);
-        count__221 = (count__221 + 1.0);
-        nexts__230 = temper.int_tostring(next__227.toState.id);
-        t_192 = next__227.toState.id;
-        temper.mapbuilder_set(used__222, t_192, true);
-        t_193 = next__227.matcher:toString();
-        return temper.concat('\n    ', gname__218, '_', name__226, ' -> ', gname__218, '_q', nexts__230, ' [label="', t_193, '"];');
+  Engine.methods.toDotSub = function(this__39, gname__264, color__265)
+    local count__267, used__268, t_208, fn__1309, inner__269, t_213, fn__1308, decls__277;
+    count__267 = 0.0;
+    used__268 = temper.mapbuilder_constructor();
+    t_208 = this__39.states__105;
+    fn__1309 = function(state__270)
+      local name__272, t_209, t_210, fn__1299;
+      name__272 = temper.concat('q', temper.int_tostring(state__270.id));
+      t_209 = state__270.id;
+      temper.mapbuilder_set(used__268, t_209, true);
+      t_210 = state__270.next;
+      fn__1299 = function(next__273)
+        local line__275, nexts__276, t_211, t_212;
+        line__275 = temper.int_tostring(count__267);
+        count__267 = (count__267 + 1.0);
+        nexts__276 = temper.int_tostring(next__273.toState.id);
+        t_211 = next__273.toState.id;
+        temper.mapbuilder_set(used__268, t_211, true);
+        t_212 = next__273.matcher:toString();
+        return temper.concat('\n    ', gname__264, '_', name__272, ' -> ', gname__264, '_q', nexts__276, ' [label="', t_212, '"];');
       end;
-      return temper.listed_join(t_191, '', fn__1032);
+      return temper.listed_join(t_210, '', fn__1299);
     end;
-    inner__223 = temper.listed_join(t_189, '', fn__1042);
-    t_194 = this__31.states__96;
-    fn__1041 = function(state__232)
-      local return__49, t_195, t_196, t_197, local_198, local_199, local_200;
-      local_198, local_199, local_200 = temper.pcall(function()
-        t_195 = state__232.id;
-        t_196 = temper.mapped_get(used__222, t_195);
-        t_197 = t_196;
+    inner__269 = temper.listed_join(t_208, '', fn__1309);
+    t_213 = this__39.states__105;
+    fn__1308 = function(state__278)
+      local return__58, t_214, t_215, t_216, local_217, local_218, local_219;
+      local_217, local_218, local_219 = temper.pcall(function()
+        t_214 = state__278.id;
+        t_215 = temper.mapped_get(used__268, t_214);
+        t_216 = t_215;
       end);
-      if local_198 then
+      if local_217 then
       else
-        t_197 = false;
+        t_216 = false;
       end
-      if t_197 then
-        local name__234, label__235, shape__236;
-        name__234 = temper.concat('q', temper.int_tostring(state__232.id));
-        if (state__232.id == 0.0) then
-          label__235 = 'start';
-        elseif (state__232.id == 1.0) then
-          label__235 = 'end';
+      if t_216 then
+        local name__280, label__281, shape__282;
+        name__280 = temper.concat('q', temper.int_tostring(state__278.id));
+        if (state__278.id == 0.0) then
+          label__281 = 'start';
+        elseif (state__278.id == 1.0) then
+          label__281 = 'end';
         else
-          label__235 = name__234;
+          label__281 = name__280;
         end
-        shape__236 = 'ellipse';
-        return__49 = temper.concat('\n    ', gname__218, '_', name__234, ' [shape="', shape__236, '"] [label="', label__235, '"];');
+        shape__282 = 'ellipse';
+        return__58 = temper.concat('\n    ', gname__264, '_', name__280, ' [shape="', shape__282, '"] [label="', label__281, '"];');
       else
-        return__49 = '';
+        return__58 = '';
       end
-      return return__49;
+      return return__58;
     end;
-    decls__231 = temper.listed_join(t_194, '', fn__1041);
-    return temper.concat('subgraph ', gname__218, ' {\n    node [style=filled color="', color__219, '"];\n    color="#E7E7E7";\n    label="NFA";\n    rankdir="LR";', decls__231, inner__223, '\n  }');
+    decls__277 = temper.listed_join(t_213, '', fn__1308);
+    return temper.concat('subgraph ', gname__264, ' {\n    node [style=filled color="', color__265, '"];\n    color="#E7E7E7";\n    label="NFA";\n    rankdir="LR";', decls__277, inner__269, '\n  }');
   end;
-  Engine.get.states = function(this__239)
-    return this__239.states__96;
+  Engine.get.states = function(this__285)
+    return this__285.states__105;
   end;
-  Engine.get.startState = function(this__243)
-    return this__243.startState__97;
+  Engine.get.startState = function(this__289)
+    return this__289.startState__106;
   end;
-  Engine.get.endState = function(this__247)
-    return this__247.endState__98;
+  Engine.get.endState = function(this__293)
+    return this__293.endState__107;
   end;
-  Engine.get.epsilon = function(this__251)
-    return this__251.epsilon__99;
+  Engine.get.epsilon = function(this__297)
+    return this__297.epsilon__108;
   end;
   exports = {};
   exports.Engine = Engine;
@@ -1923,222 +2058,222 @@ package.preload["temper-regex-engine/engines/nfa/nfa"] = function()
   EndGroupMatcher = temper.import('temper-regex-engine/engines/nfa/matcher', 'EndGroupMatcher');
   CharMatcher = temper.import('temper-regex-engine/engines/nfa/matcher', 'CharMatcher');
   TemperRegexNFA = temper.type('TemperRegexNFA', TemperRegex);
-  TemperRegexNFA.constructor = function(this__21, regex__76)
-    local t_202, t_203, t_204, t_205;
-    t_202 = Engine();
-    this__21.engine__74 = t_202;
-    t_203 = this__21.engine__74.startState;
-    t_204 = this__21.engine__74.endState;
-    this__21:buildRegex(regex__76, t_203, t_204);
-    t_205 = this__21.engine__74:opt();
-    this__21.engine__74 = t_205;
+  TemperRegexNFA.constructor = function(this__21, regex__78)
+    local t_221, t_222, t_223, t_224;
+    t_221 = Engine();
+    this__21.engine__76 = t_221;
+    t_222 = this__21.engine__76.startState;
+    t_223 = this__21.engine__76.endState;
+    this__21:buildRegex(regex__78, t_222, t_223);
+    t_224 = this__21.engine__76:opt();
+    this__21.engine__76 = t_224;
     return nil;
   end;
-  TemperRegexNFA.methods.buildRegex = function(this__22, regex__79, input__80, output__81)
-    local t_206, t_207, t_208, t_209, t_210, t_211, t_212, t_213, t_214, t_215, t_216, t_217, t_218, t_219, t_220, t_221, t_222, t_223, t_224, t_225, t_226, t_227, t_228, t_229, t_230, t_231, t_232, t_233, t_234, t_235, t_236, t_237, t_238, t_239, t_240, t_241, t_242, t_243, t_244, t_245, t_246, t_247, t_248, t_249, t_250, t_251, t_252, t_253, t_254, t_255, t_256, t_257, split__85, lastState__86, i__87, bitset__89, j__90, i__95, lastState__96, i__97, nextState__102, j__103, bitset__105, i__106;
-    if temper.instance_of(regex__79, Capture) then
-      local mid1__83, mid2__84;
-      t_240 = temper.cast_to(regex__79, Capture);
-      mid1__83 = this__22.engine__74:newState();
-      mid2__84 = this__22.engine__74:newState();
-      t_206 = StartGroupMatcher(t_240.name);
-      input__80:addNext(t_206, mid1__83);
-      t_207 = t_240.item;
-      this__22:buildRegex(t_207, mid1__83, mid2__84);
-      mid2__84:addNext(EndGroupMatcher(t_240.name), output__81);
-    elseif temper.instance_of(regex__79, CodePoints) then
-      t_241 = temper.cast_to(regex__79, CodePoints);
-      split__85 = temper.string_split(t_241.value, '');
-      lastState__86 = input__80;
-      i__87 = 0.0;
+  TemperRegexNFA.methods.buildRegex = function(this__22, regex__81, input__82, output__83)
+    local t_225, t_226, t_227, t_228, t_229, t_230, t_231, t_232, t_233, t_234, t_235, t_236, t_237, t_238, t_239, t_240, t_241, t_242, t_243, t_244, t_245, t_246, t_247, t_248, t_249, t_250, t_251, t_252, t_253, t_254, t_255, t_256, t_257, t_258, t_259, t_260, t_261, t_262, t_263, t_264, t_265, t_266, t_267, t_268, t_269, t_270, t_271, t_272, t_273, t_274, t_275, t_276, split__87, lastState__88, i__89, bitset__91, j__92, i__97, lastState__98, i__99, nextState__104, j__105, bitset__107, i__108;
+    if temper.instance_of(regex__81, Capture) then
+      local mid1__85, mid2__86;
+      t_259 = temper.cast_to(regex__81, Capture);
+      mid1__85 = this__22.engine__76:newState();
+      mid2__86 = this__22.engine__76:newState();
+      t_225 = StartGroupMatcher(t_259.name);
+      input__82:addNext(t_225, mid1__85);
+      t_226 = t_259.item;
+      this__22:buildRegex(t_226, mid1__85, mid2__86);
+      mid2__86:addNext(EndGroupMatcher(t_259.name), output__83);
+    elseif temper.instance_of(regex__81, CodePoints) then
+      t_260 = temper.cast_to(regex__81, CodePoints);
+      split__87 = temper.string_split(t_260.value, '');
+      lastState__88 = input__82;
+      i__89 = 0.0;
       while true do
-        t_208 = temper.list_length(split__85);
-        if not (i__87 < t_208) then
+        t_227 = temper.list_length(split__87);
+        if not (i__89 < t_227) then
           break;
         else
         end
-        t_209 = temper.list_length(split__85);
-        if (i__87 == (t_209 - 1.0)) then
-          t_242 = temper.list_get(split__85, i__87);
-          t_210 = CharMatcher(t_242);
-          lastState__86:addNext(t_210, output__81);
+        t_228 = temper.list_length(split__87);
+        if (i__89 == (t_228 - 1.0)) then
+          t_261 = temper.list_get(split__87, i__89);
+          t_229 = CharMatcher(t_261);
+          lastState__88:addNext(t_229, output__83);
         else
-          local curState__88;
-          curState__88 = this__22.engine__74:newState();
-          t_243 = temper.list_get(split__85, i__87);
-          t_211 = CharMatcher(t_243);
-          lastState__86:addNext(t_211, curState__88);
-          lastState__86 = curState__88;
+          local curState__90;
+          curState__90 = this__22.engine__76:newState();
+          t_262 = temper.list_get(split__87, i__89);
+          t_230 = CharMatcher(t_262);
+          lastState__88:addNext(t_230, curState__90);
+          lastState__88 = curState__90;
         end
-        i__87 = (i__87 + 1.0);
+        i__89 = (i__89 + 1.0);
       end
-    elseif temper.instance_of(regex__79, CodeSet) then
-      t_244 = temper.cast_to(regex__79, CodeSet);
-      bitset__89 = temper.densebitvector_constructor(0.0);
-      j__90 = 0.0;
+    elseif temper.instance_of(regex__81, CodeSet) then
+      t_263 = temper.cast_to(regex__81, CodeSet);
+      bitset__91 = temper.densebitvector_constructor(0.0);
+      j__92 = 0.0;
       while true do
-        local subRegex__91, split__93, i__94;
-        t_212 = temper.list_length(t_244.items);
-        if not (j__90 < t_212) then
+        local subRegex__93, split__95, i__96;
+        t_231 = temper.list_length(t_263.items);
+        if not (j__92 < t_231) then
           break;
         else
         end
-        t_245 = temper.list_get(t_244.items, j__90);
-        subRegex__91 = t_245;
-        if temper.instance_of(subRegex__91, CodeRange) then
-          local i__92;
-          t_246 = temper.cast_to(subRegex__91, CodeRange);
-          t_213 = t_246.min;
-          i__92 = t_213;
+        t_264 = temper.list_get(t_263.items, j__92);
+        subRegex__93 = t_264;
+        if temper.instance_of(subRegex__93, CodeRange) then
+          local i__94;
+          t_265 = temper.cast_to(subRegex__93, CodeRange);
+          t_232 = t_265.min;
+          i__94 = t_232;
           while true do
-            t_214 = t_246.max;
-            if not (i__92 <= t_214) then
+            t_233 = t_265.max;
+            if not (i__94 <= t_233) then
               break;
             else
             end
-            temper.densebitvector_set(bitset__89, i__92, true);
-            i__92 = (i__92 + 1.0);
-          end
-        elseif temper.instance_of(subRegex__91, CodePoints) then
-          t_247 = temper.cast_to(subRegex__91, CodePoints);
-          split__93 = temper.string_split(t_247.value, '');
-          i__94 = 0.0;
-          while true do
-            t_215 = temper.list_length(split__93);
-            if not (i__94 < t_215) then
-              break;
-            else
-            end
-            t_248 = temper.list_get(split__93, i__94);
-            temper.densebitvector_set(bitset__89, temper.string_codeat(t_248, 1.0), true);
+            temper.densebitvector_set(bitset__91, i__94, true);
             i__94 = (i__94 + 1.0);
           end
+        elseif temper.instance_of(subRegex__93, CodePoints) then
+          t_266 = temper.cast_to(subRegex__93, CodePoints);
+          split__95 = temper.string_split(t_266.value, '');
+          i__96 = 0.0;
+          while true do
+            t_234 = temper.list_length(split__95);
+            if not (i__96 < t_234) then
+              break;
+            else
+            end
+            t_267 = temper.list_get(split__95, i__96);
+            temper.densebitvector_set(bitset__91, temper.string_codeat(t_267, 1.0), true);
+            i__96 = (i__96 + 1.0);
+          end
         else
         end
-        j__90 = (j__90 + 1.0);
+        j__92 = (j__92 + 1.0);
       end
-      t_216 = BitSetMatcher(bitset__89, not t_244.negated);
-      input__80:addNext(t_216, output__81);
-    elseif temper.instance_of(regex__79, Or) then
-      t_249 = temper.cast_to(regex__79, Or);
-      i__95 = 0.0;
-      while true do
-        t_217 = temper.list_length(t_249.items);
-        if not (i__95 < t_217) then
-          break;
-        else
-        end
-        t_250 = temper.list_get(t_249.items, i__95);
-        this__22:buildRegex(t_250, input__80, output__81);
-        i__95 = (i__95 + 1.0);
-      end
-    elseif temper.instance_of(regex__79, Repeat) then
-      t_251 = temper.cast_to(regex__79, Repeat);
-      lastState__96 = input__80;
+      t_235 = BitSetMatcher(bitset__91, not t_263.negated);
+      input__82:addNext(t_235, output__83);
+    elseif temper.instance_of(regex__81, Or) then
+      t_268 = temper.cast_to(regex__81, Or);
       i__97 = 0.0;
       while true do
-        local curState__98;
-        t_218 = t_251.min;
-        if not (i__97 < t_218) then
+        t_236 = temper.list_length(t_268.items);
+        if not (i__97 < t_236) then
           break;
         else
         end
-        curState__98 = this__22.engine__74:newState();
-        t_219 = t_251.item;
-        this__22:buildRegex(t_219, lastState__96, curState__98);
-        lastState__96 = curState__98;
+        t_269 = temper.list_get(t_268.items, i__97);
+        this__22:buildRegex(t_269, input__82, output__83);
         i__97 = (i__97 + 1.0);
       end
-      t_252 = t_251.max;
-      if (t_252 ~= temper.null) then
-        local max__99, i__100;
-        t_253 = t_251.max;
-        max__99 = temper.cast_to_int(t_253);
-        t_220 = t_251.min;
-        i__100 = t_220;
-        while (i__100 < max__99) do
-          local curState__101;
-          curState__101 = this__22.engine__74:newState();
-          if t_251.reluctant then
-            t_221 = t_251.item;
-            this__22:buildRegex(t_221, lastState__96, curState__101);
-            t_222 = this__22.engine__74.epsilon;
-            lastState__96:addNext(t_222, output__81);
-          else
-            t_223 = this__22.engine__74.epsilon;
-            lastState__96:addNext(t_223, output__81);
-            t_224 = t_251.item;
-            this__22:buildRegex(t_224, lastState__96, curState__101);
-          end
-          lastState__96 = curState__101;
-          i__100 = (i__100 + 1.0);
-        end
-        t_225 = this__22.engine__74.epsilon;
-        lastState__96:addNext(t_225, output__81);
-      elseif t_251.reluctant then
-        t_226 = t_251.item;
-        this__22:buildRegex(t_226, lastState__96, lastState__96);
-        t_227 = this__22.engine__74.epsilon;
-        lastState__96:addNext(t_227, output__81);
-      else
-        t_228 = this__22.engine__74.epsilon;
-        lastState__96:addNext(t_228, output__81);
-        t_229 = t_251.item;
-        this__22:buildRegex(t_229, lastState__96, lastState__96);
-      end
-    elseif temper.instance_of(regex__79, Sequence) then
-      t_254 = temper.cast_to(regex__79, Sequence);
-      nextState__102 = output__81;
-      t_230 = temper.list_length(t_254.items);
-      j__103 = (t_230 - 1.0);
-      while (j__103 >= 0.0) do
-        local curState__104;
-        if (j__103 == 0.0) then
-          t_255 = input__80;
+    elseif temper.instance_of(regex__81, Repeat) then
+      t_270 = temper.cast_to(regex__81, Repeat);
+      lastState__98 = input__82;
+      i__99 = 0.0;
+      while true do
+        local curState__100;
+        t_237 = t_270.min;
+        if not (i__99 < t_237) then
+          break;
         else
-          t_231 = this__22.engine__74:newState();
-          t_255 = t_231;
         end
-        curState__104 = t_255;
-        t_256 = temper.list_get(t_254.items, j__103);
-        this__22:buildRegex(t_256, curState__104, nextState__102);
-        nextState__102 = curState__104;
-        j__103 = (j__103 - 1.0);
+        curState__100 = this__22.engine__76:newState();
+        t_238 = t_270.item;
+        this__22:buildRegex(t_238, lastState__98, curState__100);
+        lastState__98 = curState__100;
+        i__99 = (i__99 + 1.0);
       end
-      if (temper.list_length(t_254.items) == 0.0) then
-        t_232 = this__22.engine__74.epsilon;
-        input__80:addNext(t_232, nextState__102);
+      t_271 = t_270.max;
+      if (t_271 ~= temper.null) then
+        local max__101, i__102;
+        t_272 = t_270.max;
+        max__101 = temper.cast_to_int(t_272);
+        t_239 = t_270.min;
+        i__102 = t_239;
+        while (i__102 < max__101) do
+          local curState__103;
+          curState__103 = this__22.engine__76:newState();
+          if t_270.reluctant then
+            t_240 = t_270.item;
+            this__22:buildRegex(t_240, lastState__98, curState__103);
+            t_241 = this__22.engine__76.epsilon;
+            lastState__98:addNext(t_241, output__83);
+          else
+            t_242 = this__22.engine__76.epsilon;
+            lastState__98:addNext(t_242, output__83);
+            t_243 = t_270.item;
+            this__22:buildRegex(t_243, lastState__98, curState__103);
+          end
+          lastState__98 = curState__103;
+          i__102 = (i__102 + 1.0);
+        end
+        t_244 = this__22.engine__76.epsilon;
+        lastState__98:addNext(t_244, output__83);
+      elseif t_270.reluctant then
+        t_245 = t_270.item;
+        this__22:buildRegex(t_245, lastState__98, lastState__98);
+        t_246 = this__22.engine__76.epsilon;
+        lastState__98:addNext(t_246, output__83);
+      else
+        t_247 = this__22.engine__76.epsilon;
+        lastState__98:addNext(t_247, output__83);
+        t_248 = t_270.item;
+        this__22:buildRegex(t_248, lastState__98, lastState__98);
+      end
+    elseif temper.instance_of(regex__81, Sequence) then
+      t_273 = temper.cast_to(regex__81, Sequence);
+      nextState__104 = output__83;
+      t_249 = temper.list_length(t_273.items);
+      j__105 = (t_249 - 1.0);
+      while (j__105 >= 0.0) do
+        local curState__106;
+        if (j__105 == 0.0) then
+          t_274 = input__82;
+        else
+          t_250 = this__22.engine__76:newState();
+          t_274 = t_250;
+        end
+        curState__106 = t_274;
+        t_275 = temper.list_get(t_273.items, j__105);
+        this__22:buildRegex(t_275, curState__106, nextState__104);
+        nextState__104 = curState__106;
+        j__105 = (j__105 - 1.0);
+      end
+      if (temper.list_length(t_273.items) == 0.0) then
+        t_251 = this__22.engine__76.epsilon;
+        input__82:addNext(t_251, nextState__104);
       else
       end
-    elseif temper.instance_of(regex__79, Special) then
-      t_257 = temper.cast_to(regex__79, Special);
-      if temper.generic_eq(t_257, Begin) then
-        t_233 = BeginMatcher();
-        input__80:addNext(t_233, output__81);
-      elseif temper.generic_eq(t_257, Dot) then
-        t_234 = AnyMatcher();
-        input__80:addNext(t_234, output__81);
-      elseif temper.generic_eq(t_257, End) then
-        t_235 = EndMatcher();
-        input__80:addNext(t_235, output__81);
-      elseif temper.generic_eq(t_257, WordBoundary) then
-        t_236 = WordBoundaryMatcher();
-        input__80:addNext(t_236, output__81);
-      elseif temper.generic_eq(t_257, Digit) then
-        bitset__105 = temper.densebitvector_constructor(64.0);
-        i__106 = 48.0;
-        while (i__106 <= 57.0) do
-          temper.densebitvector_set(bitset__105, i__106, true);
-          i__106 = (i__106 + 1.0);
+    elseif temper.instance_of(regex__81, Special) then
+      t_276 = temper.cast_to(regex__81, Special);
+      if temper.generic_eq(t_276, Begin) then
+        t_252 = BeginMatcher();
+        input__82:addNext(t_252, output__83);
+      elseif temper.generic_eq(t_276, Dot) then
+        t_253 = AnyMatcher();
+        input__82:addNext(t_253, output__83);
+      elseif temper.generic_eq(t_276, End) then
+        t_254 = EndMatcher();
+        input__82:addNext(t_254, output__83);
+      elseif temper.generic_eq(t_276, WordBoundary) then
+        t_255 = WordBoundaryMatcher();
+        input__82:addNext(t_255, output__83);
+      elseif temper.generic_eq(t_276, Digit) then
+        bitset__107 = temper.densebitvector_constructor(64.0);
+        i__108 = 48.0;
+        while (i__108 <= 57.0) do
+          temper.densebitvector_set(bitset__107, i__108, true);
+          i__108 = (i__108 + 1.0);
         end
-        t_237 = BitSetMatcher(bitset__105, true);
-        input__80:addNext(t_237, output__81);
-      elseif temper.generic_eq(t_257, Space) then
-        t_238 = SpaceClassMatcher();
-        input__80:addNext(t_238, output__81);
-      elseif temper.generic_eq(t_257, Word) then
-        t_239 = WordClassMatcher();
-        input__80:addNext(t_239, output__81);
+        t_256 = BitSetMatcher(bitset__107, true);
+        input__82:addNext(t_256, output__83);
+      elseif temper.generic_eq(t_276, Space) then
+        t_257 = SpaceClassMatcher();
+        input__82:addNext(t_257, output__83);
+      elseif temper.generic_eq(t_276, Word) then
+        t_258 = WordClassMatcher();
+        input__82:addNext(t_258, output__83);
       else
         temper.bubble();
       end
@@ -2146,20 +2281,23 @@ package.preload["temper-regex-engine/engines/nfa/nfa"] = function()
     end
     return nil;
   end;
-  TemperRegexNFA.methods.split = function(this__23, str__108)
-    return this__23.engine__74:split(str__108);
+  TemperRegexNFA.methods.replace = function(this__23, text__110, format__111)
+    return this__23.engine__76:replace(text__110, format__111);
   end;
-  TemperRegexNFA.methods.found = function(this__24, str__111)
-    return this__24.engine__74:found(str__111);
+  TemperRegexNFA.methods.split = function(this__24, text__114)
+    return this__24.engine__76:split(text__114);
   end;
-  TemperRegexNFA.methods.find = function(this__25, text__114)
-    return this__25.engine__74:find(text__114);
+  TemperRegexNFA.methods.found = function(this__25, text__117)
+    return this__25.engine__76:found(text__117);
   end;
-  TemperRegexNFA.methods.toString = function(this__26)
-    return this__26.engine__74:toString();
+  TemperRegexNFA.methods.find = function(this__26, text__120)
+    return this__26.engine__76:find(text__120);
   end;
-  TemperRegexNFA.get.engine = function(this__120)
-    return this__120.engine__74;
+  TemperRegexNFA.methods.toString = function(this__27)
+    return this__27.engine__76:toString();
+  end;
+  TemperRegexNFA.get.engine = function(this__126)
+    return this__126.engine__76;
   end;
   exports = {};
   exports.TemperRegexNFA = TemperRegexNFA;
@@ -2583,87 +2721,87 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
   end;
   RegexBuilder = temper.type('RegexBuilder');
   RegexBuilder.constructor = function(this__17)
-    local t_261;
-    t_261 = temper.listbuilder_constructor();
-    this__17.list__75 = t_261;
+    local t_280;
+    t_280 = temper.listbuilder_constructor();
+    this__17.list__75 = t_280;
     return nil;
   end;
   RegexBuilder.methods.has = function(this__18, from__79, to__80)
-    local return__29, t_262, t_263, t_264, t_265, i__82;
-    ::continue_33::i__82 = 0.0;
+    local return__29, t_281, t_282, t_283, t_284, i__82;
+    ::continue_31::i__82 = 0.0;
     while true do
       local edge__83;
-      t_262 = temper.listbuilder_length(this__18.list__75);
-      if not (i__82 < t_262) then
+      t_281 = temper.listbuilder_length(this__18.list__75);
+      if not (i__82 < t_281) then
         break;
       else
       end
-      t_264 = temper.listed_get(this__18.list__75, i__82);
-      edge__83 = t_264;
+      t_283 = temper.listed_get(this__18.list__75, i__82);
+      edge__83 = t_283;
       if temper.str_eq(edge__83.to, to__80) then
-        t_263 = edge__83.from;
-        t_265 = temper.str_eq(t_263, from__79);
+        t_282 = edge__83.from;
+        t_284 = temper.str_eq(t_282, from__79);
       else
-        t_265 = false;
+        t_284 = false;
       end
-      if t_265 then
+      if t_284 then
         return__29 = true;
-        goto break_32;
+        goto break_30;
       else
       end
       i__82 = (i__82 + 1.0);
     end
     return__29 = false;
-    ::break_32::return return__29;
+    ::break_30::return return__29;
   end;
   RegexBuilder.methods.find = function(this__19, from__85, to__86)
-    local return__30, t_266, t_267, t_268, t_269, i__88;
-    ::continue_35::i__88 = 0.0;
+    local return__30, t_285, t_286, t_287, t_288, i__88;
+    ::continue_33::i__88 = 0.0;
     while true do
       local edge__89;
-      t_266 = temper.listbuilder_length(this__19.list__75);
-      if not (i__88 < t_266) then
+      t_285 = temper.listbuilder_length(this__19.list__75);
+      if not (i__88 < t_285) then
         break;
       else
       end
-      t_268 = temper.listed_get(this__19.list__75, i__88);
-      edge__89 = t_268;
+      t_287 = temper.listed_get(this__19.list__75, i__88);
+      edge__89 = t_287;
       if temper.str_eq(edge__89.to, to__86) then
-        t_267 = edge__89.from;
-        t_269 = temper.str_eq(t_267, from__85);
+        t_286 = edge__89.from;
+        t_288 = temper.str_eq(t_286, from__85);
       else
-        t_269 = false;
+        t_288 = false;
       end
-      if t_269 then
+      if t_288 then
         return__30 = edge__89.regex;
-        goto break_34;
+        goto break_32;
       else
       end
       i__88 = (i__88 + 1.0);
     end
     temper.bubble();
-    ::break_34::return return__30;
+    ::break_32::return return__30;
   end;
   RegexBuilder.methods.forEachWentFrom = function(this__20, to__91, cb__92)
-    local t_270, t_271, t_272, t_273, t_274, t_275, ls__94, i__95, i__97;
+    local t_289, t_290, t_291, t_292, t_293, t_294, ls__94, i__95, i__97;
     ls__94 = temper.listbuilder_constructor();
     i__95 = 0.0;
     while true do
       local edge__96;
-      t_270 = temper.listbuilder_length(this__20.list__75);
-      if not (i__95 < t_270) then
+      t_289 = temper.listbuilder_length(this__20.list__75);
+      if not (i__95 < t_289) then
         break;
       else
       end
-      t_273 = temper.listed_get(this__20.list__75, i__95);
-      edge__96 = t_273;
+      t_292 = temper.listed_get(this__20.list__75, i__95);
+      edge__96 = t_292;
       if temper.str_eq(edge__96.to, to__91) then
-        t_271 = edge__96.from;
-        t_274 = temper.str_ne(t_271, to__91);
+        t_290 = edge__96.from;
+        t_293 = temper.str_ne(t_290, to__91);
       else
-        t_274 = false;
+        t_293 = false;
       end
-      if t_274 then
+      if t_293 then
         temper.listbuilder_add(ls__94, edge__96);
       else
       end
@@ -2671,37 +2809,37 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
     end
     i__97 = 0.0;
     while true do
-      t_272 = temper.listbuilder_length(ls__94);
-      if not (i__97 < t_272) then
+      t_291 = temper.listbuilder_length(ls__94);
+      if not (i__97 < t_291) then
         break;
       else
       end
-      t_275 = temper.listed_get(ls__94, i__97);
-      cb__92(t_275);
+      t_294 = temper.listed_get(ls__94, i__97);
+      cb__92(t_294);
       i__97 = (i__97 + 1.0);
     end
     return nil;
   end;
   RegexBuilder.methods.forEachGoesTo = function(this__21, from__99, cb__100)
-    local t_276, t_277, t_278, t_279, t_280, t_281, ls__102, i__103, i__105;
+    local t_295, t_296, t_297, t_298, t_299, t_300, ls__102, i__103, i__105;
     ls__102 = temper.listbuilder_constructor();
     i__103 = 0.0;
     while true do
       local edge__104;
-      t_276 = temper.listbuilder_length(this__21.list__75);
-      if not (i__103 < t_276) then
+      t_295 = temper.listbuilder_length(this__21.list__75);
+      if not (i__103 < t_295) then
         break;
       else
       end
-      t_279 = temper.listed_get(this__21.list__75, i__103);
-      edge__104 = t_279;
+      t_298 = temper.listed_get(this__21.list__75, i__103);
+      edge__104 = t_298;
       if temper.str_eq(edge__104.from, from__99) then
-        t_277 = edge__104.to;
-        t_280 = temper.str_ne(t_277, from__99);
+        t_296 = edge__104.to;
+        t_299 = temper.str_ne(t_296, from__99);
       else
-        t_280 = false;
+        t_299 = false;
       end
-      if t_280 then
+      if t_299 then
         temper.listbuilder_add(ls__102, edge__104);
       else
       end
@@ -2709,55 +2847,55 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
     end
     i__105 = 0.0;
     while true do
-      t_278 = temper.listbuilder_length(ls__102);
-      if not (i__105 < t_278) then
+      t_297 = temper.listbuilder_length(ls__102);
+      if not (i__105 < t_297) then
         break;
       else
       end
-      t_281 = temper.listed_get(ls__102, i__105);
-      cb__100(t_281);
+      t_300 = temper.listed_get(ls__102, i__105);
+      cb__100(t_300);
       i__105 = (i__105 + 1.0);
     end
     return nil;
   end;
   RegexBuilder.methods.simplify = function(this__22, node__107)
-    local t_282, me__109;
+    local t_301, me__109;
     me__109 = this__22;
     if this__22:has(node__107, node__107) then
       local self__110, r1__111, fn__551;
-      t_282 = this__22:find(node__107, node__107);
-      self__110 = t_282;
+      t_301 = this__22:find(node__107, node__107);
+      self__110 = t_301;
       r1__111 = regexToString(self__110);
       fn__551 = function(wentFrom__112)
-        local t_283, r0__114, fn__544;
-        t_283 = wentFrom__112.regex;
-        r0__114 = regexToString(t_283);
+        local t_302, r0__114, fn__544;
+        t_302 = wentFrom__112.regex;
+        r0__114 = regexToString(t_302);
         fn__544 = function(goesTo__115)
-          local t_284, t_285, t_286, t_287, t_288, t_289, t_290, t_291, t_292, t_293, t_294, t_295, t_296, r2__117;
-          t_296 = goesTo__115.regex;
-          r2__117 = regexToString(t_296);
+          local t_303, t_304, t_305, t_306, t_307, t_308, t_309, t_310, t_311, t_312, t_313, t_314, t_315, r2__117;
+          t_315 = goesTo__115.regex;
+          r2__117 = regexToString(t_315);
           if temper.str_eq(r1__111, r0__114) then
             if temper.str_eq(r1__111, r2__117) then
-              t_284 = wentFrom__112.from;
-              t_285 = goesTo__115.to;
-              t_286 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 1.0, temper.null, false)));
-              me__109:add(t_284, t_285, t_286);
+              t_303 = wentFrom__112.from;
+              t_304 = goesTo__115.to;
+              t_305 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 1.0, temper.null, false)));
+              me__109:add(t_303, t_304, t_305);
             else
-              t_287 = wentFrom__112.from;
-              t_288 = goesTo__115.to;
-              t_289 = Sequence(temper.listof(Repeat(self__110, 1.0, temper.null, false), goesTo__115.regex));
-              me__109:add(t_287, t_288, t_289);
+              t_306 = wentFrom__112.from;
+              t_307 = goesTo__115.to;
+              t_308 = Sequence(temper.listof(Repeat(self__110, 1.0, temper.null, false), goesTo__115.regex));
+              me__109:add(t_306, t_307, t_308);
             end
           elseif temper.str_eq(r1__111, r2__117) then
-            t_290 = wentFrom__112.from;
-            t_291 = goesTo__115.to;
-            t_292 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 1.0, temper.null, false)));
-            me__109:add(t_290, t_291, t_292);
+            t_309 = wentFrom__112.from;
+            t_310 = goesTo__115.to;
+            t_311 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 1.0, temper.null, false)));
+            me__109:add(t_309, t_310, t_311);
           else
-            t_293 = wentFrom__112.from;
-            t_294 = goesTo__115.to;
-            t_295 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 0.0, temper.null, false), goesTo__115.regex));
-            me__109:add(t_293, t_294, t_295);
+            t_312 = wentFrom__112.from;
+            t_313 = goesTo__115.to;
+            t_314 = Sequence(temper.listof(wentFrom__112.regex, Repeat(self__110, 0.0, temper.null, false), goesTo__115.regex));
+            me__109:add(t_312, t_313, t_314);
           end
           return nil;
         end;
@@ -2770,11 +2908,11 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
       fn__550 = function(wentFrom__118)
         local fn__512;
         fn__512 = function(goesTo__120)
-          local t_297, t_298, t_299;
-          t_297 = wentFrom__118.from;
-          t_298 = goesTo__120.to;
-          t_299 = Sequence(temper.listof(wentFrom__118.regex, goesTo__120.regex));
-          me__109:add(t_297, t_298, t_299);
+          local t_316, t_317, t_318;
+          t_316 = wentFrom__118.from;
+          t_317 = goesTo__120.to;
+          t_318 = Sequence(temper.listof(wentFrom__118.regex, goesTo__120.regex));
+          me__109:add(t_316, t_317, t_318);
           return nil;
         end;
         me__109:forEachGoesTo(node__107, fn__512);
@@ -2789,42 +2927,42 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
     return nil;
   end;
   RegexBuilder.methods.dumpInternal = function(this__24)
-    local t_300, fn__497;
-    t_300 = this__24.list__75;
+    local t_319, fn__497;
+    t_319 = this__24.list__75;
     fn__497 = function(cur__129)
-      local t_301, t_302;
-      t_301 = cur__129.from;
-      t_302 = cur__129.regex;
-      return temper.concat(t_301, ' -> /', regexToString(t_302), '/ -> ', cur__129.to);
+      local t_320, t_321;
+      t_320 = cur__129.from;
+      t_321 = cur__129.regex;
+      return temper.concat(t_320, ' -> /', regexToString(t_321), '/ -> ', cur__129.to);
     end;
-    return temper.listed_join(t_300, '\n', fn__497);
+    return temper.listed_join(t_319, '\n', fn__497);
   end;
   RegexBuilder.methods.toRegexList = function(this__25)
-    local t_303, t_304, t_305, t_306, t_307, t_308, t_309, t_310, t_311, done__133, j__134, ret__136, j__137;
+    local t_322, t_323, t_324, t_325, t_326, t_327, t_328, t_329, t_330, done__133, j__134, ret__136, j__137;
     done__133 = temper.mapbuilder_constructor();
     temper.mapbuilder_set(done__133, '#begin', true);
     j__134 = 0.0;
     while true do
-      local cur__135, local_312, local_313, local_314;
-      t_303 = temper.listbuilder_length(this__25.list__75);
-      if not (j__134 < t_303) then
+      local cur__135, local_331, local_332, local_333;
+      t_322 = temper.listbuilder_length(this__25.list__75);
+      if not (j__134 < t_322) then
         break;
       else
       end
-      t_307 = temper.listed_get(this__25.list__75, j__134);
-      cur__135 = t_307;
-      local_312, local_313, local_314 = temper.pcall(function()
-        t_308 = temper.mapped_get(done__133, cur__135.from);
-        t_309 = t_308;
+      t_326 = temper.listed_get(this__25.list__75, j__134);
+      cur__135 = t_326;
+      local_331, local_332, local_333 = temper.pcall(function()
+        t_327 = temper.mapped_get(done__133, cur__135.from);
+        t_328 = t_327;
       end);
-      if local_312 then
+      if local_331 then
       else
-        t_309 = false;
+        t_328 = false;
       end
-      if not t_309 then
+      if not t_328 then
         temper.mapbuilder_set(done__133, cur__135.from, true);
-        t_304 = cur__135.from;
-        this__25:simplify(t_304);
+        t_323 = cur__135.from;
+        this__25:simplify(t_323);
       else
       end
       j__134 = (j__134 + 1.0);
@@ -2833,20 +2971,20 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
     j__137 = 0.0;
     while true do
       local cur__138;
-      t_305 = temper.listbuilder_length(this__25.list__75);
-      if not (j__137 < t_305) then
+      t_324 = temper.listbuilder_length(this__25.list__75);
+      if not (j__137 < t_324) then
         break;
       else
       end
-      t_310 = temper.listed_get(this__25.list__75, j__137);
-      cur__138 = t_310;
+      t_329 = temper.listed_get(this__25.list__75, j__137);
+      cur__138 = t_329;
       if temper.str_eq(cur__138.from, '#begin') then
-        t_306 = cur__138.to;
-        t_311 = temper.str_eq(t_306, '#end');
+        t_325 = cur__138.to;
+        t_330 = temper.str_eq(t_325, '#end');
       else
-        t_311 = false;
+        t_330 = false;
       end
-      if t_311 then
+      if t_330 then
         temper.listbuilder_add(ret__136, cur__138.regex);
       else
       end
@@ -2864,7 +3002,7 @@ package.preload["temper-regex-engine/engines/dfa/builder"] = function()
 end
 package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
   local temper = require('temper-core');
-  local RegexNode, CodePoints, CodeRange, CodeSet, Or, Sequence, Capture, CodePart, Special, SpecialSet, ItemizedRegex, Repeat, entire, oneOrMore, optional, Group, Regex, Begin, Dot, End, WordBoundary, Digit, Space, Word, TemperRegexNFA, Engine, State, Matcher, BeginMatcher, EndMatcher, WordBoundaryMatcher, WordClassMatcher, SpaceClassMatcher, AnyMatcher, BitSetMatcher, CharCodeMatcher, StartGroupMatcher, EndGroupMatcher, CharMatcher, EpsilonMatcher, TemperRegex, regexToString, chr, TransitionTable, TransitionTableEntry, toVec, fromVec, RegexBuilder, TemperRegexPatterns, console_337, TemperRegexDFA, emptyList__129, mapToList__78, validFor__79, exports;
+  local RegexNode, CodePoints, CodeRange, CodeSet, Or, Sequence, Capture, CodePart, Special, SpecialSet, ItemizedRegex, Repeat, entire, oneOrMore, optional, Group, Regex, Begin, Dot, End, WordBoundary, Digit, Space, Word, TemperRegexNFA, Engine, State, Matcher, BeginMatcher, EndMatcher, WordBoundaryMatcher, WordClassMatcher, SpaceClassMatcher, AnyMatcher, BitSetMatcher, CharCodeMatcher, StartGroupMatcher, EndGroupMatcher, CharMatcher, EpsilonMatcher, TemperRegex, regexToString, chr, TransitionTable, TransitionTableEntry, toVec, fromVec, RegexBuilder, TemperRegexPatterns, console_356, TemperRegexDFA, emptyList__129, mapToList__78, validFor__79, exports;
   RegexNode = temper.import('std/regex', 'RegexNode');
   CodePoints = temper.import('std/regex', 'CodePoints');
   CodeRange = temper.import('std/regex', 'CodeRange');
@@ -2914,42 +3052,42 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
   fromVec = temper.import('temper-regex-engine/engines/dfa/table', 'fromVec');
   RegexBuilder = temper.import('temper-regex-engine/engines/dfa/builder', 'RegexBuilder');
   TemperRegexPatterns = temper.import('temper-regex-engine/engines/patterns', 'TemperRegexPatterns');
-  console_337 = 0.0;
+  console_356 = 0.0;
   TemperRegexDFA = temper.type('TemperRegexDFA', TemperRegex);
   TemperRegexDFA.get.nstates = function(this__37)
     return temper.listbuilder_length(this__37.nfa__155.states);
   end;
   TemperRegexDFA.constructor = function(this__38, regex__159)
-    local t_338, t_339, t_340, t_341, t_342, t_343, t_344, t_345, t_346, t_347, t_348, t_349, t_350, t_351, t_352, t_353, t_354, t_355, t_356, t_357, t_358, t_359, t_360, t_361, t_362, t_363, t_364, t_365, t_366, t_367, i__161, pairs__164, i__165, i__173, index__174, i__175, mapBuilder__178, i__179, t_368;
+    local t_357, t_358, t_359, t_360, t_361, t_362, t_363, t_364, t_365, t_366, t_367, t_368, t_369, t_370, t_371, t_372, t_373, t_374, t_375, t_376, t_377, t_378, t_379, t_380, t_381, t_382, t_383, t_384, t_385, t_386, i__161, pairs__164, i__165, i__173, index__174, i__175, mapBuilder__178, i__179, t_387;
     this__38.nsyms__150 = 0.0;
-    t_364 = temper.mapbuilder_constructor();
-    this__38.symbols__151 = t_364;
-    t_365 = (TemperRegexNFA(regex__159)).engine;
-    this__38.rawNfa__154 = t_365;
-    t_366 = this__38.rawNfa__154:opt();
-    this__38.nfa__155 = t_366;
-    t_367 = TransitionTable(this__38.nstates);
-    this__38.table__152 = t_367;
+    t_383 = temper.mapbuilder_constructor();
+    this__38.symbols__151 = t_383;
+    t_384 = (TemperRegexNFA(regex__159)).engine;
+    this__38.rawNfa__154 = t_384;
+    t_385 = this__38.rawNfa__154:opt();
+    this__38.nfa__155 = t_385;
+    t_386 = TransitionTable(this__38.nstates);
+    this__38.table__152 = t_386;
     i__161 = 0.0;
     while true do
       local state__162, j__163;
-      t_338 = this__38.nstates;
-      if not (i__161 < t_338) then
+      t_357 = this__38.nstates;
+      if not (i__161 < t_357) then
         break;
       else
       end
-      t_352 = temper.listed_get(this__38.nfa__155.states, i__161);
-      state__162 = t_352;
+      t_371 = temper.listed_get(this__38.nfa__155.states, i__161);
+      state__162 = t_371;
       j__163 = 0.0;
       while true do
-        t_339 = temper.listbuilder_length(state__162.next);
-        if not (j__163 < t_339) then
+        t_358 = temper.listbuilder_length(state__162.next);
+        if not (j__163 < t_358) then
           break;
         else
         end
-        t_353 = temper.listed_get(state__162.next, j__163);
-        t_340 = t_353.matcher;
-        this__38:addSymbolsFrom(t_340);
+        t_372 = temper.listed_get(state__162.next, j__163);
+        t_359 = t_372.matcher;
+        this__38:addSymbolsFrom(t_359);
         j__163 = (j__163 + 1.0);
       end
       i__161 = (i__161 + 1.0);
@@ -2958,13 +3096,13 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     i__165 = 0.0;
     while true do
       local state__166, val__167, j__168, ent__172;
-      t_341 = this__38.nstates;
-      if not (i__165 < t_341) then
+      t_360 = this__38.nstates;
+      if not (i__165 < t_360) then
         break;
       else
       end
-      t_354 = temper.listed_get(this__38.nfa__155.states, i__165);
-      state__166 = t_354;
+      t_373 = temper.listed_get(this__38.nfa__155.states, i__165);
+      state__166 = t_373;
       val__167 = temper.listbuilder_constructor();
       j__168 = 0.0;
       while (j__168 < this__38.nsyms__150) do
@@ -2973,17 +3111,17 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
         k__170 = 0.0;
         while true do
           local next__171;
-          t_342 = temper.listbuilder_length(state__166.next);
-          if not (k__170 < t_342) then
+          t_361 = temper.listbuilder_length(state__166.next);
+          if not (k__170 < t_361) then
             break;
           else
           end
-          t_355 = temper.listed_get(state__166.next, k__170);
-          next__171 = t_355;
-          t_343 = next__171.matcher;
-          t_344 = validFor__79(t_343);
-          t_356 = temper.list_get(pairs__164, j__168);
-          if temper.densebitvector_get(t_344, t_356.key) then
+          t_374 = temper.listed_get(state__166.next, k__170);
+          next__171 = t_374;
+          t_362 = next__171.matcher;
+          t_363 = validFor__79(t_362);
+          t_375 = temper.list_get(pairs__164, j__168);
+          if temper.densebitvector_get(t_363, t_375.key) then
             temper.listbuilder_add(cur__169, next__171.toState.id);
           else
           end
@@ -2998,14 +3136,14 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     end
     i__173 = 0.0;
     while true do
-      t_345 = this__38.nstates;
-      if not (i__173 < t_345) then
+      t_364 = this__38.nstates;
+      if not (i__173 < t_364) then
         break;
       else
       end
-      t_357 = temper.listed_get(this__38.table__152.table, i__173);
-      t_346 = this__38.nstates;
-      this__38:buildTable(t_357, t_346);
+      t_376 = temper.listed_get(this__38.table__152.table, i__173);
+      t_365 = this__38.nstates;
+      this__38:buildTable(t_376, t_365);
       i__173 = (i__173 + 1.0);
     end
     index__174 = temper.mapbuilder_constructor();
@@ -3013,61 +3151,61 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     i__175 = 0.0;
     while true do
       local tent__176, name__177;
-      ::continue_39::t_347 = temper.listbuilder_length(this__38.table__152.table);
-      if not (i__175 < t_347) then
+      ::continue_37::t_366 = temper.listbuilder_length(this__38.table__152.table);
+      if not (i__175 < t_366) then
         break;
       else
       end
-      t_358 = temper.listed_get(this__38.table__152.table, i__175);
-      tent__176 = t_358;
-      t_348 = tent__176.key;
-      name__177 = this__38:nameFor(t_348);
+      t_377 = temper.listed_get(this__38.table__152.table, i__175);
+      tent__176 = t_377;
+      t_367 = tent__176.key;
+      name__177 = this__38:nameFor(t_367);
       if temper.str_eq(name__177, '') then
-        goto break_38;
+        goto break_36;
       else
       end
-      t_349 = tent__176.key;
-      temper.mapbuilder_set(index__174, this__38:nameFor(t_349), (i__175 + 1.0));
-      ::break_38::i__175 = (i__175 + 1.0);
+      t_368 = tent__176.key;
+      temper.mapbuilder_set(index__174, this__38:nameFor(t_368), (i__175 + 1.0));
+      ::break_36::i__175 = (i__175 + 1.0);
     end
     mapBuilder__178 = temper.mapbuilder_constructor();
     i__179 = 0.0;
     while true do
       local tent__180, subBuilder__181, j__182, ci__184;
-      t_350 = temper.listbuilder_length(this__38.table__152.table);
-      if not (i__179 < t_350) then
+      t_369 = temper.listbuilder_length(this__38.table__152.table);
+      if not (i__179 < t_369) then
         break;
       else
       end
-      t_359 = temper.listed_get(this__38.table__152.table, i__179);
-      tent__180 = t_359;
+      t_378 = temper.listed_get(this__38.table__152.table, i__179);
+      tent__180 = t_378;
       subBuilder__181 = temper.mapbuilder_constructor();
       j__182 = 0.0;
       while (j__182 < this__38.nsyms__150) do
         local value__183;
-        t_360 = temper.list_get(tent__180.val, j__182);
-        t_361 = temper.mapped_get(index__174, this__38:nameFor(t_360));
-        value__183 = t_361;
-        t_362 = temper.list_get(pairs__164, j__182);
-        temper.mapbuilder_set(subBuilder__181, t_362.key, value__183);
+        t_379 = temper.list_get(tent__180.val, j__182);
+        t_380 = temper.mapped_get(index__174, this__38:nameFor(t_379));
+        value__183 = t_380;
+        t_381 = temper.list_get(pairs__164, j__182);
+        temper.mapbuilder_set(subBuilder__181, t_381.key, value__183);
         j__182 = (j__182 + 1.0);
       end
-      t_351 = tent__180.key;
-      t_363 = temper.mapped_get(index__174, this__38:nameFor(t_351));
-      ci__184 = t_363;
+      t_370 = tent__180.key;
+      t_382 = temper.mapped_get(index__174, this__38:nameFor(t_370));
+      ci__184 = t_382;
       temper.mapbuilder_set(mapBuilder__178, ci__184, mapToList__78(temper.mapped_tomap(subBuilder__181), 0.0));
       i__179 = (i__179 + 1.0);
     end
-    t_368 = temper.mapped_tomap(mapBuilder__178);
-    this__38.map__153 = mapToList__78(t_368, temper.listof());
+    t_387 = temper.mapped_tomap(mapBuilder__178);
+    this__38.map__153 = mapToList__78(t_387, temper.listof());
     return nil;
   end;
   TemperRegexDFA.methods.addCodePoint = function(this__39, c__186)
-    local local_369, local_370, local_371;
-    local_369, local_370, local_371 = temper.pcall(function()
+    local local_388, local_389, local_390;
+    local_388, local_389, local_390 = temper.pcall(function()
       temper.mapped_get(this__39.symbols__151, c__186);
     end);
-    if local_369 then
+    if local_388 then
     else
       local newSym__188;
       newSym__188 = this__39.nsyms__150;
@@ -3086,51 +3224,51 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     return nil;
   end;
   TemperRegexDFA.methods.nameFor = function(this__41, vec__195)
-    local t_373, t_374, fn__1515;
-    t_373 = this__41.nstates;
-    t_374 = fromVec(vec__195, t_373);
+    local t_392, t_393, fn__1515;
+    t_392 = this__41.nstates;
+    t_393 = fromVec(vec__195, t_392);
     fn__1515 = function(s__197)
       return temper.int_tostring(s__197);
     end;
-    return temper.listed_join(t_374, '|', fn__1515);
+    return temper.listed_join(t_393, '|', fn__1515);
   end;
   TemperRegexDFA.methods.buildEngine = function(this__42)
-    local t_375, t_376, t_377, t_378, t_379, t_380, t_381, t_382, t_383, t_384, t_385, t_386, t_387, t_388, nstates__201, index__202, i__203, dfa__206, dfaStates__207, i__208, pairs__210, i__211;
+    local t_394, t_395, t_396, t_397, t_398, t_399, t_400, t_401, t_402, t_403, t_404, t_405, t_406, t_407, nstates__201, index__202, i__203, dfa__206, dfaStates__207, i__208, pairs__210, i__211;
     nstates__201 = temper.listbuilder_length(this__42.nfa__155.states);
     index__202 = temper.mapbuilder_constructor();
     temper.mapbuilder_set(index__202, '', -1.0);
     i__203 = 0.0;
     while true do
       local tent__204, name__205;
-      ::continue_41::t_375 = temper.listbuilder_length(this__42.table__152.table);
-      if not (i__203 < t_375) then
+      ::continue_39::t_394 = temper.listbuilder_length(this__42.table__152.table);
+      if not (i__203 < t_394) then
         break;
       else
       end
-      t_381 = temper.listed_get(this__42.table__152.table, i__203);
-      tent__204 = t_381;
-      t_376 = tent__204.key;
-      name__205 = this__42:nameFor(t_376);
+      t_400 = temper.listed_get(this__42.table__152.table, i__203);
+      tent__204 = t_400;
+      t_395 = tent__204.key;
+      name__205 = this__42:nameFor(t_395);
       if temper.str_eq(name__205, '') then
-        goto break_40;
+        goto break_38;
       else
       end
-      t_377 = tent__204.key;
-      temper.mapbuilder_set(index__202, this__42:nameFor(t_377), i__203);
-      ::break_40::i__203 = (i__203 + 1.0);
+      t_396 = tent__204.key;
+      temper.mapbuilder_set(index__202, this__42:nameFor(t_396), i__203);
+      ::break_38::i__203 = (i__203 + 1.0);
     end
     dfa__206 = Engine();
     dfaStates__207 = temper.listbuilder_constructor();
     i__208 = 0.0;
     while true do
       local tent__209;
-      t_378 = temper.listbuilder_length(this__42.table__152.table);
-      if not (i__208 < t_378) then
+      t_397 = temper.listbuilder_length(this__42.table__152.table);
+      if not (i__208 < t_397) then
         break;
       else
       end
-      t_382 = temper.listed_get(this__42.table__152.table, i__208);
-      tent__209 = t_382;
+      t_401 = temper.listed_get(this__42.table__152.table, i__208);
+      tent__209 = t_401;
       if (i__208 == 0.0) then
         temper.listbuilder_add(dfaStates__207, dfa__206.startState);
       elseif temper.densebitvector_get(tent__209.key, 1.0) then
@@ -3144,26 +3282,26 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     i__211 = 0.0;
     while true do
       local tent__212, state__213, j__214;
-      t_379 = temper.listbuilder_length(this__42.table__152.table);
-      if not (i__211 < t_379) then
+      t_398 = temper.listbuilder_length(this__42.table__152.table);
+      if not (i__211 < t_398) then
         break;
       else
       end
-      t_383 = temper.listed_get(this__42.table__152.table, i__211);
-      tent__212 = t_383;
-      t_384 = temper.listed_get(dfaStates__207, i__211);
-      state__213 = t_384;
+      t_402 = temper.listed_get(this__42.table__152.table, i__211);
+      tent__212 = t_402;
+      t_403 = temper.listed_get(dfaStates__207, i__211);
+      state__213 = t_403;
       j__214 = 0.0;
       while (j__214 < this__42.nsyms__150) do
         local value__215;
-        t_385 = temper.list_get(tent__212.val, j__214);
-        t_386 = temper.mapped_get(index__202, this__42:nameFor(t_385));
-        value__215 = t_386;
+        t_404 = temper.list_get(tent__212.val, j__214);
+        t_405 = temper.mapped_get(index__202, this__42:nameFor(t_404));
+        value__215 = t_405;
         if (value__215 ~= -1.0) then
-          t_387 = temper.list_get(pairs__210, j__214);
-          t_380 = CharCodeMatcher(t_387.key);
-          t_388 = temper.listed_get(dfaStates__207, value__215);
-          state__213:addNext(t_380, t_388);
+          t_406 = temper.list_get(pairs__210, j__214);
+          t_399 = CharCodeMatcher(t_406.key);
+          t_407 = temper.listed_get(dfaStates__207, value__215);
+          state__213:addNext(t_399, t_407);
         else
         end
         j__214 = (j__214 + 1.0);
@@ -3173,19 +3311,19 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     return dfa__206:opt();
   end;
   TemperRegexDFA.methods.buildTable = function(this__43, tent__217, nstates__218)
-    local t_389, t_390, t_391, t_392, t_393, t_394, i__220;
+    local t_408, t_409, t_410, t_411, t_412, t_413, i__220;
     i__220 = 0.0;
     while (i__220 < this__43.nsyms__150) do
       local newKey__221;
-      t_390 = temper.list_get(tent__217.val, i__220);
-      newKey__221 = t_390;
+      t_409 = temper.list_get(tent__217.val, i__220);
+      newKey__221 = t_409;
       if (temper.list_length(fromVec(newKey__221, nstates__218)) >= 1.0) then
-        t_389 = this__43.table__152:has(newKey__221);
-        t_391 = not t_389;
+        t_408 = this__43.table__152:has(newKey__221);
+        t_410 = not t_408;
       else
-        t_391 = false;
+        t_410 = false;
       end
-      if t_391 then
+      if t_410 then
         local allVals__222, j__223, ent__229;
         allVals__222 = temper.listbuilder_constructor();
         j__223 = 0.0;
@@ -3196,11 +3334,11 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
           while (k__225 < nstates__218) do
             if temper.densebitvector_get(newKey__221, k__225) then
               local ent__226, bv__227, l__228;
-              t_392 = this__43.table__152:get(toVec(temper.listof(k__225), nstates__218));
-              ent__226 = t_392;
-              t_393 = this__43.table__152:get(toVec(temper.listof(k__225), nstates__218));
-              t_394 = temper.list_get(t_393.val, j__223);
-              bv__227 = t_394;
+              t_411 = this__43.table__152:get(toVec(temper.listof(k__225), nstates__218));
+              ent__226 = t_411;
+              t_412 = this__43.table__152:get(toVec(temper.listof(k__225), nstates__218));
+              t_413 = temper.list_get(t_412.val, j__223);
+              bv__227 = t_413;
               l__228 = 0.0;
               while (l__228 < nstates__218) do
                 if temper.densebitvector_get(bv__227, l__228) then
@@ -3226,7 +3364,7 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     return nil;
   end;
   TemperRegexDFA.methods.addSymbolsFrom = function(this__44, next__231)
-    local t_395, t_396, t_397, t_398;
+    local t_414, t_415, t_416, t_417;
     if temper.instance_of(next__231, WordClassMatcher) then
       temper.cast_to(next__231, WordClassMatcher);
       this__44:addCodePointRange(48.0, 57.0);
@@ -3242,13 +3380,13 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     elseif temper.instance_of(next__231, BitSetMatcher) then
       temper.cast_to(next__231, BitSetMatcher);
     elseif temper.instance_of(next__231, CharCodeMatcher) then
-      t_397 = temper.cast_to(next__231, CharCodeMatcher);
-      t_395 = t_397.code;
-      this__44:addCodePoint(t_395);
+      t_416 = temper.cast_to(next__231, CharCodeMatcher);
+      t_414 = t_416.code;
+      this__44:addCodePoint(t_414);
     elseif temper.instance_of(next__231, CharMatcher) then
-      t_398 = temper.cast_to(next__231, CharMatcher);
-      t_396 = t_398.code;
-      this__44:addCodePoint(t_396);
+      t_417 = temper.cast_to(next__231, CharMatcher);
+      t_415 = t_417.code;
+      this__44:addCodePoint(t_415);
     elseif temper.instance_of(next__231, AnyMatcher) then
       temper.cast_to(next__231, AnyMatcher);
       this__44:addCodePoint(9.0);
@@ -3280,64 +3418,64 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     return nil;
   end;
   TemperRegexDFA.methods.foundAfter = function(this__45, str__234, place__235)
-    local return__68, t_399, t_400, state__237;
-    ::continue_43::state__237 = 1.0;
+    local return__68, t_418, t_419, state__237;
+    ::continue_41::state__237 = 1.0;
     while true do
       if (state__237 == 0.0) then
         return__68 = false;
-        goto break_42;
+        goto break_40;
       else
       end
       if (state__237 == 2.0) then
         return__68 = true;
-        goto break_42;
+        goto break_40;
       else
       end
       if temper.string_hasindex(str__234, place__235) then
         return__68 = false;
-        goto break_42;
+        goto break_40;
       else
       end
-      t_399 = temper.listed_getor(temper.listed_getor(this__45.map__153, state__237, emptyList__129), temper.string_codeat(str__234, place__235), 0.0);
-      state__237 = t_399;
-      t_400 = temper.string_next(str__234, place__235);
-      place__235 = t_400;
+      t_418 = temper.listed_getor(temper.listed_getor(this__45.map__153, state__237, emptyList__129), temper.string_codeat(str__234, place__235), 0.0);
+      state__237 = t_418;
+      t_419 = temper.string_next(str__234, place__235);
+      place__235 = t_419;
     end
-    ::break_42::return return__68;
+    ::break_40::return return__68;
   end;
   TemperRegexDFA.methods.found = function(this__46, str__239)
-    local return__69, t_401, place__241;
-    ::continue_45::place__241 = 1.0;
+    local return__69, t_420, place__241;
+    ::continue_43::place__241 = 1.0;
     while true do
       if this__46:foundAfter(str__239, place__241) then
         return__69 = true;
-        goto break_44;
+        goto break_42;
       elseif temper.string_hasindex(str__239, place__241) then
-        t_401 = temper.string_next(str__239, place__241);
-        place__241 = t_401;
+        t_420 = temper.string_next(str__239, place__241);
+        place__241 = t_420;
       else
         return__69 = false;
-        goto break_44;
+        goto break_42;
       end
     end
-    ::break_44::return return__69;
+    ::break_42::return return__69;
   end;
   TemperRegexDFA.methods.find = function(this__47, str__243)
-    local return__70, t_402, place__245;
-    ::continue_47::place__245 = 1.0;
+    local return__70, t_421, place__245;
+    ::continue_45::place__245 = 1.0;
     while true do
       if this__47:foundAfter(str__243, place__245) then
         return__70 = true;
-        goto break_46;
+        goto break_44;
       elseif temper.string_hasindex(str__243, place__245) then
-        t_402 = temper.string_next(str__243, place__245);
-        place__245 = t_402;
+        t_421 = temper.string_next(str__243, place__245);
+        place__245 = t_421;
       else
         return__70 = false;
-        goto break_46;
+        goto break_44;
       end
     end
-    ::break_46::return return__70;
+    ::break_44::return return__70;
   end;
   TemperRegexDFA.methods.toMarkdownTable = function(this__48)
     return this__48.table__152:toMarkdownWith(this__48.symbols__151);
@@ -3361,44 +3499,44 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     return Or(this__51:toRegexList());
   end;
   TemperRegexDFA.methods.toRegexList = function(this__52)
-    local t_403, t_404, t_405, t_406, t_407, t_408, t_409, t_410, t_411, t_412, t_413, t_414, t_415, t_416, t_417, t_418, builder__264, syms__265, i__266;
+    local t_422, t_423, t_424, t_425, t_426, t_427, t_428, t_429, t_430, t_431, t_432, t_433, t_434, t_435, t_436, t_437, builder__264, syms__265, i__266;
     builder__264 = RegexBuilder();
     syms__265 = temper.mapped_tolist(this__52.symbols__151);
     i__266 = 0.0;
     while true do
       local tent__267, kname__268, tmap__269, j__270, ls__273, j__274;
-      ::continue_49::t_403 = temper.listbuilder_length(this__52.table__152.table);
-      if not (i__266 < t_403) then
+      ::continue_47::t_422 = temper.listbuilder_length(this__52.table__152.table);
+      if not (i__266 < t_422) then
         break;
       else
       end
-      t_408 = temper.listed_get(this__52.table__152.table, i__266);
-      tent__267 = t_408;
-      t_404 = tent__267.key;
-      kname__268 = this__52:nameFor(t_404);
+      t_427 = temper.listed_get(this__52.table__152.table, i__266);
+      tent__267 = t_427;
+      t_423 = tent__267.key;
+      kname__268 = this__52:nameFor(t_423);
       if temper.str_eq(kname__268, '') then
-        goto break_48;
+        goto break_46;
       else
       end
       tmap__269 = temper.mapbuilder_constructor();
       j__270 = 0.0;
       while (j__270 < this__52.nsyms__150) do
-        local val__271, local_419, local_420, local_421, got__272;
-        t_409 = temper.list_get(tent__267.val, j__270);
-        val__271 = this__52:nameFor(t_409);
-        local_419, local_420, local_421 = temper.pcall(function()
-          t_410 = temper.mapped_get(tmap__269, val__271);
-          t_411 = t_410;
+        local val__271, local_438, local_439, local_440, got__272;
+        t_428 = temper.list_get(tent__267.val, j__270);
+        val__271 = this__52:nameFor(t_428);
+        local_438, local_439, local_440 = temper.pcall(function()
+          t_429 = temper.mapped_get(tmap__269, val__271);
+          t_430 = t_429;
         end);
-        if local_419 then
+        if local_438 then
         else
-          t_405 = temper.listbuilder_constructor();
-          t_411 = t_405;
+          t_424 = temper.listbuilder_constructor();
+          t_430 = t_424;
         end
-        got__272 = t_411;
+        got__272 = t_430;
         if temper.str_ne(val__271, '') then
-          t_412 = temper.list_get(syms__265, j__270);
-          temper.listbuilder_add(got__272, t_412.key);
+          t_431 = temper.list_get(syms__265, j__270);
+          temper.listbuilder_add(got__272, t_431.key);
           temper.mapbuilder_set(tmap__269, val__271, got__272);
         else
         end
@@ -3416,19 +3554,19 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
       j__274 = 0.0;
       while true do
         local vals__275;
-        t_406 = temper.list_length(ls__273);
-        if not (j__274 < t_406) then
+        t_425 = temper.list_length(ls__273);
+        if not (j__274 < t_425) then
           break;
         else
         end
-        t_413 = temper.list_get(ls__273, j__274);
-        vals__275 = t_413.value;
+        t_432 = temper.list_get(ls__273, j__274);
+        vals__275 = t_432.value;
         if (temper.listbuilder_length(vals__275) == 1.0) then
           local points__276;
-          t_414 = temper.list_get(ls__273, j__274);
-          points__276 = CodePoints(temper.listed_join(t_414.value, '', chr));
-          t_415 = temper.list_get(ls__273, j__274);
-          builder__264:add(kname__268, t_415.key, points__276);
+          t_433 = temper.list_get(ls__273, j__274);
+          points__276 = CodePoints(temper.listed_join(t_433.value, '', chr));
+          t_434 = temper.list_get(ls__273, j__274);
+          builder__264:add(kname__268, t_434.key, points__276);
         else
           local parts__277, bits__278, max__279, k__280, start__282, k__283;
           parts__277 = temper.listbuilder_constructor();
@@ -3437,13 +3575,13 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
           k__280 = 0.0;
           while true do
             local chrv__281;
-            t_407 = temper.listbuilder_length(vals__275);
-            if not (k__280 < t_407) then
+            t_426 = temper.listbuilder_length(vals__275);
+            if not (k__280 < t_426) then
               break;
             else
             end
-            t_416 = temper.listed_get(vals__275, k__280);
-            chrv__281 = t_416;
+            t_435 = temper.listed_get(vals__275, k__280);
+            chrv__281 = t_435;
             if (chrv__281 > max__279) then
               max__279 = chrv__281;
             else
@@ -3468,8 +3606,8 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
                 local l__285;
                 l__285 = s__284;
                 while (l__285 < k__283) do
-                  t_417 = temper.string_fromcodepoint(l__285);
-                  temper.listbuilder_add(parts__277, CodePoints(t_417));
+                  t_436 = temper.string_fromcodepoint(l__285);
+                  temper.listbuilder_add(parts__277, CodePoints(t_436));
                   l__285 = (l__285 + 1.0);
                 end
               else
@@ -3479,19 +3617,19 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
             end
             k__283 = (k__283 + 1.0);
           end
-          t_418 = temper.list_get(ls__273, j__274);
-          builder__264:add(kname__268, t_418.key, CodeSet(temper.listbuilder_tolist(parts__277)));
+          t_437 = temper.list_get(ls__273, j__274);
+          builder__264:add(kname__268, t_437.key, CodeSet(temper.listbuilder_tolist(parts__277)));
         end
         j__274 = (j__274 + 1.0);
       end
-      ::break_48::i__266 = (i__266 + 1.0);
+      ::break_46::i__266 = (i__266 + 1.0);
     end
     return builder__264:toRegexList();
   end;
   TemperRegexDFA.methods.toRegexString = function(this__53)
-    local t_423;
-    t_423 = this__53:toRegex();
-    return regexToString(t_423);
+    local t_442;
+    t_442 = this__53:toRegex();
+    return regexToString(t_442);
   end;
   TemperRegexDFA.get.nsyms = function(this__310)
     return this__310.nsyms__150;
@@ -3513,19 +3651,19 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
   end;
   emptyList__129 = temper.listof();
   mapToList__78 = function(map__130, defaultValue__131)
-    local t_424, t_425, t_426, t_427, ls__133, max__134, i__135, ret__137, i__138;
+    local t_443, t_444, t_445, t_446, ls__133, max__134, i__135, ret__137, i__138;
     ls__133 = temper.mapped_tolist(map__130);
     max__134 = 0.0;
     i__135 = 0.0;
     while true do
       local key__136;
-      t_424 = temper.list_length(ls__133);
-      if not (i__135 < t_424) then
+      t_443 = temper.list_length(ls__133);
+      if not (i__135 < t_443) then
         break;
       else
       end
-      t_425 = temper.list_get(ls__133, i__135);
-      key__136 = t_425.key;
+      t_444 = temper.list_get(ls__133, i__135);
+      key__136 = t_444.key;
       if (key__136 > max__134) then
         max__134 = key__136;
       else
@@ -3535,22 +3673,22 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     ret__137 = temper.listbuilder_constructor();
     i__138 = 0.0;
     while (i__138 <= max__134) do
-      local local_428, local_429, local_430;
-      local_428, local_429, local_430 = temper.pcall(function()
-        t_426 = temper.mapped_get(map__130, i__138);
-        t_427 = t_426;
+      local local_447, local_448, local_449;
+      local_447, local_448, local_449 = temper.pcall(function()
+        t_445 = temper.mapped_get(map__130, i__138);
+        t_446 = t_445;
       end);
-      if local_428 then
+      if local_447 then
       else
-        t_427 = defaultValue__131;
+        t_446 = defaultValue__131;
       end
-      temper.listbuilder_add(ret__137, t_427);
+      temper.listbuilder_add(ret__137, t_446);
       i__138 = (i__138 + 1.0);
     end
     return temper.listbuilder_tolist(ret__137);
   end;
   validFor__79 = function(next__139)
-    local t_432, t_433, valid__143, validPoint__141, validRange__142;
+    local t_451, t_452, valid__143, validPoint__141, validRange__142;
     valid__143 = temper.densebitvector_constructor(0.0);
     validPoint__141 = function(c__144)
       temper.densebitvector_set(valid__143, c__144, true);
@@ -3580,11 +3718,11 @@ package.preload["temper-regex-engine/engines/dfa/dfa"] = function()
     elseif temper.instance_of(next__139, BitSetMatcher) then
       temper.cast_to(next__139, BitSetMatcher);
     elseif temper.instance_of(next__139, CharMatcher) then
-      t_432 = temper.cast_to(next__139, CharMatcher);
-      validPoint__141(t_432.code);
+      t_451 = temper.cast_to(next__139, CharMatcher);
+      validPoint__141(t_451.code);
     elseif temper.instance_of(next__139, CharCodeMatcher) then
-      t_433 = temper.cast_to(next__139, CharCodeMatcher);
-      validPoint__141(t_433.code);
+      t_452 = temper.cast_to(next__139, CharCodeMatcher);
+      validPoint__141(t_452.code);
     elseif temper.instance_of(next__139, AnyMatcher) then
       temper.cast_to(next__139, AnyMatcher);
     elseif temper.instance_of(next__139, EpsilonMatcher) then
@@ -3628,13 +3766,13 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
   EpsilonMatcher = temper.import('temper-regex-engine/engines/nfa/matcher', 'EpsilonMatcher');
   TransitionTableEntry = temper.type('TransitionTableEntry');
   TransitionTableEntry.methods.toMarkdownWith = function(this__10, nsyms__68)
-    local t_316, fn__480, keyStr__70, t_317, fn__479, valStrs__73;
-    t_316 = fromVec(this__10.key__65, nsyms__68);
+    local t_335, fn__480, keyStr__70, t_336, fn__479, valStrs__73;
+    t_335 = fromVec(this__10.key__65, nsyms__68);
     fn__480 = function(id__71)
       return temper.concat('q', temper.int_tostring(id__71));
     end;
-    keyStr__70 = temper.listed_join(t_316, ',', fn__480);
-    t_317 = this__10.val__66;
+    keyStr__70 = temper.listed_join(t_335, ',', fn__480);
+    t_336 = this__10.val__66;
     fn__479 = function(vec__74)
       local return__24, vec__76;
       vec__76 = fromVec(vec__74, nsyms__68);
@@ -3649,19 +3787,19 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
       end
       return return__24;
     end;
-    valStrs__73 = temper.listed_join(t_317, ' | ', fn__479);
+    valStrs__73 = temper.listed_join(t_336, ' | ', fn__479);
     return temper.concat('| ', keyStr__70, ' | ', valStrs__73, ' |');
   end;
   TransitionTableEntry.methods.toDotWith = function(this__11, nsyms__80)
-    local t_318, fn__461, keyStr__82, t_319, fn__460, valStrs__85;
-    t_318 = fromVec(this__11.key__65, nsyms__80);
+    local t_337, fn__461, keyStr__82, t_338, fn__460, valStrs__85;
+    t_337 = fromVec(this__11.key__65, nsyms__80);
     fn__461 = function(id__83)
       return temper.concat('q', temper.int_tostring(id__83));
     end;
-    keyStr__82 = temper.listed_join(t_318, '', fn__461);
-    t_319 = this__11.val__66;
+    keyStr__82 = temper.listed_join(t_337, '', fn__461);
+    t_338 = this__11.val__66;
     fn__460 = function(vec__86)
-      local return__28, t_320, vec__88;
+      local return__28, t_339, vec__88;
       vec__88 = fromVec(vec__86, nsyms__80);
       if (temper.list_length(vec__88) == 0.0) then
         return__28 = '<TD>-</TD>';
@@ -3670,12 +3808,12 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
         fn__452 = function(id__89)
           return temper.concat('q', temper.int_tostring(id__89));
         end;
-        t_320 = temper.listed_join(vec__88, ',', fn__452);
-        return__28 = temper.concat('<TD>', t_320, '</TD>');
+        t_339 = temper.listed_join(vec__88, ',', fn__452);
+        return__28 = temper.concat('<TD>', t_339, '</TD>');
       end
       return return__28;
     end;
-    valStrs__85 = temper.listed_join(t_319, '', fn__460);
+    valStrs__85 = temper.listed_join(t_338, '', fn__460);
     return temper.concat('<TR><TD>', keyStr__82, '</TD>', valStrs__85, '</TR>');
   end;
   TransitionTableEntry.constructor = function(this__19, key__92, val__93)
@@ -3691,36 +3829,36 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
   end;
   TransitionTable = temper.type('TransitionTable');
   TransitionTable.constructor = function(this__12, size__97)
-    local t_321;
+    local t_340;
     this__12.nsyms__94 = size__97;
-    t_321 = temper.listbuilder_constructor();
-    this__12.table__95 = t_321;
+    t_340 = temper.listbuilder_constructor();
+    this__12.table__95 = t_340;
     return nil;
   end;
   TransitionTable.methods.has = function(this__13, key__100)
-    local return__31, local_322, local_323, local_324;
-    local_322, local_323, local_324 = temper.pcall(function()
+    local return__31, local_341, local_342, local_343;
+    local_341, local_342, local_343 = temper.pcall(function()
       this__13:get(key__100);
       return__31 = true;
     end);
-    if local_322 then
+    if local_341 then
     else
       return__31 = false;
     end
     return return__31;
   end;
   TransitionTable.methods.get = function(this__14, key__103)
-    local return__32, t_326, t_327, i__105;
-    ::continue_37::i__105 = 0.0;
+    local return__32, t_345, t_346, i__105;
+    ::continue_35::i__105 = 0.0;
     while true do
       local cur__107, ret__108, j__109;
-      t_326 = temper.listbuilder_length(this__14.table__95);
-      if not (i__105 < t_326) then
+      t_345 = temper.listbuilder_length(this__14.table__95);
+      if not (i__105 < t_345) then
         break;
       else
       end
-      t_327 = temper.listed_get(this__14.table__95, i__105);
-      cur__107 = t_327;
+      t_346 = temper.listed_get(this__14.table__95, i__105);
+      cur__107 = t_346;
       ret__108 = true;
       j__109 = 0.0;
       while (j__109 < this__14.nsyms__94) do
@@ -3733,23 +3871,23 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
       end
       if ret__108 then
         return__32 = cur__107;
-        goto break_36;
+        goto break_34;
       else
       end
       i__105 = (i__105 + 1.0);
     end
     temper.bubble();
-    ::break_36::return return__32;
+    ::break_34::return return__32;
   end;
   TransitionTable.methods.toMarkdownWith = function(this__15, map__111)
-    local t_328, t_329, l__113, size__114, t_330, fn__422, inner__115, header__118, i__119, ls__120, i__121, noop__123, dash__126;
+    local t_347, t_348, l__113, size__114, t_349, fn__422, inner__115, header__118, i__119, ls__120, i__121, noop__123, dash__126;
     l__113 = temper.mapped_tolist(map__111);
     size__114 = this__15.nsyms__94;
-    t_330 = this__15.table__95;
+    t_349 = this__15.table__95;
     fn__422 = function(ent__116)
       return ent__116:toMarkdownWith(size__114);
     end;
-    inner__115 = temper.listed_join(t_330, '\n', fn__422);
+    inner__115 = temper.listed_join(t_349, '\n', fn__422);
     header__118 = temper.listbuilder_constructor();
     temper.listbuilder_add(header__118, 'state');
     i__119 = 0.0;
@@ -3761,13 +3899,13 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
     i__121 = 0.0;
     while true do
       local ent__122;
-      t_328 = temper.list_length(ls__120);
-      if not (i__121 < t_328) then
+      t_347 = temper.list_length(ls__120);
+      if not (i__121 < t_347) then
         break;
       else
       end
-      t_329 = temper.list_get(ls__120, i__121);
-      ent__122 = t_329;
+      t_348 = temper.list_get(ls__120, i__121);
+      ent__122 = t_348;
       temper.listbuilder_set(header__118, (ent__122.value + 1.0), temper.concat('#', temper.int_tostring(ent__122.key)));
       i__121 = (i__121 + 1.0);
     end
@@ -3780,14 +3918,14 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
     return temper.concat('\n|', temper.listed_join(header__118, '|', noop__123), '|\n|', temper.listed_join(header__118, '|', dash__126), '|\n', inner__115, '\n');
   end;
   TransitionTable.methods.toDotWith = function(this__16, map__130, color__131)
-    local t_331, t_332, l__133, size__134, t_333, fn__403, inner__135, header__138, i__139, ls__140, i__141, noop__143, dash__146, t_334;
+    local t_350, t_351, l__133, size__134, t_352, fn__403, inner__135, header__138, i__139, ls__140, i__141, noop__143, dash__146, t_353;
     l__133 = temper.mapped_tolist(map__130);
     size__134 = this__16.nsyms__94;
-    t_333 = this__16.table__95;
+    t_352 = this__16.table__95;
     fn__403 = function(ent__136)
       return ent__136:toDotWith(size__134);
     end;
-    inner__135 = temper.listed_join(t_333, '', fn__403);
+    inner__135 = temper.listed_join(t_352, '', fn__403);
     header__138 = temper.listbuilder_constructor();
     temper.listbuilder_add(header__138, '<TD>state</TD>');
     i__139 = 0.0;
@@ -3799,13 +3937,13 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
     i__141 = 0.0;
     while true do
       local ent__142;
-      t_331 = temper.list_length(ls__140);
-      if not (i__141 < t_331) then
+      t_350 = temper.list_length(ls__140);
+      if not (i__141 < t_350) then
         break;
       else
       end
-      t_332 = temper.list_get(ls__140, i__141);
-      ent__142 = t_332;
+      t_351 = temper.list_get(ls__140, i__141);
+      ent__142 = t_351;
       temper.listbuilder_set(header__138, (ent__142.value + 1.0), temper.concat('<TD>#', temper.int_tostring(ent__142.key), '</TD>'));
       i__141 = (i__141 + 1.0);
     end
@@ -3815,8 +3953,8 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
     dash__146 = function(s__147)
       return '---';
     end;
-    t_334 = temper.listed_join(header__138, '', noop__143);
-    return temper.concat('<TABLE border="0" cellspacing="5" bgcolor="', color__131, '"><TR>', t_334, '</TR>', inner__135, '</TABLE>');
+    t_353 = temper.listed_join(header__138, '', noop__143);
+    return temper.concat('<TABLE border="0" cellspacing="5" bgcolor="', color__131, '"><TR>', t_353, '</TR>', inner__135, '</TABLE>');
   end;
   TransitionTable.get.nsyms = function(this__159)
     return this__159.nsyms__94;
@@ -3825,17 +3963,17 @@ package.preload["temper-regex-engine/engines/dfa/table"] = function()
     return this__163.table__95;
   end;
   toVec = function(ls__55, size__56)
-    local t_335, t_336, vec__58, i__59;
+    local t_354, t_355, vec__58, i__59;
     vec__58 = temper.densebitvector_constructor(0.0);
     i__59 = 0.0;
     while true do
-      t_335 = temper.list_length(ls__55);
-      if not (i__59 < t_335) then
+      t_354 = temper.list_length(ls__55);
+      if not (i__59 < t_354) then
         break;
       else
       end
-      t_336 = temper.list_get(ls__55, i__59);
-      temper.densebitvector_set(vec__58, t_336, true);
+      t_355 = temper.list_get(ls__55, i__59);
+      temper.densebitvector_set(vec__58, t_355, true);
       i__59 = (i__59 + 1.0);
     end
     return vec__58;
