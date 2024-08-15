@@ -1,0 +1,31 @@
+
+let {...} = import("std/regex");
+let {TemperRegexNFA} = import("./engines/nfa/nfa.temper");
+
+/*
+test() {
+  let catcher = /(a|b)+/.data;
+
+  let nfa = new TemperRegexNFA(catcher);
+
+  assert(nfa.found("a"));
+  assert(nfa.found("b"));
+}
+*/
+
+let idStart = /a|b|c/.data;
+let idNumber = /1|2|3/.data;
+let word = new Sequence([
+  WordBoundary,
+  idStart,
+  idNumber,
+  WordBoundary,
+]);
+
+let nfa = new TemperRegexNFA(word);
+
+console.log(nfa.toString());
+
+let expected = "b2";
+let found = word.find("1a ${expected} c3")["full"].value;
+console.log("Found id: ${found}");

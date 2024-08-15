@@ -2,8 +2,8 @@
 let { ... } = import("std/regex");
 let { State, Next } = import("./state.temper");
 let { Stack, StackStart, StackSlot } = import("./stack.temper");
-let { Matcher, EpsilonMatcher, StartGroupMatcher, EndGroupMatcher } = import("./matcher.temper");
-let { ord, slice } = import("../../util.temper");
+let { ord, chr, idString, slice } = import("../../util.temper");
+let { ... } = import("./matcher.temper");
 
 export class Engine {
   public states: ListBuilder<State>;
@@ -20,7 +20,7 @@ export class Engine {
 
   public opt(): Engine {
     var cur = this;
-    cur = cur.optEpsilonEllison();
+    // cur = cur.optEpsilonEllison();
     cur = cur.optDeadCode();
     return cur;
   }
@@ -125,7 +125,47 @@ export class Engine {
     return ret;
   }
 
-  public matches(str: String): Boolean {
+  public split(str: String): Listed<String> {
+    var codePoints = str.split("").map(ord);
+    var stackStart = new StackStart();
+    var badNext = new Next(endState, epsilon);
+    var last = 0;
+    let ret = new ListBuilder<String>();
+    for (var i = 0; i < codePoints.length; i += 1) {
+      var stack: Stack = new StackSlot(i, startState, stackStart);
+      while (stack != stackStart) {
+        var index = stack.index;
+        var state = stack.state;
+        stack = stack.next;
+        if (state.id == endState.id) {
+          let cur = new ListBuilder<Int>();
+          for (var j = last; j < i; j++) {
+            cur.add(codePoints.getOr(j, 0));
+          }
+          i = index - 1;
+          last = index;
+          ret.add(cur.join("", chr));
+          break;
+        }
+        var next = state.next;
+        var len =  next.length;
+        out: for (var c = 0; c < len; c += 1) {
+          let {matcher, toState} = next.getOr(c, badNext);
+          if (matcher.matches(codePoints, index)) {
+            stack = new StackSlot(index + matcher.width(), toState, stack);
+          }
+        }
+      }
+    }
+    let cur = new ListBuilder<Int>();
+    for (var j = last; j < codePoints.length; j++) {
+      cur.add(codePoints.getOr(j, 0));
+    }
+    ret.add(cur.join("", chr));
+    return ret;
+  }
+
+  public found(str: String): Boolean {
     var codePoints = str.split("").map(ord);
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
@@ -142,10 +182,8 @@ export class Engine {
         var len =  next.length;
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
-          if (matcher == epsilon) {
-            stack = new StackSlot(index, toState, stack);
-          } else if (matcher.matches(codePoints, index)) {
-            stack = new StackSlot(index + 1, toState, stack);
+          if (matcher.matches(codePoints, index)) {
+            stack = new StackSlot(index + matcher.width(), toState, stack);
           }
         }
       }
@@ -153,8 +191,9 @@ export class Engine {
     return false;
   }
 
-  public groups(str: String): Mapped<String, Group> {
+  public find(str: String): Mapped<String, Group> {
     let groups = new MapBuilder<String, Pair<Int, Int>>();
+    let pending = new MapBuilder<String, Int>();
     var codePoints = str.split("").map(ord);
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
@@ -173,31 +212,36 @@ export class Engine {
             if (val.value < 0) {
               continue;
             }
-            ret[key] = new Group(key, slice(str, val.key, val.value), val.key);
+            let str = new ListBuilder<Int>();
+            for (var j = val.key; j < val.value; j++) {
+              str.add(codePoints.getOr(j, 0));
+            }
+            ret[key] = new Group(key, str.join("", chr), val.key);
           }
-          ret["full"] = new Group("full", slice(str, i, index), i);
+          let str = new ListBuilder<Int>();
+          for (var j = i; j < index; j++) {
+            str.add(codePoints.getOr(j, 0));
+          }
+          if (!ret.has("full")) {
+            ret["full"] = new Group("full", str.join("", chr), i);
+          }
           return ret;
         }
         var next = state.next;
         var len =  next.length;
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
-          if (matcher == epsilon) {
-            stack = new StackSlot(index, toState, stack);
-          } else if (matcher.special()) {
+          if (matcher.matches(codePoints, index)) {
             match (matcher) {
               is StartGroupMatcher -> do {
-                groups[matcher.name] = new Pair(index, -1);
-                stack = new StackSlot(index, toState, stack);
+                pending[matcher.name] = index;
               }
               is EndGroupMatcher -> do {
-                groups[matcher.name] = new Pair(groups[matcher.name].key, index);
-                stack = new StackSlot(index, toState, stack);
+                groups[matcher.name] = new Pair(pending[matcher.name], index);
               }
               else -> do {}
             }
-          } else if (matcher.matches(codePoints, index)) {
-            stack = new StackSlot(index + 1, toState, stack);
+            stack = new StackSlot(index + matcher.width(), toState, stack);
           }
         }
       }

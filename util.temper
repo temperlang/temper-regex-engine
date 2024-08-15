@@ -120,6 +120,10 @@ export let regexToString(base: RegexNode): String {
   }
 }
 
+export let idString(s: String): String {
+  return s;
+}
+
 export let ord(s: String): Int {
   return s.codeAt(String.start);
 }

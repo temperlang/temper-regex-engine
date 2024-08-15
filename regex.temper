@@ -3,6 +3,7 @@ let { ... } = import("std/regex");
 
 export interface TemperRegex {
   public constructor(data: RegexNode);
+  public split(text: String, replace: String): Listed<String>;
   public found(text: String): Boolean;
   public find(text: String): Mapped<String, Group>;
 }

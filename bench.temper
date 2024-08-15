@@ -58,7 +58,7 @@ export class RegexBench {
     regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 10.0;
+    timePerRunInternal = 50.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {

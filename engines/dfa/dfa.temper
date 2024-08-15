@@ -57,8 +57,8 @@ let validFor(next: Matcher): DenseBitVector {
       validPoint(13);
       validPoint(32);
     }
-    is RangeMatcher -> do {
-      validRange(next.low, next.high);
+    is BitSetMatcher -> do {
+      // validRange(next.low, next.high);
     }
     is CharMatcher -> do {
       validPoint(next.code);
@@ -260,8 +260,8 @@ export class TemperRegexDFA extends TemperRegex {
         addCodePoint(13);
         addCodePoint(32);
       }
-      is RangeMatcher -> do {
-        addCodePointRange(next.low, next.high);
+      is BitSetMatcher -> do {
+        // addCodePointRange(next.low, next.high);
       }
       is CharCodeMatcher -> do {
         addCodePoint(next.code);

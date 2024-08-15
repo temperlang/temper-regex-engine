@@ -1,11 +1,13 @@
 
 let { ... } = import("std/regex");
-let { TemperRegex } = import("../regex");
+let { TemperRegex } = import("../regex.temper");
+let { chr } = import("../util.temper");
 
 let isCodePointWordChar(code: Int): Boolean {
-  (48 <= code && code <= 57) // this range is 0 to 9, like above
-         || (65 <= code && code <= 90) // this range is A to Z (uppercase)
-         || (97 <= code && code <= 122) // this range is a to z (lowercase)
+  return (char'0' <= code && code <= char'9')
+    || (char'A' <= code && code <= char'Z') 
+    || (char'a' <= code && code <= char'z')
+    || code == char'_';
 }
 
 export class Matcher {
@@ -112,7 +114,8 @@ export class Matcher {
   }
 
   public matchWordBoundary(): Boolean {
-    return isCodePointWordChar(str.codeAt(str.prev(head)))
+    let last = str.prev(head);
+    return isCodePointWordChar(str.codeAt(last))
         != isCodePointWordChar(str.codeAt(head));
   }
 
@@ -279,6 +282,26 @@ export class TemperRegexWalker extends TemperRegex {
     data = re;
   }
 
+  public split(text: String): Listed<String> {
+    var cur = new ListBuilder<Int>();
+    let ret = new ListBuilder<String>();
+    var i = String.start;
+    while (text.hasIndex(i)) {
+      var m = new Matcher(text);
+      m.setHead(i);
+      if (m.matchRegex(data)) {
+        i = m.head;
+        ret.add(cur.join("", chr));
+        cur = new ListBuilder<Int>();
+      } else {
+        cur.add(text.codeAt(i));
+        i = text.next(i);
+      }
+    }
+    ret.add(cur.join("", chr));
+    return ret.toList();
+  }
+
   public found(text: String): Boolean {
     for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
@@ -292,13 +315,23 @@ export class TemperRegexWalker extends TemperRegex {
   }
   
   public find(text: String): Mapped<String, Group> {
+    var start = 0;
     for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
       m.resetGroups(data);
       if (m.matchRegex(data)) {
+        if (!m.groups.has("full")) {
+          let full = new ListBuilder<Int>();
+          while (i.compareTo(m.head) != 0) {
+            full.add(text.codeAt(i));
+            i = text.next(i);
+          }
+          m.groups["full"] = new Group("full", full.join("", chr), start);
+        }
         return m.groups;
       }
+      start += 1;
     }
     return new Map<String, Group>([]);
   }

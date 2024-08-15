@@ -1,13 +1,20 @@
 
 let { ord } = import("../../util.temper");
 
+let isCodePointWordChar(code: Int): Boolean {
+  return (char'0' <= code && code <= char'9')
+    || (char'A' <= code && code <= char'Z') 
+    || (char'a' <= code && code <= char'z')
+    || code == char'_';
+}
+
 export interface Matcher {
   public matches(str: List<Int>, index: Int): Boolean;
 
   public toString(): String;
 
-  public special(): Boolean {
-    return false;
+  public width(): Int {
+    return 1;
   }
 }
 
@@ -19,24 +26,46 @@ export class BeginMatcher extends Matcher {
   public toString(): String {
     return "^";
   }
+
+  public width(): Int {
+    return 0;
+  }
+}
+
+export class EndMatcher extends Matcher {
+  public matches(str: List<Int>, index: Int): Boolean {
+    return index == str.length;
+  }
+
+  public toString(): String {
+    return "$";
+  }
+
+  public width(): Int {
+    return 0;
+  }
 }
 
 export class WordBoundaryMatcher extends Matcher {
   public matches(str: List<Int>, index: Int): Boolean {
-    var code1 = str.getOr(index-1, -1);
-    var code2 = str.getOr(index, -1);
-    var isWord1 = (48 <= code1 && code1 <= 57) || (65 <= code1 && code1 <= 90) || (97 <= code1 && code1 <= 122);
-    var isWord2 = (48 <= code2 && code2 <= 57) || (65 <= code2 && code2 <= 90) || (97 <= code2 && code2 <= 122);
-    return isWord1 != isWord2;
+    let code1 = str.getOr(index-1, -1);
+    let code2 = str.getOr(index, -1);
+    return isCodePointWordChar(code1) != isCodePointWordChar(code2);
+  }
+  
+  public toString(): String {
+    return "\\b";
+  }
+
+  public width(): Int {
+    return 0;
   }
 }
 
 export class WordClassMatcher extends Matcher {
   public matches(str: List<Int>, index: Int): Boolean {
     var code = str.getOr(index, -1);
-    return (48 <= code && code <= 57) // this range is 0 to 9, like above
-      || (65 <= code && code <= 90)   // this range is A to Z (uppercase)
-      || (97 <= code && code <= 122)  // this range is a to z (lowercase)
+    return isCodePointWordChar(code);
   }
 
   public toString(): String {
@@ -55,16 +84,6 @@ export class SpaceClassMatcher extends Matcher {
   }
 }
 
-export class EndMatcher extends Matcher {
-  public matches(str: List<Int>, index: Int): Boolean {
-    return index == str.length;
-  }
-
-  public toString(): String {
-    return "$";
-  }
-}
-
 export class AnyMatcher extends Matcher {
   public matches(str: List<Int>, index: Int): Boolean {
     return index != str.length;
@@ -75,17 +94,21 @@ export class AnyMatcher extends Matcher {
   }
 }
 
-export class RangeMatcher extends Matcher {
-  public low: Int;
-  public high: Int;
+export class BitSetMatcher extends Matcher {
+  public bitset: DenseBitVector;
+  public want: Boolean;
 
   public matches(str: List<Int>, index: Int): Boolean {
     var c = str.getOr(index, -1);
-    return low <= c && c <= high;
+    return bitset[c] == want;
   }
 
   public toString(): String {
-    return "[\\x${low.toString()}-\\x${high.toString()}]";
+    if (want) {
+      return "[^...]";
+    } else {
+      return "[...]";
+    }
   }
 }
 
@@ -118,11 +141,11 @@ export class StartGroupMatcher extends Matcher {
   }
 
   public toString(): String {
-    return "(?<${name}>";
+    return "<${name}>";
   }
 
-  public special(): Boolean {
-    return true;
+  public width(): Int {
+    return 0;
   }
 }
 
@@ -138,11 +161,11 @@ export class EndGroupMatcher extends Matcher {
   }
 
   public toString(): String {
-    return ")";
+    return "</${name}>";
   }
 
-  public special(): Boolean {
-    return true;
+  public width(): Int {
+    return 0;
   }
 }
 
@@ -172,5 +195,9 @@ export class EpsilonMatcher extends Matcher {
 
   public toString(): String {
     return "ε";
+  }
+
+  public width(): Int {
+    return 0;
   }
 }

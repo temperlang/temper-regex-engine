@@ -1,6 +1,7 @@
 
 let {...} = import("std/regex");
 let { TemperRegex } = import("../../regex.temper");
+let { regexToString } = import("../../util.temper");
 let { Engine } = import("./engine.temper");
 let { State } = import("./state.temper");
 let { ... } = import("./matcher.temper");
@@ -37,20 +38,24 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is CodeSet -> do {
+        let bitset = new DenseBitVector(0);
         for (var j = 0; j < regex.items.length; j++) {
           var subRegex = regex.items[j];
           match (subRegex) {
             is CodeRange -> do {
-              input.addNext(new RangeMatcher(subRegex.min, subRegex.max), output);
+              for (var i = subRegex.min; i <= subRegex.max; i++) {
+                bitset[i] = true;
+              }
             }
             is CodePoints -> do {
               var split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
-                input.addNext(new CharMatcher(split[i]), output);
+                bitset[split[i].codeAt(String.start)] = true
               }
             }
           }
         }
+        input.addNext(new BitSetMatcher(bitset, !regex.negated), output);
       }
       is Or -> do {
         for (var i = 0; i < regex.items.length; i++) {
@@ -68,14 +73,24 @@ export class TemperRegexNFA extends TemperRegex {
           var max = regex.max.as<Int>();
           for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
-            buildRegex(regex.item, lastState, curState);
-            lastState.addNext(engine.epsilon, output);
+            if (regex.reluctant) {
+              buildRegex(regex.item, lastState, curState);
+              lastState.addNext(engine.epsilon, output);
+            } else {
+              lastState.addNext(engine.epsilon, output);
+              buildRegex(regex.item, lastState, curState);
+            }
             lastState = curState;
           }
           lastState.addNext(engine.epsilon, output);
         } else {
-          buildRegex(regex.item, lastState, lastState);
-          lastState.addNext(engine.epsilon, output);
+          if (regex.reluctant) {
+            buildRegex(regex.item, lastState, lastState);
+            lastState.addNext(engine.epsilon, output);
+          } else {
+            lastState.addNext(engine.epsilon, output);
+            buildRegex(regex.item, lastState, lastState);
+          }
         }
       }
       is Sequence -> do {
@@ -103,7 +118,11 @@ export class TemperRegexNFA extends TemperRegex {
         } else if (regex == WordBoundary) { 
           input.addNext(new WordBoundaryMatcher(), output);
         } else if (regex == Digit) {
-          input.addNext(new RangeMatcher(48, 57), output);
+          let bitset = new DenseBitVector(64);
+          for (var i = char'0'; i <= char'9'; i++) {
+            bitset[i] = true;
+          }
+          input.addNext(new BitSetMatcher(bitset, true), output);
         } else if(regex == Space) {
           input.addNext(new SpaceClassMatcher(), output);
         } else if (regex == Word) {
@@ -115,12 +134,16 @@ export class TemperRegexNFA extends TemperRegex {
     }
   }
 
+  public split(str: String): Listed<String> {
+    return engine.split(str);
+  }
+
   public found(str: String): Boolean {
-    return engine.matches(str);
+    return engine.found(str);
   }
 
   public find(text: String): Mapped<String, Group> {
-    return engine.groups(text);
+    return engine.find(text);
   }
 
   public toString(): String {
