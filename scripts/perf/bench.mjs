@@ -9,11 +9,13 @@ const bench = new RegexBench(clock);
 bench.addRegexDefaults();
 bench.addCheckDefaults();
 
+bench.addEngineTemper();
+// bench.addEngineDFA();
 bench.addEngineNFA();
-bench.addEngineWalker();
+// bench.addEngineWalker();
 
 bench.onEngineResult((result) => {
-    console.log(result.toString());
+    console.log(`// ${result.toString()}`);
 });
 
 bench.run();

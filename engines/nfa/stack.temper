@@ -4,7 +4,7 @@ let { State } = import("./state.temper");
 let noGroups: Listed<String> = [];
 
 export interface Stack {
-  public index: Int;
+  public index: StringIndex;
   public state: State;
   public groups: Listed<String> = noGroups;
 
@@ -12,14 +12,11 @@ export interface Stack {
 }
 
 export class StackStart extends Stack {
-  public index: Int;
+  public index: StringIndex;
   public state: State;
   public groups: Listed<String> = noGroups;
 
-  public constructor(): Void {
-    index = -1;
-    state = new State(-1);
-  }
+  public constructor(): Void {}
   
   public get next(): Stack {
     return this;
@@ -27,7 +24,7 @@ export class StackStart extends Stack {
 }
 
 export class StackSlot extends Stack {
-  public index: Int;
+  public index: StringIndex;
   public state: State;
   public slot: Stack;
   public groups: Listed<String> = noGroups;

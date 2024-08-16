@@ -1,12 +1,10 @@
-let { RegexNode } = import("std/regex");
-
-let { parse } = import("./temper-regex-parser");
+let { ... } = import("std/regex");
 
 let { TemperRegex } = import("./regex.temper");
 let { regexToString } = import("./util.temper");
 
 let { TemperRegexNFA } = import("./engines/nfa/nfa.temper");
-let { TemperRegexDFA } = import("./engines/dfa/dfa.temper");
+let { TemperRegexDFA, fastMatcher } = import("./engines/dfa/dfa.temper");
 let { TemperRegexWalker } = import("./engines/walk.temper");
 let { TemperRegexNative } = import("./engines/native.temper");
 
@@ -38,7 +36,7 @@ class EngineResult {
   public score: Float64;
 
   public toString(): String {
-    return "${engine}: ${((score * 100.0).toInt().toFloat64() / 100.0).toString()}";
+    return "${engine}: ${((score * 100.0).toInt().toFloat64() / 100.0 orelse 0.0).toString()}";
   }
 }
 
@@ -58,7 +56,8 @@ export class RegexBench {
     regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 50.0;
+    timePerRunInternal = 10.0;
+    // timePerRunInternal = -1.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -70,13 +69,12 @@ export class RegexBench {
   }
 
   public addRegexDefaults(): Void {
-    addRegexStr("h(?:[eu]l+o|i)");
-    addRegexStr("(a+a)+a");
-    addRegexStr("([Hh][eu]l+l){4}");
+    addRegex(/h(?:[eu]l+o|i)/.data);
+    addRegex(/(a+a)+a/.data);
+    addRegex(/([Hh][eu]l+l)/.data);
   }
 
   public addCheckDefaults(): Void {
-    checks.add("hello");
     checks.add("hi");
     checks.add("helo");
     checks.add("hullo");
@@ -90,6 +88,8 @@ export class RegexBench {
     var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
     checks.add(many_a);
     checks.add(many_h);
+    checks.add("${many_a}${many_h}");
+    checks.add("${many_h}${many_a}");
   }
 
   public addEngineDefaults(): Void {
@@ -101,10 +101,6 @@ export class RegexBench {
 
   public addEngine(name: String, cb: fn(RegexNode): TemperRegex): Void {
     engines.add(new Engine(name, cb));
-  }
-
-  public addRegexStr(str: String): Void {
-    addRegex(parse(str));
   }
 
   public addRegex(re: RegexNode): Void {
@@ -133,7 +129,7 @@ export class RegexBench {
     addEngine(
       "NFA",
       fn(regex: RegexNode): TemperRegex {
-        return new TemperRegexNFA(regex);
+        return TemperRegexNFA.fromRegex(regex, fastMatcher);
       }
     );
   }
@@ -148,7 +144,8 @@ export class RegexBench {
   }
 
   public isFound(tcre: TemperRegex, check: String): Boolean {
-    return tcre.find(check).has("full");
+    // return tcre.find(check).has("full");
+    return tcre.found(check);
   }
 
   public run(): Void {
@@ -158,6 +155,7 @@ export class RegexBench {
       var engine = engines[i];
       var count = 0.0;
       var total = 0.0;
+      var ls = new ListBuilder<String>();
       for (var j = 0; j < regex.length; j++) {
         var re = regex[j];
         var tcre = engine.invoke(re);
@@ -165,6 +163,11 @@ export class RegexBench {
           var check = checks[k];
           var iters = 1;
           var found = isFound(tcre, check);
+          if (found) {
+            ls.add("/${regexToString(re)}/.found(\"${check}\")");
+          } else {
+            ls.add("not /${regexToString(re)}/.found(\"${check}\")");
+          }
           var beginTime = time();
           do {
             for (var l = 0; l < iters; l++) {
@@ -174,7 +177,7 @@ export class RegexBench {
           } while (time() - beginTime < timePerRunInternal);
           var endTime = time();
           var ms = endTime - beginTime;
-          var score = iters.toFloat64() / ms;
+          var score = iters.toFloat64() / ms orelse 0.0;
           count += 1.0;
           total += score;
           var thisRun = new SingleResult(engine.name, check, regexToString(re), found, score);
@@ -182,7 +185,10 @@ export class RegexBench {
           runs.add(thisRun);
         }
       }
-      onEngineResultCallback(new EngineResult(engine.name, total / count));
+      onEngineResultCallback(new EngineResult(engine.name, total / count orelse 0.0));
+      for (var i = 0; i < ls.length; i++) {
+        console.log("// ${ls[i]}");
+      }
     }
 
     return runs.toList();

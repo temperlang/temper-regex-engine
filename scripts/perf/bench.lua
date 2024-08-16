@@ -10,7 +10,9 @@ local bench = RegexBench(clock);
 bench:addRegexDefaults();
 bench:addCheckDefaults();
 
+-- bench:addEngineTemper();
 bench:addEngineNFA();
+-- bench:addEngineDFA();
 bench:addEngineWalker();
 
 bench:onEngineResult(function (result)

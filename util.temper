@@ -72,14 +72,14 @@ export let regexToString(base: RegexNode): String {
         }
         is CodePoints -> do {
           var points = base.item.as<CodePoints>();
-          if (points.value.split("").length == 1) {
+          if (points.value.hasIndex(String.start) && !points.value.hasIndex(points.value.next(String.start))) {
             pat = str;
           } else {
-            pat = "(${str})";
+            pat = "${str}";
           }
         }
         else -> do {
-          pat = "(${str})";
+          pat = "(?:${str})";
         }
       }
       return "${pat}${mod}${q}";
@@ -94,7 +94,7 @@ export let regexToString(base: RegexNode): String {
           return regexToString(r);
         }
         var inner = base.items.join("", rec);
-        return "(${inner})";
+        return "(?:${inner})";
       }
     }
     is Special -> do {

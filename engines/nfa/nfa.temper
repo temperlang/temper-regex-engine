@@ -2,61 +2,85 @@
 let {...} = import("std/regex");
 let { TemperRegex } = import("../../regex.temper");
 let { regexToString } = import("../../util.temper");
+let { wordCharsList, spaceCharsList } = import("../../ctype.temper");
 let { Engine } = import("./engine.temper");
 let { State } = import("./state.temper");
 let { ... } = import("./matcher.temper");
 
 export class TemperRegexNFA extends TemperRegex {
-  public engine: Engine;
+  public var engine: Engine;
+  public fastMatcher: fn(RegexNode): Matcher | Null | Bubble;
   
-  public constructor(regex: RegexNode): Void {
-    engine = new Engine();
-    buildRegex(regex, engine.startState, engine.endState);
-    engine = engine.opt();
+  public static fromRegex(regex: RegexNode, fastMatcher: fn(RegexNode): Matcher | Null | Bubble): TemperRegexNFA {
+    let nfa = new TemperRegexNFA(new Engine(), fastMatcher);
+    nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
+    nfa.engine = nfa.engine.optEpsilonEllison();
+    return nfa;
   }
 
   public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
+    do {
+      let next = fastMatcher(regex);
+      match (next) {
+        is Matcher -> do {
+          input.addNext(next, output);
+          // console.log("${next.toString()}");
+        }
+        null -> do {
+          buildRegexBase(regex, input, output);
+        }
+        else -> bubble();
+      }
+    } orelse do {
+      buildRegexBase(regex, input, output);
+    }
+  }
+
+  public buildRegexBase(regex: RegexNode, input: State, output: State): Void | Bubble {
     match (regex) {
       is Capture -> do {
         var mid1 = engine.newState();
         var mid2 = engine.newState();
-        engine.baseGroups[regex.name] = new Group(regex.name, "", -1);
+        // engine.baseGroups[regex.name] = new Group(regex.name, "", -1);
         input.addNext(new StartGroupMatcher(regex.name), mid1);
         buildRegex(regex.item, mid1, mid2);
         mid2.addNext(new EndGroupMatcher(regex.name), output);
       }
       is CodePoints -> do {
-        var split = regex.value.split("");
         var lastState = input;
-        for (var i = 0; i < split.length ; i++) {
-          if (i == split.length - 1) {
-            lastState.addNext(new CharMatcher(split[i]), output);
+        var index = String.start;
+        while (true) {
+          let chr = regex.value.codeAt(index);
+          index = regex.value.next(index);
+          if (!regex.value.hasIndex(index)) {
+            lastState.addNext(charCodeMatcher(chr), output);
+            break;
           } else {
             var curState = engine.newState();
-            lastState.addNext(new CharMatcher(split[i]), curState);
+            lastState.addNext(charCodeMatcher(chr), curState);
             lastState = curState;
           }
         }
       }
       is CodeSet -> do {
-        let bitset = new DenseBitVector(0);
+        let ls = new ListBuilder<Int>();
         for (var j = 0; j < regex.items.length; j++) {
           var subRegex = regex.items[j];
           match (subRegex) {
             is CodeRange -> do {
               for (var i = subRegex.min; i <= subRegex.max; i++) {
-                bitset[i] = true;
+                ls.add(i);
               }
             }
             is CodePoints -> do {
               var split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
-                bitset[split[i].codeAt(String.start)] = true
+                ls.add(split[i].codeAt(String.start));
               }
             }
           }
         }
-        input.addNext(new BitSetMatcher(bitset, !regex.negated), output);
+        input.addNext(fromChars(ls, !regex.negated), output);
       }
       is Or -> do {
         for (var i = 0; i < regex.items.length; i++) {
@@ -113,21 +137,21 @@ export class TemperRegexNFA extends TemperRegex {
         if (regex == Begin) {
           input.addNext(new BeginMatcher(), output);
         } else if (regex == Dot) { 
-          input.addNext(new AnyMatcher(), output);
+          input.addNext(fromChars([0], false), output);
         } else if (regex == End) {
           input.addNext(new EndMatcher(), output);
         } else if (regex == WordBoundary) { 
           input.addNext(new WordBoundaryMatcher(), output);
         } else if (regex == Digit) {
-          let bitset = new DenseBitVector(64);
+          let ls = new ListBuilder<Int>();
           for (var i = char'0'; i <= char'9'; i++) {
-            bitset[i] = true;
+            ls.add(i);
           }
-          input.addNext(new BitSetMatcher(bitset, true), output);
+          input.addNext(fromChars(ls, true), output);
         } else if(regex == Space) {
-          input.addNext(new SpaceClassMatcher(), output);
+          input.addNext(fromChars(spaceCharsList, true), output);
         } else if (regex == Word) {
-          input.addNext(new WordClassMatcher(), output);
+          input.addNext(fromChars(wordCharsList, true), output);
         } else {
           bubble();
         }
@@ -144,7 +168,7 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public found(text: String): Boolean {
-    return engine.found(text);
+    return engine.found(text, String.start) != StringIndex.none;
   }
 
   public find(text: String): Mapped<String, Group> {

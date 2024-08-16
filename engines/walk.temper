@@ -2,25 +2,19 @@
 let { ... } = import("std/regex");
 let { TemperRegex } = import("../regex.temper");
 let { chr } = import("../util.temper");
-
-let isCodePointWordChar(code: Int): Boolean {
-  return (char'0' <= code && code <= char'9')
-    || (char'A' <= code && code <= char'Z') 
-    || (char'a' <= code && code <= char'z')
-    || code == char'_';
-}
+let { wordChars } = import("../ctype.temper");
 
 export class Matcher {
   public str: String;
   public head: StringIndex;
-  public groups: MapBuilder<String, Group>;
   public depth: Int;
+  public var groups: MapBuilder<String, Group>;
 
   constructor(src: String): Void {
     str = src;
     head = String.start;
-    groups = new MapBuilder<String, Group>();
     depth = 0;
+    groups = new MapBuilder<String, Group>();
   }
 
   public advance(): Void {
@@ -40,7 +34,7 @@ export class Matcher {
         list.add(str.codeAt(i));
       }
       var text = String.fromCodePoints(list);
-      groups[regex.name] = new Group(regex.name, text, str.countBetween(String.start, begin));
+      groups[regex.name] = new Group(regex.name, text, begin);
       return true;
     } else {
       setHead(begin);
@@ -105,7 +99,7 @@ export class Matcher {
   }
 
   public matchWord(): Boolean {
-    if (isCodePointWordChar(str.codeAt(head))) {
+    if (wordChars[str.codeAt(head)]) {
       advance();
       return true;
     } else {
@@ -115,8 +109,8 @@ export class Matcher {
 
   public matchWordBoundary(): Boolean {
     let last = str.prev(head);
-    return isCodePointWordChar(str.codeAt(last))
-        != isCodePointWordChar(str.codeAt(head));
+    return wordChars[str.codeAt(last)]
+        != wordChars[str.codeAt(head)];
   }
 
   public matchSpecial(regex: Special): Boolean {
@@ -254,25 +248,8 @@ export class Matcher {
   }
 
   public resetGroups(regex: RegexNode): Void {
-    match (regex) {
-      is Capture -> do {
-        groups[regex.name] = new Group(regex.name, "", -1);
-        resetGroups(regex.item);
-      }
-      is Repeat -> resetGroups(regex.item);
-      is Or -> do {
-        for (var i = 0; i < regex.items.length; i++) {
-          resetGroups(regex.items[i]);
-        }
-      }
-      is Sequence -> do {
-        for (var i = 0; i < regex.items.length; i++) {
-          resetGroups(regex.items[i]);
-        }
-      }
-      else -> do {}
-    }
-  };
+    groups = new MapBuilder<String, Group>();
+  }
 }
 
 export class TemperRegexWalker extends TemperRegex {
@@ -315,7 +292,6 @@ export class TemperRegexWalker extends TemperRegex {
   }
   
   public find(text: String): Mapped<String, Group> {
-    var start = 0;
     for (var i = String.start; text.hasIndex(i); i = text.next(i)) {
       var m = new Matcher(text);
       m.setHead(i);
@@ -327,11 +303,10 @@ export class TemperRegexWalker extends TemperRegex {
             full.add(text.codeAt(i));
             i = text.next(i);
           }
-          m.groups["full"] = new Group("full", full.join("", chr), start);
+          m.groups["full"] = new Group("full", full.join("", chr), i);
         }
         return m.groups;
       }
-      start += 1;
     }
     return new Map<String, Group>([]);
   }

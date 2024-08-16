@@ -1,0 +1,42 @@
+
+let wordCharsCalc(): DenseBitVector {
+  let bitset = new DenseBitVector(0);
+  for (var i = char'0'; i <= char'9'; i++) {
+    bitset[i] = true;
+  }
+  for (var i = char'A'; i <= char'Z'; i++) {
+    bitset[i] = true;
+  }
+  for (var i = char'a'; i <= char'z'; i++) {
+    bitset[i] = true;
+  }
+  bitset[char'_'] = true;
+  return bitset;
+}
+
+let spaceCharsCalc(): DenseBitVector {
+  let bitset = new DenseBitVector(0);
+  bitset[char' '] = true;
+  bitset[char'\r'] = true;
+  bitset[char'\n'] = true;
+  bitset[char'\t'] = true;
+  bitset[12] = true;
+  bitset[14] = true;
+  return bitset;
+}
+
+let bitsToList(bitset: DenseBitVector, max: Int): Listed<Int> {
+  let ls = new ListBuilder<Int>();
+  for (var i = 0; i < max; i++) {
+    if (bitset[i]) {
+      ls.add(i);
+    }
+  }
+  return ls;
+}
+
+export let wordChars = wordCharsCalc();
+export let spaceChars = spaceCharsCalc();
+
+export let wordCharsList = bitsToList(wordChars, 128);
+export let spaceCharsList = bitsToList(spaceChars, 32);
