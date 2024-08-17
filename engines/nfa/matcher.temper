@@ -17,7 +17,7 @@ export interface Matcher {
 export class BeginMatcher extends Matcher {
   public matches(str: String, index: StringIndex): Listed<StringIndex> {
     if (index.compareTo(String.start) == 0) {
-      return [str.next(index)];
+      return [index];
     } else {
       return noMatch;
     }
@@ -31,7 +31,7 @@ export class BeginMatcher extends Matcher {
 export class EndMatcher extends Matcher {
   public matches(str: String, index: StringIndex): Listed<StringIndex> {
     if (index.compareTo(str.end) == 0) {
-      return [str.next(index)];
+      return [index];
     } else {
       return noMatch;
     }
@@ -46,8 +46,8 @@ export class EndMatcher extends Matcher {
 export class WordBoundaryMatcher extends Matcher {
   public matches(str: String, index: StringIndex): Listed<StringIndex> {
     let code1 = str.codeAt(str.prev(index));
-    let code1 = str.codeAt(index);
-    if (wordChars[code1] != wordChars[code1]) {
+    let code2 = str.codeAt(index);
+    if (wordChars[code1] != wordChars[code2]) {
       return [index];
     } else {
       return noMatch;
@@ -66,7 +66,7 @@ export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
   }
   let bitset = new DenseBitVector(0);
   for (var i = 0; i < options.length; i++) {
-    bitset[i] = true;
+    bitset[options[i]] = true;
   }
   return new ContainsMatcher(bitset, options, want);
 }

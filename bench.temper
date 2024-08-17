@@ -1,6 +1,6 @@
 let { ... } = import("std/regex");
 
-let { parse } = import("./temper-regex-parser");
+// let { parse } = import("./temper-regex-parser");
 
 let { TemperRegex } = import("./regex.temper");
 let { regexToString } = import("./util.temper");
@@ -72,30 +72,10 @@ export class RegexBench {
   }
 
   public addRegexDefaults(): Void {
-    // addRegex(/h(i|[eu]l+o)/.data);
-    // addRegex(/(a+a)+a/.data);
-    // addRegex(/([Hh][eu]l+l)/.data);
-    // addRegex(/a+(?intro=b+)c((?option1=d)|(?alphaOption2=e))+/.data)
-    // console.log(regexToString(/h(i|[eu]l+o)/.data));
-
-    let idStart = /[a-zA-Z_]/.data;
-    let idContinue = new Or([idStart, /[0-9]/.data]);
-    let wordNode = new Sequence([
-      WordBoundary,
-      idStart,
-      new Repeat(idContinue, 0, null),
-      WordBoundary,
-    ]);
-    
-    let word = TemperRegexNFA.fromRegex(wordNode, noFastMatcher);
-
-    console.log(word.toString());
-    // console.log(word.find("abcdef")["full"].value.toString());
-
-    let expected = "def_456";
-    let res = word.find("123_abc ${expected} ghi_789");
-    let found = res["full"].value;
-    console.log("Found id: ${found}");
+    addRegex(/h(i|[eu]l+o)/.data);
+    addRegex(/(a+a)+a/.data);
+    addRegex(/([Hh][eu]l+l)/.data);
+    addRegex(/a+(?intro=b+)c((?option1=d)|(?alphaOption2=e))+/.data);
 
     // addRegex(
     //   new Sequence([
@@ -150,19 +130,19 @@ export class RegexBench {
   }
 
   public addCheckDefaults(): Void {
-    // checks.add("hi");
-    // checks.add("helo");
-    // checks.add("hullo");
-    // checks.add("hulo");
-    // checks.add("i am going to say hello");
-    // checks.add("abcdefghijklmnopqrstuvwxyz");
-    // checks.add("test");
-    // checks.add("Hell, MI");
-    // checks.add("hydrogen helium carbon nitrognen");
-    // var many_a = "aaaaaaaaaaaaaaaaaaa";
-    // var many_h = "hullhullhullhullhullhullhullhull";
-    // checks.add(many_a);
-    // checks.add(many_h);
+    checks.add("hi");
+    checks.add("helo");
+    checks.add("hullo");
+    checks.add("hulo");
+    checks.add("i am going to say hello");
+    checks.add("abcdefghijklmnopqrstuvwxyz");
+    checks.add("test");
+    checks.add("Hell, MI");
+    checks.add("hydrogen helium carbon nitrognen");
+    var many_a = "aaaaaaaaaaaaaaaaaaa";
+    var many_h = "hullhullhullhullhullhullhullhull";
+    checks.add(many_a);
+    checks.add(many_h);
     checks.add("🌍aaabbceef");
   }
 
@@ -210,7 +190,7 @@ export class RegexBench {
 
   public addEnginePattern(indexAfter: fn(String): fn(String, StringIndex): List<StringIndex>): Void {
     addEngine(
-      "NFA+DFA+Pattern",
+      "Pattern",
       fn(regex: RegexNode): TemperRegex {
         return TemperRegexNFA.fromRegex(regex, patternMatcher(indexAfter));
       }

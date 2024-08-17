@@ -42,6 +42,9 @@ let validFor(next: Matcher): DenseBitVector {
       validPoint(next.char);
     }
     is ContainsMatcher -> do {
+      if (!next.want) {
+        bubble();
+      }
       for (var i = 0; i < next.options.length; i++) {
         validPoint(next.options[i]);
       }
@@ -443,19 +446,28 @@ export class PatternMatcher extends Matcher {
     dfa = new TemperRegexDFA(regex);
     indexAfter = check;
     let ls = dfa.toRegexList().map(regexToString);
-    let done = new MapBuilder<String, Boolean>();
+    let done = new ListBuilder<String>();
     for (var i = 0; i < ls.length; i++) {
-      done[ls[i]] = true;
+      var has = false;
+      for (var j = 0; j < done.length; j++) {
+        if (ls[i] == done[j]) {
+          has = true;
+        }
+      }
+      if (!has) {
+        done.add(ls[i]);
+      }
     }
-    tries = done.keys.map(indexAfter);
-    if (tries.length == 0) {
+    if (done.length == 0) {
       bubble();
     }
+    tries = done.map(check);
   }
 
   public matches(str: String, index: StringIndex): Listed<StringIndex> {
     for (var i = 0; i < tries.length; i++) {
-      let got = tries.getOr(i, noTry)(str, index);
+      let doTry = tries.getOr(i, noTry);
+      let got = doTry(str, index);
       if (got.length == 1) {
         return got;
       }

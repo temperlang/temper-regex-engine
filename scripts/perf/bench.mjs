@@ -10,24 +10,25 @@ const bench = new RegexBench(clock);
 bench.addRegexDefaults();
 bench.addCheckDefaults();
 
-// bench.addEngineCombo();
-bench.addEngineTemper();
+// bench.addEngineTemper();
 // bench.addEngineDFA();
-// bench.addEnginePattern((reStr) => {
-//     let re = new RegExp(`^(?:${reStr})`);
-//     let notFound = [];
-//     return (baseStr, index) => {
-//         const after = baseStr.slice(index);
-//         const match = after.match(re);
-//         if (match) {
-//             return [index + match[0].length];
-//         } else {
-//             return notFound;
-//         }
-//     };
-// });
+// bench.addEngineNFA();
+
+bench.addEnginePattern((reStr) => {
+    let fmt = reStr.replace('(', '(?:');
+    let re = new RegExp(`^${fmt}`, 'y');
+    let notFound = [];
+    return (str, index) => {
+        re.lastIndex = index;
+        const match = re.exec(str);
+        if (match) {
+            return [index + match[0].length];
+        } else {
+            return notFound;
+        }
+    };
+});
 // bench.addEngineCombo();
-bench.addEngineNFA();
 // bench.addEngineWalker();
 
 let last = new Set();

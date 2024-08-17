@@ -317,7 +317,11 @@ export class Engine {
             for (var j = val.key; j.compareTo(val.value) < 0; j = str.next(j)) {
               res.add(str.codeAt(j));
             }
-            groups[key] = group(str, key, res.join("", chr), val.key);
+            for (var i = 0; i < sgroups.length; i++) {
+              if (sgroups.getOr(i, "") == key) {
+                groups[key] = group(str, key, res.join("", chr), val.key);
+              }
+            }
           }
           if (!groups.has("full")) {
             let full = new ListBuilder<Int>();
