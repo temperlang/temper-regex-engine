@@ -60,6 +60,11 @@ export class RegexBench {
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
     timePerRunInternal = 1000.0;
+    let stringToEscape = "$(*^";
+    let regexWithInterpolatedString = rgx".${stringToEscape}+.";
+    let stringToEscapeAndMore = "<${stringToEscape}${stringToEscape}>";
+    let escapedMatch = regexWithInterpolatedString.find(stringToEscapeAndMore);
+    console.log(escapedMatch["full"].value);
     // timePerRunInternal = -1.0;
   }
 

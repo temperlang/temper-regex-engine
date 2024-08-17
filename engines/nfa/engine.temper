@@ -160,7 +160,7 @@ export class Engine {
         if (state.id == endState.id) {
           let cur = new ListBuilder<Int>();
           for (var j = last; j.compareTo(i) < 0; j = str.next(j)) {
-            cur.add(str.codeAt(i));
+            cur.add(str.codeAt(j));
           }
           ret.add(cur.join("", chr));
           
@@ -189,6 +189,7 @@ export class Engine {
           }
           ret.add(replace(groups));
 
+          // i = str.prev(index);
           i = str.prev(index);
           last = index;
           break;

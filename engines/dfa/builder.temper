@@ -73,17 +73,18 @@ export class RegexBuilder {
           var r2 = regexToString(goesTo.regex);
           let got = if (r1 == r0) {
             if (r1 == r2) {
-              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+              new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)])
             } else {
-              me.add(wentFrom.from, goesTo.to, new Sequence([new Repeat(self, 1, null, false), goesTo.regex]));
+              new Sequence([new Repeat(self, 1, null, false), goesTo.regex])
             }
           } else {
             if (r1 == r2) {
-              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
+              new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)])
             } else {
-              me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex]));
+              new Sequence([wentFrom.regex, new Repeat(self, 0, null, false), goesTo.regex])
             }
           }
+          me.add(wentFrom.from, goesTo.to, got);
         });
       });
     } else {

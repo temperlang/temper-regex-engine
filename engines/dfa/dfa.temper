@@ -353,7 +353,24 @@ export class TemperRegexDFA extends TemperRegex {
       for (var j = 0; j < ls.length; j++) {
         var vals = ls[j].value;
         if (vals.length == 1) {
-          var points = new CodePoints(ls[j].value.join("", chr));
+          var points = new CodePoints(ls[j].value.join("", fn(i: Int): String {
+            match (i) {
+              char'(' -> return "\\(";
+              char')' -> return "\\)";
+              char'[' -> return "\\[";
+              char']' -> return "\\]";
+              char'{' -> return "\\{";
+              char'}' -> return "\\}";
+              char'+' -> return "\\+";
+              char'-' -> return "\\-";
+              char'*' -> return "\\*";
+              char'|' -> return "\\|";
+              char'$' -> return "\\$";
+              char'^' -> return "\\^";
+              char'\\' -> return "\\\\";
+              else -> return chr(i);
+            } 
+          }));
           builder.add(kname, ls[j].key, points);
         } else {
           var parts = new ListBuilder<CodePart>();

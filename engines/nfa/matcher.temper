@@ -60,8 +60,18 @@ export class WordBoundaryMatcher extends Matcher {
 
 }
 
+export class AnyMatcher extends Matcher {
+  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+    return [str.next(index)];
+  }
+
+  public toString(): String {
+    return ".";
+  }
+}
+
 export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
-  if (options.length == 1) {
+  if (options.length == 1 && want) {
     return new SingleMatcher(options, options[0]);
   }
   let bitset = new DenseBitVector(0);
