@@ -71,7 +71,7 @@ export class RegexBuilder {
         var r0 = regexToString(wentFrom.regex);
         me.forEachGoesTo(node, fn(goesTo: RegexBuilderEdge): Void {
           var r2 = regexToString(goesTo.regex);
-          if (r1 == r0) {
+          let got = if (r1 == r0) {
             if (r1 == r2) {
               me.add(wentFrom.from, goesTo.to, new Sequence([wentFrom.regex, new Repeat(self, 1, null, false)]));
             } else {

@@ -12,11 +12,11 @@ bench.addCheckDefaults();
 
 // bench.addEngineTemper();
 // bench.addEngineDFA();
-// bench.addEngineNFA();
+bench.addEngineNFA();
+bench.addEngineCombo();
 
-bench.addEnginePattern((reStr) => {
-    let fmt = reStr.replace('(', '(?:');
-    let re = new RegExp(`^${fmt}`, 'y');
+bench.addEnginePattern((fmt) => {
+    let re = new RegExp(`^(${fmt})`, 'y');
     let notFound = [];
     return (str, index) => {
         re.lastIndex = index;
@@ -28,7 +28,6 @@ bench.addEnginePattern((reStr) => {
         }
     };
 });
-// bench.addEngineCombo();
 // bench.addEngineWalker();
 
 let last = new Set();

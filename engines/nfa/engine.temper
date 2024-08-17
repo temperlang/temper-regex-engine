@@ -140,7 +140,6 @@ export class Engine {
   public newState(): State {
     var ret = new State(states.length);
     states.add(ret);
-    // console.log("new ${ret.id.toString()}");
     return ret;
   }
 
@@ -307,6 +306,7 @@ export class Engine {
         var state = stack.state;
         var sgroups = stack.groups;
         stack = stack.next;
+        // console.log(state.id.toString());
         if (state.id == endState.id) {
           let groups = new MapBuilder<String, Group>();
           let keys = pairs.keys;
@@ -325,7 +325,7 @@ export class Engine {
           }
           if (!groups.has("full")) {
             let full = new ListBuilder<Int>();
-            for (var j = i; j.compareTo(i) < 0; j = str.next(j)) {
+            for (var j = i; j.compareTo(index) < 0; j = str.next(j)) {
               full.add(str.codeAt(j));
             }
             groups["full"] = group(str, "full", full.join("", chr), i);

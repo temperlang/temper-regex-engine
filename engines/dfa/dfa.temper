@@ -51,15 +51,12 @@ let validFor(next: Matcher): DenseBitVector {
     }
     is EpsilonMatcher -> do {}
     is WordBoundaryMatcher -> do {
-      // console.log("WordBoundaryMatcher");
       bubble();
     }
     is EndMatcher -> do {
-      // console.log("EndMatcher");
       bubble();
     }
     is BeginMatcher -> do {
-      // console.log("BeginMatcher");
       bubble();
     }
   }
@@ -142,7 +139,6 @@ export class TemperRegexDFA extends TemperRegex {
         subBuilder[pairs[j].key] = value;
       }
       var ci = index[nameFor(tent.key)];
-      // console.log(nameFor(tent.key));
       stopStates[ci] = true;
       for (var j = 0; j < symbols.length; j++) {
         if (fromVec(tent.val[j], nstates).length != 0) {
@@ -261,15 +257,12 @@ export class TemperRegexDFA extends TemperRegex {
       is StartGroupMatcher -> do {}
       is EndGroupMatcher -> do {}
       is WordBoundaryMatcher -> do {
-        // console.log("WordBoundaryMatcher");
         bubble();
       }
       is EndMatcher -> do {
-        // console.log("EndMatcher");
         bubble();
       }
       is BeginMatcher -> do {
-        // console.log("BeginMatcher");
         bubble();
       }
     }
@@ -278,17 +271,11 @@ export class TemperRegexDFA extends TemperRegex {
   public indexAfter(str: String, place: StringIndex): Listed<StringIndex> {
     let init = place;
     var state = 1;
-    // console.log("/*");
-    // console.log(" * str: \"${str}\"");
-    // console.log(" * char: #${str.countBetween(String.start, place).toString()}");
     var ok = false;
     while (true) {
-      // console.log(" * ${state.toString()}");
       if (okStates[state]) {
-      // if (state == 1) {
         ok = true;
       }
-      // if (state == 2 || !str.hasIndex(place)) {
       if (stopStates[state] || !str.hasIndex(place)) {
         if (ok) {
           return [place];
@@ -444,6 +431,7 @@ export class PatternMatcher extends Matcher {
 
   public constructor(regex: RegexNode, check: fn(String): fn(String, StringIndex): Listed<StringIndex>): Void {
     dfa = new TemperRegexDFA(regex);
+    // console.log(dfa.toDot());
     indexAfter = check;
     let ls = dfa.toRegexList().map(regexToString);
     let done = new ListBuilder<String>();

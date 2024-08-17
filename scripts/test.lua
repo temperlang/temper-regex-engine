@@ -23,6 +23,11 @@ local function regex(str)
 end
 
 do
+    local re = regex('\\b[a-zA-Z_]([a-zA-Z_]|[0-9])*\\b')
+    assert(re:find('123_abc def_456 ghi_789').full.value == 'def_456')
+end
+
+do
     local re = regex('(?b=a)b|(?c=a)c')
     local b = re:find('ab')
     local c = re:find('ac')

@@ -20,6 +20,7 @@ export class TemperRegexNFA extends TemperRegex {
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
     nfa.engine = nfa.engine.optEpsilonEllison();
     // nfa.engine = nfa.engine.optDeadCode();
+    // console.log(nfa.engine.toString());
     return nfa;
   }
 
@@ -29,8 +30,6 @@ export class TemperRegexNFA extends TemperRegex {
       match (next) {
         is Matcher -> do {
           input.addNext(next, output);
-          // console.log("${next.toString()}");
-          // bubble();
         }
         null -> do {
           buildRegexWrap(regex, input, output);
@@ -39,19 +38,13 @@ export class TemperRegexNFA extends TemperRegex {
       }
     } orelse do {
       buildRegexWrap(regex, input, output);
-      // bubble();
     }
   }
 
   public buildRegexWrap(regex: RegexNode, input: State, output: State): Void | Bubble {
-    // var mid1 = engine.newState();
-    // var mid2 = engine.newState();
-    // input.addNext(engine.epsilon, mid1);
-    // mid2.addNext(engine.epsilon, output);
-    // buildRegexBase(regex, mid1, mid2);
-    // console.log("${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
+    // console.log("+ ${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
     let ret = buildRegexBase(regex, input, output);
-    // console.log("${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
+    // console.log("- ${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
     return ret;
   }
 
@@ -121,7 +114,7 @@ export class TemperRegexNFA extends TemperRegex {
           var max = regex.max.as<Int>();
           for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
-            if (regex.reluctant) {
+            if (!regex.reluctant) {
               buildRegex(regex.item, lastState, curState);
               lastState.addNext(engine.epsilon, output);
             } else {
@@ -132,7 +125,7 @@ export class TemperRegexNFA extends TemperRegex {
           }
           lastState.addNext(engine.epsilon, output);
         } else {
-          if (regex.reluctant) {
+          if (!regex.reluctant) {
             buildRegex(regex.item, lastState, lastState);
             lastState.addNext(engine.epsilon, output);
           } else {
@@ -142,16 +135,55 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is Sequence -> do {
-        var v1 = input;
-        for (var j = 0; j < regex.items.length; j++) {
-          var v2 = if (j + 1 != regex.items.length) {
-            engine.newState()
-          } else {
-            output
-          };
+        match (regex.items.length) {
+          0 -> input.addNext(engine.epsilon, output);
+          1 -> buildRegex(regex.items[0], input, output);
+          else -> do {
+            let seqs = new ListBuilder<Listed<RegexNode>>();
+            var last = new ListBuilder<RegexNode>();
+            let addAll(items: Listed<RegexNode>): Void {
+              for (var i = 0; i < items.length; i++) {
+                let item = items[i];
+                match (item) {
+                  Begin, End, WordBoundary, Dot, is Group -> do {
+                    if (last.length != 0) {
+                      seqs.add(last);
+                    }
+                    last = new ListBuilder<RegexNode>();
+                    last.add(item);
+                  }
+                  is Sequence -> do {
+                    addAll(item.items);
+                  }
+                  else -> do {
+                    last.add(item);
+                  }
+                }
+              }
+            }
+            addAll(regex.items);
+            if (last.length != 0) {
+              seqs.add(last);
+            }
+            if (seqs.length == 0) {
+              input.addNext(engine.epsilon, output);
+            } else {
+              var v1 = input;
+              for (var i = 0; i < seqs.length; i++) {
+                let items = seqs[i];
+                for (var j = 0; j < items.length; j++) {
+                  var v2 = if (j + 1 != items.length || i + 1 != seqs.length) {
+                    engine.newState()
+                  } else {
+                    output
+                  };
 
-          buildRegex(regex.items[j], v1, v2);
-          v1 = v2;
+                  buildRegex(items[j], v1, v2);
+                  v1 = v2;
+                }
+              };
+            }
+          }
         }
 
         // var nextState = output; 
