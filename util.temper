@@ -41,9 +41,10 @@ export let regexToString(base: RegexNode): String {
       for (var i = 0; i < base.items.length; i++) {
         add(base.items[i]);
       }
-      return ret.toList().join("|", fn(p: Pair<String, Boolean>): String {
+      let mid = ret.toList().join("|", fn(p: Pair<String, Boolean>): String {
         return p.key;
       });
+      return "(${mid})";
     }
     is Repeat -> do {
       var mod = if (base.min == 0 && base.max == 1) {
@@ -79,7 +80,7 @@ export let regexToString(base: RegexNode): String {
           }
         }
         else -> do {
-          pat = "(?:${str})";
+          pat = "(${str})";
         }
       }
       return "${pat}${mod}${q}";
@@ -94,7 +95,7 @@ export let regexToString(base: RegexNode): String {
           return regexToString(r);
         }
         var inner = base.items.join("", rec);
-        return "(?:${inner})";
+        return "(${inner})";
       }
     }
     is Special -> do {

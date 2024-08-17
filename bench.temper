@@ -1,10 +1,12 @@
 let { ... } = import("std/regex");
 
+let { parse } = import("./temper-regex-parser");
+
 let { TemperRegex } = import("./regex.temper");
 let { regexToString } = import("./util.temper");
 
-let { TemperRegexNFA } = import("./engines/nfa/nfa.temper");
-let { TemperRegexDFA, fastMatcher } = import("./engines/dfa/dfa.temper");
+let { TemperRegexNFA, noFastMatcher } = import("./engines/nfa/nfa.temper");
+let { TemperRegexDFA, fastMatcher, patternMatcher } = import("./engines/dfa/dfa.temper");
 let { TemperRegexWalker } = import("./engines/walk.temper");
 let { TemperRegexNative } = import("./engines/native.temper");
 
@@ -34,6 +36,7 @@ export class SingleResult {
 class EngineResult {
   public engine: String;
   public score: Float64;
+  public passed: Listed<Pair<RegexNode, String>>;
 
   public toString(): String {
     return "${engine}: ${((score * 100.0).toInt().toFloat64() / 100.0 orelse 0.0).toString()}";
@@ -56,7 +59,7 @@ export class RegexBench {
     regex = new ListBuilder<RegexNode>();
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 10.0;
+    timePerRunInternal = 1000.0;
     // timePerRunInternal = -1.0;
   }
 
@@ -69,27 +72,98 @@ export class RegexBench {
   }
 
   public addRegexDefaults(): Void {
-    addRegex(/h(?:[eu]l+o|i)/.data);
-    addRegex(/(a+a)+a/.data);
-    addRegex(/([Hh][eu]l+l)/.data);
+    // addRegex(/h(i|[eu]l+o)/.data);
+    // addRegex(/(a+a)+a/.data);
+    // addRegex(/([Hh][eu]l+l)/.data);
+    // addRegex(/a+(?intro=b+)c((?option1=d)|(?alphaOption2=e))+/.data)
+    // console.log(regexToString(/h(i|[eu]l+o)/.data));
+
+    let idStart = /[a-zA-Z_]/.data;
+    let idContinue = new Or([idStart, /[0-9]/.data]);
+    let wordNode = new Sequence([
+      WordBoundary,
+      idStart,
+      new Repeat(idContinue, 0, null),
+      WordBoundary,
+    ]);
+    
+    let word = TemperRegexNFA.fromRegex(wordNode, noFastMatcher);
+
+    console.log(word.toString());
+    // console.log(word.find("abcdef")["full"].value.toString());
+
+    let expected = "def_456";
+    let res = word.find("123_abc ${expected} ghi_789");
+    let found = res["full"].value;
+    console.log("Found id: ${found}");
+
+    // addRegex(
+    //   new Sequence([
+    //     new CodePoints("a"),
+    //     new Or([
+    //       new CodePoints("i"),
+    //       new Sequence([
+    //         new CodeSet([
+    //           new CodePoints("eu"),
+    //         ]),
+    //         new CodePoints("l"),
+    //         new Repeat(
+    //           new CodePoints("l"),
+    //           1, null, false,
+    //         ),
+    //       ]),
+    //     ]),
+    //   ]),
+    // );
+    // addRegex(
+    //   new Sequence([
+    //     new Repeat(
+    //       new Sequence([
+    //         new Repeat(
+    //           new CodePoints("a"),
+    //           1, null, false,
+    //         ),
+    //         new CodePoints("a"),
+    //       ]),
+    //       1, null, false,
+    //     ),
+    //     new CodePoints("a"),
+    //   ]),
+    // )
+    // addRegex(
+    //   new Sequence([
+    //     new Or([
+    //       new CodePoints("H"),
+    //       new CodePoints("h"),
+    //     ]),
+    //     new Or([
+    //       new CodePoints("e"),
+    //       new CodePoints("u"),
+    //     ]),
+    //     new Repeat(
+    //       new CodePoints("l"),
+    //       1, null, false,
+    //     ),
+    //     new CodePoints("l"),
+    //   ])
+    // )
   }
 
   public addCheckDefaults(): Void {
-    checks.add("hi");
-    checks.add("helo");
-    checks.add("hullo");
-    checks.add("hulo");
-    checks.add("i am going to say hello");
-    checks.add("abcdefghijklmnopqrstuvwxyz");
-    checks.add("test");
-    checks.add("Hell, MI");
-    checks.add("hydrogen helium carbon nitrognen");
-    var many_a = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    var many_h = "hullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhullhull";
-    checks.add(many_a);
-    checks.add(many_h);
-    checks.add("${many_a}${many_h}");
-    checks.add("${many_h}${many_a}");
+    // checks.add("hi");
+    // checks.add("helo");
+    // checks.add("hullo");
+    // checks.add("hulo");
+    // checks.add("i am going to say hello");
+    // checks.add("abcdefghijklmnopqrstuvwxyz");
+    // checks.add("test");
+    // checks.add("Hell, MI");
+    // checks.add("hydrogen helium carbon nitrognen");
+    // var many_a = "aaaaaaaaaaaaaaaaaaa";
+    // var many_h = "hullhullhullhullhullhullhullhull";
+    // checks.add(many_a);
+    // checks.add(many_h);
+    checks.add("🌍aaabbceef");
   }
 
   public addEngineDefaults(): Void {
@@ -125,11 +199,29 @@ export class RegexBench {
     );
   }
 
+  public addEngineCombo(): Void {
+    addEngine(
+      "NFA+DFA",
+      fn(regex: RegexNode): TemperRegex {
+        return TemperRegexNFA.fromRegex(regex, fastMatcher);
+      }
+    );
+  }
+
+  public addEnginePattern(indexAfter: fn(String): fn(String, StringIndex): List<StringIndex>): Void {
+    addEngine(
+      "NFA+DFA+Pattern",
+      fn(regex: RegexNode): TemperRegex {
+        return TemperRegexNFA.fromRegex(regex, patternMatcher(indexAfter));
+      }
+    );
+  }
+
   public addEngineNFA(): Void {
     addEngine(
       "NFA",
       fn(regex: RegexNode): TemperRegex {
-        return TemperRegexNFA.fromRegex(regex, fastMatcher);
+        return TemperRegexNFA.fromRegex(regex, noFastMatcher);
       }
     );
   }
@@ -151,11 +243,13 @@ export class RegexBench {
   public run(): Void {
     var runs = new ListBuilder<SingleResult>();
 
+    let timePerRun = timePerRunInternal / (checks.length * regex.length).toFloat64();
+
     for (var i = 0; i < engines.length; i++) {
       var engine = engines[i];
       var count = 0.0;
       var total = 0.0;
-      var ls = new ListBuilder<String>();
+      var ls = new ListBuilder<Pair<RegexNode, String>>();
       for (var j = 0; j < regex.length; j++) {
         var re = regex[j];
         var tcre = engine.invoke(re);
@@ -164,9 +258,7 @@ export class RegexBench {
           var iters = 1;
           var found = isFound(tcre, check);
           if (found) {
-            ls.add("/${regexToString(re)}/.found(\"${check}\")");
-          } else {
-            ls.add("not /${regexToString(re)}/.found(\"${check}\")");
+            ls.add(new Pair(re, check));
           }
           var beginTime = time();
           do {
@@ -174,7 +266,7 @@ export class RegexBench {
               found = isFound(tcre, check);
             }
             iters += iters;
-          } while (time() - beginTime < timePerRunInternal);
+          } while (time() - beginTime < timePerRun);
           var endTime = time();
           var ms = endTime - beginTime;
           var score = iters.toFloat64() / ms orelse 0.0;
@@ -185,10 +277,7 @@ export class RegexBench {
           runs.add(thisRun);
         }
       }
-      onEngineResultCallback(new EngineResult(engine.name, total / count orelse 0.0));
-      for (var i = 0; i < ls.length; i++) {
-        console.log("// ${ls[i]}");
-      }
+      onEngineResultCallback(new EngineResult(engine.name, total / count orelse 0.0, ls));
     }
 
     return runs.toList();

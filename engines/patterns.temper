@@ -1,21 +1,2 @@
 
 let { TemperRegex } = import("../regex.temper");
-
-export class TemperRegexPatterns extends TemperRegex {
-  public tries: List<String>;
-  public check: fn(String, String): Boolean;
-
-  public constructor(strs: List<String>, isMatch: fn(String, String): Boolean): Void {
-    tries = strs;
-    check = isMatch;
-  }
-
-  public found(str: String): Boolean {
-    for (var i = 0; i < tries.length; i++) {
-      if (check(str, tries[i])) {
-        return true;
-      }
-    }
-    return false;
-  }
-}

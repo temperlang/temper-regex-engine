@@ -11,7 +11,6 @@ let { regexToString, chr } = import("../../util.temper");
 
 let { TransitionTable, TransitionTableEntry, toVec, fromVec } = import("./table.temper");
 let { RegexBuilder } = import("./builder.temper");
-let { TemperRegexPatterns } = import("../patterns.temper");
 
 let emptyList = [];
 
@@ -248,6 +247,9 @@ export class TemperRegexDFA extends TemperRegex {
         addCodePoint(next.char);
       }
       is ContainsMatcher -> do {
+        if (!next.want) {
+          bubble();
+        }
         for (var i = 0; i < next.options.length; i++) {
           addCodePoint(next.options[i]);
         }
@@ -322,12 +324,12 @@ export class TemperRegexDFA extends TemperRegex {
     return "digraph {\n  ${nfaDot1}\n  ${nfaDot2}\n  table[shape=none label=<${tableDot}>];\n  ${dfaDot}\n}\n";
   }
 
-  public toPatterns(isMatch: fn(String, String): Boolean): TemperRegexPatterns {
-    let regexToStringChr(r: RegexNode): String {
-      return regexToString(r);
-    }
-    return new TemperRegexPatterns(toRegexList().map(regexToStringChr), isMatch);
-  }
+  // public toPatterns(isMatch: fn(String, String): Boolean): TemperRegexPatterns {
+  //   let regexToStringChr(r: RegexNode): String {
+  //     return regexToString(r);
+  //   }
+  //   return new TemperRegexPatterns(toRegexList().map(regexToStringChr), isMatch);
+  // }
 
   public toRegex(): RegexNode {
     return new Or(toRegexList());
@@ -408,11 +410,9 @@ export let fastMatcher(regex: RegexNode): Matcher | Null | Bubble {
 
 export class FastMatcher extends Matcher {
   public dfa: TemperRegexDFA;
-  public engine: Engine;
 
   public constructor(regex: RegexNode): Void {
     dfa = new TemperRegexDFA(regex);
-    engine = dfa.buildEngine();
   }
 
   public matches(str: String, index: StringIndex): Listed<StringIndex> {
@@ -420,8 +420,50 @@ export class FastMatcher extends Matcher {
   }
 
   public toString(): String {
-    // return "/${dfa.toRegexString()}/";
-    // return "/${dfa.toRegexList().length.toString()}/";
-    return "/* /${dfa.toRegexString()}/ */ ${dfa.toDot()}";
+    return "/${dfa.toRegexString()}/";
+  }
+}
+
+export let patternMatcher(indexAfter: fn(String): fn(String, StringIndex): Listed<StringIndex>): fn(RegexNode): Matcher | Null | Bubble {
+  return fn(regex: RegexNode): Matcher | Null | Bubble {
+    return new PatternMatcher(regex, indexAfter);
+  };
+}
+
+let noTry(s: String, i: StringIndex): Listed<StringIndex> {
+  return notFound;
+}
+
+export class PatternMatcher extends Matcher {
+  public dfa: TemperRegexDFA;
+  public tries: List<fn(String, StringIndex): Listed<StringIndex>>;
+  public indexAfter: fn(String): fn(String, StringIndex): Listed<StringIndex>;
+
+  public constructor(regex: RegexNode, check: fn(String): fn(String, StringIndex): Listed<StringIndex>): Void {
+    dfa = new TemperRegexDFA(regex);
+    indexAfter = check;
+    let ls = dfa.toRegexList().map(regexToString);
+    let done = new MapBuilder<String, Boolean>();
+    for (var i = 0; i < ls.length; i++) {
+      done[ls[i]] = true;
+    }
+    tries = done.keys.map(indexAfter);
+    if (tries.length == 0) {
+      bubble();
+    }
+  }
+
+  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+    for (var i = 0; i < tries.length; i++) {
+      let got = tries.getOr(i, noTry)(str, index);
+      if (got.length == 1) {
+        return got;
+      }
+    }
+    return notFound;
+  }
+
+  public toString(): String {
+    return "/${dfa.toRegexString()}/";
   }
 }

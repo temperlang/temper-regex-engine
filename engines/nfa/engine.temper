@@ -123,6 +123,8 @@ export class Engine {
         add(next.matcher, next.toState);
       }
 
+      map.remove(state.id);
+
       if (count == 0 || isFinal) {
         return opt.endState;
       }
@@ -138,6 +140,7 @@ export class Engine {
   public newState(): State {
     var ret = new State(states.length);
     states.add(ret);
+    // console.log("new ${ret.id.toString()}");
     return ret;
   }
 

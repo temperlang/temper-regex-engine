@@ -7,6 +7,10 @@ let { Engine } = import("./engine.temper");
 let { State } = import("./state.temper");
 let { ... } = import("./matcher.temper");
 
+export let noFastMatcher(re: RegexNode): Matcher | Null | Bubble {
+  return null;
+}
+
 export class TemperRegexNFA extends TemperRegex {
   public var engine: Engine;
   public fastMatcher: fn(RegexNode): Matcher | Null | Bubble;
@@ -15,6 +19,7 @@ export class TemperRegexNFA extends TemperRegex {
     let nfa = new TemperRegexNFA(new Engine(), fastMatcher);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
     nfa.engine = nfa.engine.optEpsilonEllison();
+    // nfa.engine = nfa.engine.optDeadCode();
     return nfa;
   }
 
@@ -25,15 +30,29 @@ export class TemperRegexNFA extends TemperRegex {
         is Matcher -> do {
           input.addNext(next, output);
           // console.log("${next.toString()}");
+          // bubble();
         }
         null -> do {
-          buildRegexBase(regex, input, output);
+          buildRegexWrap(regex, input, output);
         }
         else -> bubble();
       }
     } orelse do {
-      buildRegexBase(regex, input, output);
+      buildRegexWrap(regex, input, output);
+      // bubble();
     }
+  }
+
+  public buildRegexWrap(regex: RegexNode, input: State, output: State): Void | Bubble {
+    // var mid1 = engine.newState();
+    // var mid2 = engine.newState();
+    // input.addNext(engine.epsilon, mid1);
+    // mid2.addNext(engine.epsilon, output);
+    // buildRegexBase(regex, mid1, mid2);
+    // console.log("${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
+    let ret = buildRegexBase(regex, input, output);
+    // console.log("${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
+    return ret;
   }
 
   public buildRegexBase(regex: RegexNode, input: State, output: State): Void | Bubble {
@@ -49,18 +68,18 @@ export class TemperRegexNFA extends TemperRegex {
       is CodePoints -> do {
         var lastState = input;
         var index = String.start;
-        while (true) {
+        while (regex.value.hasIndex(index)) {
           let chr = regex.value.codeAt(index);
           index = regex.value.next(index);
-          if (!regex.value.hasIndex(index)) {
-            lastState.addNext(charCodeMatcher(chr), output);
-            break;
+          var curState = if (regex.value.hasIndex(index)) {
+            engine.newState()
           } else {
-            var curState = engine.newState();
-            lastState.addNext(charCodeMatcher(chr), curState);
-            lastState = curState;
-          }
+            output
+          };
+          lastState.addNext(charCodeMatcher(chr), curState);
+          lastState = curState;
         }
+        // lastState.addNext(engine.epsilon, output);
       }
       is CodeSet -> do {
         let ls = new ListBuilder<Int>();
@@ -80,11 +99,15 @@ export class TemperRegexNFA extends TemperRegex {
             }
           }
         }
+        let make(i: Int): RegexNode {
+          return new CodePoints(String.fromCodePoint(i));
+        }
+        // buildRegex(new Or(ls.map(make)), input, output);
         input.addNext(fromChars(ls, !regex.negated), output);
       }
       is Or -> do {
         for (var i = 0; i < regex.items.length; i++) {
-          buildRegex(regex.items[i], input, output)
+          buildRegex(regex.items[i], input, output);
         }
       }
       is Repeat -> do {
@@ -119,24 +142,36 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is Sequence -> do {
-        var nextState = output; 
-        for (var j = regex.items.length - 1; j >= 0; j--) {
-          var curState = if (j == 0) {
-            input
-          } else {
+        var v1 = input;
+        for (var j = 0; j < regex.items.length; j++) {
+          var v2 = if (j + 1 != regex.items.length) {
             engine.newState()
+          } else {
+            output
           };
-          buildRegex(regex.items[j], curState, nextState);
-          nextState = curState;
+
+          buildRegex(regex.items[j], v1, v2);
+          v1 = v2;
         }
-        if (regex.items.length == 0) {
-          input.addNext(engine.epsilon, nextState);
-        }
+
+        // var nextState = output; 
+        // for (var j = regex.items.length - 1; j >= 0; j--) {
+        //   var curState = if (j == 0) {
+        //     input
+        //   } else {
+        //     engine.newState()
+        //   };
+        //   buildRegex(regex.items[j], curState, nextState);
+        //   nextState = curState;
+        // }
+        // if (regex.items.length == 0) {
+        //   input.addNext(engine.epsilon, nextState);
+        // }
       }
       is Special -> do {
         if (regex == Begin) {
           input.addNext(new BeginMatcher(), output);
-        } else if (regex == Dot) { 
+        } else if (regex == Dot) {
           input.addNext(fromChars([0], false), output);
         } else if (regex == End) {
           input.addNext(new EndMatcher(), output);
