@@ -1,59 +1,27 @@
 
 let {...} = import("std/regex");
-let { TemperRegex } = import("../../regex.temper");
-let { regexToString } = import("../../util.temper");
-let { wordCharsList, spaceCharsList } = import("../../ctype.temper");
+let { TemperRegex } = import("../regex.temper");
+let { regexToString } = import("../util.temper");
+let { wordCharsList, spaceCharsList } = import("../ctype.temper");
 let { Engine } = import("./engine.temper");
 let { State } = import("./state.temper");
 let { ... } = import("./matcher.temper");
 
-export let noFastMatcher(re: RegexNode): Matcher | Null | Bubble {
-  return null;
-}
-
 export class TemperRegexNFA extends TemperRegex {
   public var engine: Engine;
-  public fastMatcher: fn(RegexNode): Matcher | Null | Bubble;
   
-  public static fromRegex(regex: RegexNode, fastMatcher: fn(RegexNode): Matcher | Null | Bubble): TemperRegexNFA {
-    let nfa = new TemperRegexNFA(new Engine(), fastMatcher);
+  public static fromRegex(regex: RegexNode): TemperRegexNFA {
+    let nfa = new TemperRegexNFA(new Engine());
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
-    // nfa.engine = nfa.engine.optEpsilonEllison();
-    // nfa.engine = nfa.engine.optDeadCode();
-    // console.log(nfa.engine.toString());
+    nfa.engine = nfa.engine.optEpsilonEllison();
     return nfa;
   }
-
+  
   public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
-    do {
-      let next = fastMatcher(regex);
-      match (next) {
-        is Matcher -> do {
-          input.addNext(next, output);
-        }
-        null -> do {
-          buildRegexWrap(regex, input, output);
-        }
-        else -> bubble();
-      }
-    } orelse do {
-      buildRegexWrap(regex, input, output);
-    }
-  }
-
-  public buildRegexWrap(regex: RegexNode, input: State, output: State): Void | Bubble {
-    // console.log("+ ${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
-    let ret = buildRegexBase(regex, input, output);
-    // console.log("- ${input.id.toString()} -> ${regexToString(regex)} -> ${output.id.toString()}");
-    return ret;
-  }
-
-  public buildRegexBase(regex: RegexNode, input: State, output: State): Void | Bubble {
     match (regex) {
       is Capture -> do {
         var mid1 = engine.newState();
         var mid2 = engine.newState();
-        // engine.baseGroups[regex.name] = new Group(regex.name, "", -1);
         input.addNext(new StartGroupMatcher(regex.name), mid1);
         buildRegex(regex.item, mid1, mid2);
         mid2.addNext(new EndGroupMatcher(regex.name), output);
@@ -72,7 +40,6 @@ export class TemperRegexNFA extends TemperRegex {
           lastState.addNext(charCodeMatcher(chr), curState);
           lastState = curState;
         }
-        // lastState.addNext(engine.epsilon, output);
       }
       is CodeSet -> do {
         let ls = new ListBuilder<Int>();
@@ -95,7 +62,6 @@ export class TemperRegexNFA extends TemperRegex {
         let make(i: Int): RegexNode {
           return new CodePoints(String.fromCodePoint(i));
         }
-        // buildRegex(new Or(ls.map(make)), input, output);
         input.addNext(fromChars(ls, !regex.negated), output);
       }
       is Or -> do {
@@ -114,23 +80,23 @@ export class TemperRegexNFA extends TemperRegex {
           var max = regex.max.as<Int>();
           for (var i = regex.min; i < max; i++) {
             var curState = engine.newState();
-            if (regex.reluctant) {
-              buildRegex(regex.item, lastState, curState);
+            if (!regex.reluctant) {
               lastState.addNext(engine.epsilon, output);
+              buildRegex(regex.item, lastState, curState);
             } else {
-              lastState.addNext(engine.epsilon, output);
               buildRegex(regex.item, lastState, curState);
+              lastState.addNext(engine.epsilon, output);
             }
             lastState = curState;
           }
           lastState.addNext(engine.epsilon, output);
         } else {
-          if (regex.reluctant) {
-            buildRegex(regex.item, lastState, lastState);
+          if (!regex.reluctant) {
             lastState.addNext(engine.epsilon, output);
+            buildRegex(regex.item, lastState, lastState);
           } else {
-            lastState.addNext(engine.epsilon, output);
             buildRegex(regex.item, lastState, lastState);
+            lastState.addNext(engine.epsilon, output);
           }
         }
       }
@@ -185,20 +151,6 @@ export class TemperRegexNFA extends TemperRegex {
             }
           }
         }
-
-        // var nextState = output; 
-        // for (var j = regex.items.length - 1; j >= 0; j--) {
-        //   var curState = if (j == 0) {
-        //     input
-        //   } else {
-        //     engine.newState()
-        //   };
-        //   buildRegex(regex.items[j], curState, nextState);
-        //   nextState = curState;
-        // }
-        // if (regex.items.length == 0) {
-        //   input.addNext(engine.epsilon, nextState);
-        // }
       }
       is Special -> do {
         if (regex == Begin) {

@@ -1,25 +1,10 @@
 
-local temper = require('temper-core')
-
-local TemperRegexNFA = require('temper-regex-engine/engines/nfa/nfa').TemperRegexNFA
-local regexToString = require('temper-regex-engine/util').regexToString
+local TemperRegexNFA = require('temper-regex-engine/nfa/nfa').TemperRegexNFA
 
 local libparse = require('temper-regex-parser')
 
--- local done = false
-local function noFastMatcher(re)
-    -- if not done then
-    --     done = true
-    --     print(regexToString(re))
-    --     for k, v in pairs(re) do
-    --         print(k, v)
-    --     end
-    -- end
-    return temper.null
-end
-
 local function regex(str)
-    return TemperRegexNFA.fromRegex(libparse.parse(str), noFastMatcher)
+    return TemperRegexNFA.fromRegex(libparse.parse(str))
 end
 
 do

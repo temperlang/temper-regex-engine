@@ -1,9 +1,6 @@
-import glob
+import sys
 
-in_file_names = [
-    *glob.glob('temper.out/lua/temper-regex-engine/**/*.lua', recursive=True),
-    # *glob.glob('temper.out/lua/temper-regex-parser/**/*.lua', recursive=True),
-]
+in_file_names = sys.argv[1:]
 
 with open('bundle.lua', 'w') as out:
     for in_file_name in in_file_names:

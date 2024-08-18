@@ -2,7 +2,7 @@
 let { ... } = import("std/regex");
 let { State, Next } = import("./state.temper");
 let { Stack, StackStart, StackSlot } = import("./stack.temper");
-let { ord, chr, idString, slice } = import("../../util.temper");
+let { ord, chr, idString, slice } = import("../util.temper");
 let { ... } = import("./matcher.temper");
 
 let group(str: String, name: String, value: String, start: StringIndex): Group {
@@ -22,27 +22,22 @@ export class Engine {
   public startState: State;
   public endState: State;
   public epsilon: EpsilonMatcher;
-  // public baseGroups: MapBuilder<String, Group>;
 
   public constructor() {
     states = new ListBuilder<State>();
     startState = newState();
     endState = newState();
     epsilon = new EpsilonMatcher();
-    // baseGroups = new MapBuilder<String, Group>();
   }
 
   public opt(): Engine {
     var cur = this;
-    // cur = cur.optEpsilonEllison();
-    // cur = cur.optDeadCode();
     return cur;
   }
 
   public optDeadCode(): Engine {
     var unopt = this;
     var opt = new Engine();
-    // opt.baseGroups = unopt.baseGroups;
     var map = new MapBuilder<Int, Int>();
 
     let visit(state: State): State {
@@ -75,7 +70,6 @@ export class Engine {
   public optEpsilonEllison(): Engine {
     var unopt = this;
     var opt = new Engine();
-    // opt.baseGroups = unopt.baseGroups;
     var map = new MapBuilder<Int, Int>();
 
     let visit(state: State): State {
@@ -143,7 +137,7 @@ export class Engine {
     return ret;
   }
 
-  public replace(str: String, replace: fn(Mapped<String, Group>): String): String {
+  public replace(str: String, replacer: fn(Mapped<String, Group>): String): String {
     let pairs = new MapBuilder<String, Pair<StringIndex, StringIndex>>();
     let pending = new MapBuilder<String, StringIndex>();
     var stackStart = new StackStart();
@@ -164,7 +158,6 @@ export class Engine {
           }
           ret.add(cur.join("", chr));
           
-          // let groups = baseGroups.toMapBuilder();
           let groups = new MapBuilder<String, Group>();
           if (!groups.has("full")) {
             let full = new ListBuilder<Int>();
@@ -187,9 +180,8 @@ export class Engine {
               }
             }
           }
-          ret.add(replace(groups));
+          ret.add(replacer(groups));
 
-          // i = str.prev(index);
           i = str.prev(index);
           last = index;
           break;
@@ -199,21 +191,24 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.length != 0) {
+          if (skip.is<StringIndex>()) {
+            let type = matcher.type();
             match (matcher) {
-              is StartGroupMatcher -> do {
+              StartGroupMatcher.id -> do {
+                let matcher = matcher.as<StartGroupMatcher>();
                 pending[matcher.name] = index;
-                stack = new StackSlot(skip.getOr(0, index), toState, stack, sgroups);
+                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
               }
-              is EndGroupMatcher -> do {
+              EndGroupMatcher.id -> do {
+                let matcher = matcher.as<EndGroupMatcher>();
                 pairs[matcher.name] = new Pair(pending[matcher.name], index);
                 let next = new ListBuilder<String>();
                 next.add(matcher.name);
                 next.addAll(sgroups);
-                stack = new StackSlot(skip.getOr(0, index), toState, stack, next);
+                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, next);
               }
               else -> do {
-                stack = new StackSlot(skip.getOr(0, index), toState, stack, sgroups);
+                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
               }
             }
           }
@@ -222,7 +217,6 @@ export class Engine {
     }
     let cur = new ListBuilder<Int>();
     for (var j = last; str.hasIndex(j); j = str.next(j)) {
-      // cur.add(codePoints.getOr(j, 0));
       cur.add(str.codeAt(j));
     }
     ret.add(cur.join("", chr));
@@ -255,8 +249,8 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.length != 0) {
-            stack = new StackSlot(skip.getOr(0, index), toState, stack);
+          if (skip.is<StringIndex>()) {
+            stack = new StackSlot(skip.as<StringIndex>(), toState, stack);
           }
         }
       }
@@ -286,8 +280,8 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.length != 0) {
-            stack = new StackSlot(skip.getOr(0, index), toState, stack);
+          if (skip.is<StringIndex>()) {
+            stack = new StackSlot(skip.as<StringIndex>(), toState, stack);
           }
         }
       }
@@ -307,7 +301,6 @@ export class Engine {
         var state = stack.state;
         var sgroups = stack.groups;
         stack = stack.next;
-        // console.log(state.id.toString());
         if (state.id == endState.id) {
           let groups = new MapBuilder<String, Group>();
           let keys = pairs.keys;
@@ -338,13 +331,16 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.length != 0) {
-            match (matcher) {
-              is StartGroupMatcher -> do {
+          if (skip.is<StringIndex>()) {
+            let type = matcher.type();
+            match (type) {
+              StartGroupMatcher.id -> do {
+                let matcher = matcher.as<StartGroupMatcher>();
                 pending[matcher.name] = index;
                 stack = new StackSlot(index, toState, stack, sgroups);
               }
-              is EndGroupMatcher -> do {
+              EndGroupMatcher.id -> do {
+                let matcher = matcher.as<EndGroupMatcher>();
                 pairs[matcher.name] = new Pair(pending[matcher.name], index);
                 let next = new ListBuilder<String>();
                 next.add(matcher.name);
@@ -352,7 +348,7 @@ export class Engine {
                 stack = new StackSlot(index, toState, stack, next);
               }
               else -> do {
-                stack = new StackSlot(skip.getOr(0, index), toState, stack, sgroups);
+                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
               }
             }
           }

@@ -10,7 +10,7 @@ bench.add_regex_defaults()
 bench.add_check_defaults()
 
 bench.add_engine_nfa()
-bench.add_engine_walker()
+bench.add_engine_temper()
 
 @bench.on_engine_result
 def on_engine_result(result):

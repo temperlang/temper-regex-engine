@@ -8,4 +8,3 @@ export interface TemperRegex {
   public found(text: String): Boolean;
   public find(text: String): Mapped<String, Group>;
 }
-

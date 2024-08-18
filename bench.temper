@@ -1,14 +1,10 @@
 let { ... } = import("std/regex");
 
-// let { parse } = import("./temper-regex-parser");
-
 let { TemperRegex } = import("./regex.temper");
 let { regexToString } = import("./util.temper");
 
-let { TemperRegexNFA, noFastMatcher } = import("./engines/nfa/nfa.temper");
-let { TemperRegexDFA, fastMatcher, patternMatcher } = import("./engines/dfa/dfa.temper");
-let { TemperRegexWalker } = import("./engines/walk.temper");
-let { TemperRegexNative } = import("./engines/native.temper");
+let { TemperRegexNFA } = import("./nfa/nfa.temper");
+let { TemperRegexNative } = import("./native.temper");
 
 class Engine {
   public name: String;
@@ -18,8 +14,6 @@ class Engine {
     return cons(re);
   }
 }
-
-var engines = new ListBuilder<Engine>();
 
 export class SingleResult {
   public engine: String;
@@ -60,12 +54,6 @@ export class RegexBench {
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
     timePerRunInternal = 1000.0;
-    let stringToEscape = "$(*^";
-    let regexWithInterpolatedString = rgx".${stringToEscape}+.";
-    let stringToEscapeAndMore = "<${stringToEscape}${stringToEscape}>";
-    let escapedMatch = regexWithInterpolatedString.find(stringToEscapeAndMore);
-    console.log(escapedMatch["full"].value);
-    // timePerRunInternal = -1.0;
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -80,58 +68,7 @@ export class RegexBench {
     addRegex(/h(i|[eu]l+o)/.data);
     addRegex(/(a+a)+a/.data);
     addRegex(/([Hh][eu]l+l)/.data);
-    addRegex(/a+(?intro=b+)c((?option1=d)|(?alphaOption2=e))+/.data);
-
-    // addRegex(
-    //   new Sequence([
-    //     new CodePoints("a"),
-    //     new Or([
-    //       new CodePoints("i"),
-    //       new Sequence([
-    //         new CodeSet([
-    //           new CodePoints("eu"),
-    //         ]),
-    //         new CodePoints("l"),
-    //         new Repeat(
-    //           new CodePoints("l"),
-    //           1, null, false,
-    //         ),
-    //       ]),
-    //     ]),
-    //   ]),
-    // );
-    // addRegex(
-    //   new Sequence([
-    //     new Repeat(
-    //       new Sequence([
-    //         new Repeat(
-    //           new CodePoints("a"),
-    //           1, null, false,
-    //         ),
-    //         new CodePoints("a"),
-    //       ]),
-    //       1, null, false,
-    //     ),
-    //     new CodePoints("a"),
-    //   ]),
-    // )
-    // addRegex(
-    //   new Sequence([
-    //     new Or([
-    //       new CodePoints("H"),
-    //       new CodePoints("h"),
-    //     ]),
-    //     new Or([
-    //       new CodePoints("e"),
-    //       new CodePoints("u"),
-    //     ]),
-    //     new Repeat(
-    //       new CodePoints("l"),
-    //       1, null, false,
-    //     ),
-    //     new CodePoints("l"),
-    //   ])
-    // )
+    // addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
   }
 
   public addCheckDefaults(): Void {
@@ -149,13 +86,32 @@ export class RegexBench {
     checks.add(many_a);
     checks.add(many_h);
     checks.add("🌍aaabbceef");
+    let len = checks.length;
+    if (false) {
+      for (var i = 0; i < len; i++) {
+        let ls = new ListBuilder<String>();
+        for (var i = 0; i < 100; i++) {
+          ls.add(" ");
+        }
+        ls.add(checks[i]);
+        checks.add(ls.join("", fn(s: String): String { s }));
+      }
+    }
+    if (false) {
+      for (var i = 0; i < len; i++) {
+        for (var j = 0; j < len; j++) {
+          checks.add("${checks[i]}${checks[j]}");
+          for (var k = 0; j < len; j++) {
+            checks.add("${checks[i]}${checks[j]}${checks[k]}");
+          }
+        }
+      }
+    }
   }
 
   public addEngineDefaults(): Void {
     addEngineTemper();
-    addEngineDFA();
     addEngineNFA();
-    addEngineWalker();
   }
 
   public addEngine(name: String, cb: fn(RegexNode): TemperRegex): Void {
@@ -175,54 +131,17 @@ export class RegexBench {
     );
   }
 
-  public addEngineDFA(): Void {
-    addEngine(
-      "DFA",
-      fn(regex: RegexNode): TemperRegex {
-        return new TemperRegexDFA(regex);
-      }
-    );
-  }
-
-  public addEngineCombo(): Void {
-    addEngine(
-      "NFA+DFA",
-      fn(regex: RegexNode): TemperRegex {
-        return TemperRegexNFA.fromRegex(regex, fastMatcher);
-      }
-    );
-  }
-
-  public addEnginePattern(indexAfter: fn(String): fn(String, StringIndex): List<StringIndex>): Void {
-    addEngine(
-      "Pattern",
-      fn(regex: RegexNode): TemperRegex {
-        return TemperRegexNFA.fromRegex(regex, patternMatcher(indexAfter));
-      }
-    );
-  }
-
   public addEngineNFA(): Void {
     addEngine(
       "NFA",
       fn(regex: RegexNode): TemperRegex {
-        return TemperRegexNFA.fromRegex(regex, noFastMatcher);
-      }
-    );
-  }
-
-  public addEngineWalker(): Void {
-    addEngine(
-      "Walker",
-      fn(regex: RegexNode): TemperRegex {
-        return new TemperRegexWalker(regex);
+        return TemperRegexNFA.fromRegex(regex);
       }
     );
   }
 
   public isFound(tcre: TemperRegex, check: String): Boolean {
-    // return tcre.find(check).has("full");
-    return tcre.found(check);
+    return tcre.find(check).has("full");
   }
 
   public run(): Void {

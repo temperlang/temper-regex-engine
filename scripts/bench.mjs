@@ -1,6 +1,10 @@
 import {RegexBench} from 'temper-regex-engine/bench';
 import { regexToString } from 'temper-regex-engine/util';
 
+Object.freeze = (x) => {
+    return x;
+};
+
 const init = new Date();
 
 const clock = () => new Date() - init;
@@ -10,25 +14,8 @@ const bench = new RegexBench(clock);
 bench.addRegexDefaults();
 bench.addCheckDefaults();
 
-// bench.addEngineTemper();
-// bench.addEngineDFA();
+bench.addEngineTemper();
 bench.addEngineNFA();
-bench.addEngineCombo();
-
-bench.addEnginePattern((fmt) => {
-    let re = new RegExp(`^(${fmt})`, 'y');
-    let notFound = [];
-    return (str, index) => {
-        re.lastIndex = index;
-        const match = re.exec(str);
-        if (match) {
-            return [index + match[0].length];
-        } else {
-            return notFound;
-        }
-    };
-});
-// bench.addEngineWalker();
 
 let last = new Set();
 
@@ -38,7 +25,7 @@ bench.onEngineResult((result) => {
     const tooFew = last.difference(pass);
     if (last.size !== 0 && (tooMany.size !== 0 || tooFew.size !== 0)) {
         for (const p of tooMany) {
-            console.log('did not want: ' + p);
+            console.log('not wanted: ' + p);
         }
         for (const p of tooFew) {
             console.log('wanted: ' + p);

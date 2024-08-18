@@ -1,6 +1,6 @@
 
-let { chr } = import("../../util.temper");
-let { wordChars } = import("../../ctype.temper");
+let { chr } = import("../util.temper");
+let { wordChars } = import("../ctype.temper");
 
 let noMatch: List<StringIndex> = [];
 
@@ -9,17 +9,25 @@ export let charCodeMatcher(c: Int): Matcher {
 }
 
 export interface Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex>;
+  public type(): Int;
+
+  public matches(str: String, index: StringIndex): StringIndexOption;
 
   public toString(): String;
 }
 
 export class BeginMatcher extends Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+
+  public static id: Int = 0;
+  public type(): Int {
+    return BeginMatcher.id;
+  }
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
     if (index.compareTo(String.start) == 0) {
-      return [index];
+      return index;
     } else {
-      return noMatch;
+      return StringIndex.none;
     }
   }
 
@@ -29,11 +37,17 @@ export class BeginMatcher extends Matcher {
 }
 
 export class EndMatcher extends Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+
+  public static id: Int = 1;
+  public type(): Int {
+    return BeginMatcher.id;
+  }
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
     if (index.compareTo(str.end) == 0) {
-      return [index];
+      return index;
     } else {
-      return noMatch;
+      return StringIndex.none;
     }
   }
 
@@ -44,35 +58,30 @@ export class EndMatcher extends Matcher {
 }
 
 export class WordBoundaryMatcher extends Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+
+  public static id: Int = 2;
+  public type(): Int {
+    return WordBoundaryMatcher.id;
+  }
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
     let code1 = str.codeAt(str.prev(index));
     let code2 = str.codeAt(index);
     if (wordChars[code1] != wordChars[code2]) {
-      return [index];
+      return index;
     } else {
-      return noMatch;
+      return StringIndex.none;
     }
   }
-  
+
   public toString(): String {
     return "\\b";
-  }
-
-}
-
-export class AnyMatcher extends Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
-    return [str.next(index)];
-  }
-
-  public toString(): String {
-    return ".";
   }
 }
 
 export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
   if (options.length == 1 && want) {
-    return new SingleMatcher(options, options[0]);
+    return new SingleMatcher(options[0]);
   }
   let bitset = new DenseBitVector(0);
   for (var i = 0; i < options.length; i++) {
@@ -82,14 +91,18 @@ export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
 }
 
 export class SingleMatcher extends Matcher {
-  public options: Listed<Int>;
   public char: Int;
 
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+  public static id: Int = 3;
+  public type(): Int {
+    return SingleMatcher.id;
+  }
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
     if (char == str.codeAt(index)) {
-      return [str.next(index)];
+      return str.next(index);
     } else {
-      return noMatch;
+      return StringIndex.none;
     }
   }
 
@@ -103,11 +116,16 @@ export class ContainsMatcher extends Matcher {
   public options: Listed<Int>;
   public want: Boolean;
 
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
+  public static id: Int = 4;
+  public type(): Int {
+    return ContainsMatcher.id;
+  }
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
     if (bitset[str.codeAt(index)] == want) {
-      return [str.next(index)];
+      return str.next(index);
     } else {
-      return noMatch;
+      return StringIndex.none;
     }
   }
 
@@ -124,12 +142,13 @@ export class ContainsMatcher extends Matcher {
 export class StartGroupMatcher extends Matcher {
   public name: String;
 
-  public constructor(str: String): Void {
-    name = str;
+  public static id: Int = 5;
+  public type(): Int {
+    return ContainsMatcher.id;
   }
 
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
-    return [index];
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return StringIndex.none;
   }
 
   public toString(): String {
@@ -140,12 +159,13 @@ export class StartGroupMatcher extends Matcher {
 export class EndGroupMatcher extends Matcher {
   public name: String;
 
-  public constructor(str: String): Void {
-    name = str;
+  public static id: Int = 6;
+  public type(): Int {
+    return ContainsMatcher.id;
   }
-
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
-    return [index];
+  
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return index;
   }
 
   public toString(): String {
@@ -154,8 +174,14 @@ export class EndGroupMatcher extends Matcher {
 }
 
 export class EpsilonMatcher extends Matcher {
-  public matches(str: String, index: StringIndex): Listed<StringIndex> {
-    return [index];
+
+  public static id: Int = 7;
+  public type(): Int {
+    return ContainsMatcher.id;
+  }
+  
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return index;
   }
 
   public toString(): String {

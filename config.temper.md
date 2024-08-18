@@ -2,8 +2,7 @@
 
     export let name = "temper-regex-engine";
 
-    import("./engines/nfa/nfa.temper");
-    import("./engines/dfa/dfa.temper");
-    // import("./test.temper");
     import("./bench.temper");
+    
+    import("./nfa/nfa.temper");
 
