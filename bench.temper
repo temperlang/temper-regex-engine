@@ -141,7 +141,8 @@ export class RegexBench {
   }
 
   public isFound(tcre: TemperRegex, check: String): Boolean {
-    return tcre.find(check).has("full");
+    // return tcre.find(check).has("full");
+    return tcre.found(check);
   }
 
   public run(): Void {

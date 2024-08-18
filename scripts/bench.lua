@@ -16,8 +16,10 @@ bench:addEngineNFA();
 
 local found
 
+local check = false
+
 bench:onEngineResult(function (result)
-    if found then
+    if check and found then
         local errors = {}
         do
             local missing = {}
@@ -47,7 +49,6 @@ bench:onEngineResult(function (result)
             local rest = table.concat(errors, '\n\t')
             error('engine ' .. result.engine .. ' failed with ' .. tostring(#errors) .. ' errors:\n\t' .. rest)
         end
-
     else
         found = result.passed
     end

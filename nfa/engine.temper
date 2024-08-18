@@ -30,43 +30,6 @@ export class Engine {
     epsilon = new EpsilonMatcher();
   }
 
-  public opt(): Engine {
-    var cur = this;
-    return cur;
-  }
-
-  public optDeadCode(): Engine {
-    var unopt = this;
-    var opt = new Engine();
-    var map = new MapBuilder<Int, Int>();
-
-    let visit(state: State): State {
-      var optId = map[state.id] orelse -1;
-      if (optId >= 0) {
-        return opt.states[optId];
-      }
-      var outState: State = if (state == unopt.startState) {
-        opt.startState
-      } else if (state == unopt.endState) {
-        opt.endState
-      } else {
-        opt.newState()
-      };
-
-      map[state.id] = outState.id;
-
-      for (var i = 0; i < state.next.length; i++) {
-        var next = state.next[i];
-        outState.addNext(next.matcher, visit(next.toState));
-      }
-      return outState;
-    }
-
-    visit(startState);
-
-    return opt;
-  }
-
   public optEpsilonEllison(): Engine {
     var unopt = this;
     var opt = new Engine();

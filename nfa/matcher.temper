@@ -17,7 +17,6 @@ export interface Matcher {
 }
 
 export class BeginMatcher extends Matcher {
-
   public static id: Int = 0;
   public type(): Int {
     return BeginMatcher.id;
@@ -37,7 +36,6 @@ export class BeginMatcher extends Matcher {
 }
 
 export class EndMatcher extends Matcher {
-
   public static id: Int = 1;
   public type(): Int {
     return BeginMatcher.id;
@@ -58,7 +56,6 @@ export class EndMatcher extends Matcher {
 }
 
 export class WordBoundaryMatcher extends Matcher {
-
   public static id: Int = 2;
   public type(): Int {
     return WordBoundaryMatcher.id;
@@ -174,8 +171,8 @@ export class EndGroupMatcher extends Matcher {
 }
 
 export class EpsilonMatcher extends Matcher {
-
   public static id: Int = 7;
+
   public type(): Int {
     return ContainsMatcher.id;
   }

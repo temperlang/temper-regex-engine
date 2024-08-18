@@ -1,0 +1,269 @@
+
+let {...} = import("../nfa/engine.temper");
+let {...} = import("../nfa/state.temper");
+let {...} = import("../nfa/matcher.temper");
+
+let concat<T>(a: Listed<T>, b: Listed<T>): Listed<T> {
+  let r = new ListBuilder<T>();
+  r.addAll(a);
+  r.addAll(b);
+  return r;
+}
+
+class Target {
+  public name: Listed<Int>;
+  public var id: Int = -1;
+
+  public constructor(arg: Listed<Int>): Void {
+    name = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
+  }
+
+  public eq(other: Target): Boolean {
+    if (other.name.length != name.length) {
+      return false;
+    }
+    for (var i = 0; i < name.length; i++) {
+      if (other.name[i] != name[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public toString(): String {
+    if (name.length == 0) {
+      return "<error>";
+    }
+    let pre = if (id < 0) {
+      ""
+    } else {
+      "[${id.toString()}]";
+    }
+    let body = name.join(",", fn(x: Int): String {
+      return "v${x.toString()}";
+    });
+    return "{${body}}"
+  }
+}
+
+let error = new Target([]);
+
+class Row {
+  public name: Target;
+  public other: Target;
+  public keys: Listed<Int>;
+  public map: Mapped<Int, Target>;
+  public ok: Boolean;
+
+  public toString(): String {
+    let nameStr = name.toString();
+    let mapStr = keys.join("", fn(key: Int) {
+      let keyStr = if (32 <= key && key <= 126) {
+        "#${String.fromCodePoint(key)}"
+      } else {
+        key.toString()
+      };
+      let valueStr = map[key].toString();
+      return "\n  ${keyStr} => ${valueStr}";
+    });
+    let elseStr = "\n  else => ${other.toString()}"
+    return "${nameStr}:${mapStr}${elseStr}";
+  }
+}
+
+let noRow = new Row(error, error, [], new Map<Int, Target>([]), false);
+
+class Table {
+  public rows: ListBuilder<Row>;
+
+  public targets: Listed<Target> = [];
+
+  let update(t: Target): Void {
+    if (t.name.length == 0) {
+      t.id = -1;
+      return;
+    }
+    for (var j = 0; j < targets.length; j++) {
+      if (targets[j].eq(t)) {
+        t.id = j;
+        return;
+      }
+    }
+    bubble();
+  }
+
+  public finish(): Void {
+    let build = new ListBuilder<Target>();
+    targets = build;
+    outer: for (var i = 0; i < rows.length; i++) {
+      let row = rows[i];
+      for (var j = 0; j < build.length; j++) {
+        if (build[j].eq(row.name)) {
+          row.name.id = j;
+          continue outer;
+        }
+      }
+      row.name.id = i;
+      build.add(row.name);
+    }
+    for (var i = 0; i < rows.length; i++) {
+      let row = rows[i];
+      update(row.other);
+      outer: for (var j = 0; j < row.keys.length; j++) {
+        let key = row.keys[j];
+        let cur = row.map[key];
+        update(cur);
+      }
+    }
+  }
+
+  public has(name: Target): Boolean {
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].name.eq(name)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public add(row: Row): Void {
+    if (!has(row.name)) {
+      rows.add(row);
+    }
+  }
+
+  public addEmpty(name: Target): Void {
+    add(new Row(name, error, [], new Map<Int, Target>([]), false));
+  }
+
+  public toString(): String {
+    return rows.join("\n", fn(s: Row): String {
+      return s.toString();
+    })
+  }
+
+  public find(name: Target): Row {
+    for (var i = 0; i < rows.length; i++) {
+      let row = rows[i];
+      if (row.name.eq(name)) {
+        return row;
+      }
+    }
+    bubble();
+  }
+
+  public testFrom(str: String, from: StringIndex, stop: StringIndex): Boolean {
+    var head = from;
+    var target = 0;
+    while (true) {
+      // let cur = find(target);
+      let cur = rows.getOr(target, noRow);
+      let char = str.codeAt(head);
+      let next = cur.map.getOr(char, cur.other);
+      if (next.id < 0 || head == stop) {
+        return cur.ok;
+      }
+      target = next.id;
+      head = str.next(head);
+    }
+  }
+
+  public test(str: String): Boolean {
+    let stop = str.end;
+    var head = String.start;
+    while (head.compareTo(stop) < 0) {
+      if (testFrom(str, head, stop)) {
+        return true;
+      }
+      head = str.next(head);
+    }
+    return false;
+  }
+}
+
+export let dfa(engine: Engine): fn(String): Boolean {
+  let states = new MapBuilder<Int, State>();
+  for (var i = 0; i < engine.states.length; i++) {
+    let state = engine.states[i];
+    states[state.id] = state;
+  }
+  
+  let table = new Table(new ListBuilder<Row>());
+  table.addEmpty(new Target([0]));
+
+  for (var i = 0; i < table.rows.length; i++) {
+    let row = table.rows[i];
+
+    let keys = new ListBuilder<Int>();
+    let map = new MapBuilder<Int, Target>();
+
+    let add(char: Int, toState: State): Void {
+      if (!map.has(char)) {
+        keys.add(char);
+      }
+      let exists = map.getOr(char, new Target([])).name;
+      let r = new ListBuilder<Int>();
+      for (var j = 0; j < exists.length; j++) {
+        let exist = exists[j];
+        if (exist != toState.id) {
+          r.add(exist);
+        }
+      }
+      r.add(toState.id);
+      map[char] = new Target(r);
+    }
+
+    let done = new MapBuilder<Int, Boolean>();
+  
+    let onState(state: State): Void {
+      if (done.getOr(state.id, false)) {
+        return;
+      }
+      done[state.id] = true;
+      for (var j = 0; j < state.next.length; j++) {
+        let {toState, matcher} = state.next[j];
+        match (matcher) {
+          is ContainsMatcher -> do {
+            for (var k = 0; k < matcher.options.length; k++) {
+              add(matcher.options[k], toState);
+            }
+          }
+          is SingleMatcher -> do {
+            add(matcher.char, toState);
+          }
+          is EpsilonMatcher -> do {
+            onState(toState);
+          }
+          else -> do {
+            continue;
+          }
+        }
+      }
+    }
+
+    for (var j = 0; j < row.name.name.length; j++) {
+      onState(states[row.name.name[j]]);
+    }
+
+    for (var i = 0; i < keys.length; i++) {
+      let key = keys[i];
+      let val = map[key];
+      table.addEmpty(val);
+    }
+
+    table.rows[i] = new Row(
+      row.name,
+      row.other,
+      keys,
+      map,
+      row.name.name.getOr(0, -1) == 1
+      || row.name.name.getOr(1, -1) == 1
+    );
+  }
+
+  table.finish();
+
+  return fn(str: String): Boolean {
+    return table.test(str);
+  }
+}

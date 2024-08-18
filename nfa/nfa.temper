@@ -1,5 +1,6 @@
 
 let {...} = import("std/regex");
+let { dfa } = import("../dfa/dfa.temper");
 let { TemperRegex } = import("../regex.temper");
 let { regexToString } = import("../util.temper");
 let { wordCharsList, spaceCharsList } = import("../ctype.temper");
@@ -7,13 +8,19 @@ let { Engine } = import("./engine.temper");
 let { State } = import("./state.temper");
 let { ... } = import("./matcher.temper");
 
+let noTest(str: String): Boolean {
+  bubble();
+}
+
 export class TemperRegexNFA extends TemperRegex {
   public var engine: Engine;
+  public var test: fn(String): Boolean;
   
   public static fromRegex(regex: RegexNode): TemperRegexNFA {
-    let nfa = new TemperRegexNFA(new Engine());
+    let nfa = new TemperRegexNFA(new Engine(), noTest);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
-    nfa.engine = nfa.engine.optEpsilonEllison();
+    // nfa.engine = nfa.engine.optEpsilonEllison();
+    nfa.test = dfa(nfa.engine);
     return nfa;
   }
   
@@ -187,7 +194,8 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public found(text: String): Boolean {
-    return engine.found(text, String.start) != StringIndex.none;
+    // return engine.found(text, String.start) != StringIndex.none;
+    return test(text);
   }
 
   public find(text: String): Mapped<String, Group> {
