@@ -68,7 +68,7 @@ export class RegexBench {
     addRegex(/h(i|[eu]l+o)/.data);
     addRegex(/(a+a)+a/.data);
     addRegex(/([Hh][eu]l+l)/.data);
-    // addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
+    addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
   }
 
   public addCheckDefaults(): Void {

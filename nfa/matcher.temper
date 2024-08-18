@@ -52,7 +52,6 @@ export class EndMatcher extends Matcher {
   public toString(): String {
     return "$";
   }
-
 }
 
 export class WordBoundaryMatcher extends Matcher {
@@ -145,7 +144,7 @@ export class StartGroupMatcher extends Matcher {
   }
 
   public matches(str: String, index: StringIndex): StringIndexOption {
-    return StringIndex.none;
+    return index;
   }
 
   public toString(): String {

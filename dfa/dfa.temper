@@ -12,10 +12,11 @@ let concat<T>(a: Listed<T>, b: Listed<T>): Listed<T> {
 
 class Target {
   public name: Listed<Int>;
-  public var id: Int = -1;
+  public var id: Int;
 
   public constructor(arg: Listed<Int>): Void {
     name = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
+    id = -1;
   }
 
   public eq(other: Target): Boolean {
@@ -158,10 +159,13 @@ class Table {
     while (true) {
       // let cur = find(target);
       let cur = rows.getOr(target, noRow);
+      if (cur.ok) {
+        return true;
+      }
       let char = str.codeAt(head);
       let next = cur.map.getOr(char, cur.other);
       if (next.id < 0 || head == stop) {
-        return cur.ok;
+        return false;
       }
       target = next.id;
       head = str.next(head);
@@ -191,13 +195,53 @@ export let dfa(engine: Engine): fn(String): Boolean {
   let table = new Table(new ListBuilder<Row>());
   table.addEmpty(new Target([0]));
 
+  let ok = true;
+  
   for (var i = 0; i < table.rows.length; i++) {
     let row = table.rows[i];
 
+    let other = new Target([]);
     let keys = new ListBuilder<Int>();
     let map = new MapBuilder<Int, Target>();
 
+    let done = new MapBuilder<Int, Boolean>();
+
+    let addOther(toState: State): Void {
+      for (var j = 0; j < toState.next.length; j++) {
+        let {toState, matcher} = toState.next[j];
+        match (matcher) {
+          is EpsilonMatcher,
+          is StartGroupMatcher,
+          is EndGroupMatcher -> do {
+            addOther(toState);
+          }
+          else -> do {}
+        }
+      }
+      let exists = other.name;
+      let r = new ListBuilder<Int>();
+      for (var j = 0; j < exists.length; j++) {
+        let exist = exists[j];
+        if (exist != toState.id) {
+          r.add(exist);
+        }
+      }
+      r.add(toState.id);
+      other = new Target(r);
+    }
+
     let add(char: Int, toState: State): Void {
+      for (var j = 0; j < toState.next.length; j++) {
+        let {toState, matcher} = toState.next[j];
+        match (matcher) {
+          is EpsilonMatcher,
+          is StartGroupMatcher,
+          is EndGroupMatcher -> do {
+            add(char, toState);
+          }
+          else -> do {}
+        }
+      }
       if (!map.has(char)) {
         keys.add(char);
       }
@@ -213,8 +257,6 @@ export let dfa(engine: Engine): fn(String): Boolean {
       map[char] = new Target(r);
     }
 
-    let done = new MapBuilder<Int, Boolean>();
-  
     let onState(state: State): Void {
       if (done.getOr(state.id, false)) {
         return;
@@ -223,7 +265,11 @@ export let dfa(engine: Engine): fn(String): Boolean {
       for (var j = 0; j < state.next.length; j++) {
         let {toState, matcher} = state.next[j];
         match (matcher) {
+          // actual chars
           is ContainsMatcher -> do {
+            if (!matcher.want) {
+              ok = false;
+            }
             for (var k = 0; k < matcher.options.length; k++) {
               add(matcher.options[k], toState);
             }
@@ -231,18 +277,40 @@ export let dfa(engine: Engine): fn(String): Boolean {
           is SingleMatcher -> do {
             add(matcher.char, toState);
           }
+          // epsilon & named epsilon
           is EpsilonMatcher -> do {
             onState(toState);
           }
+          is StartGroupMatcher -> do {
+            onState(toState);
+          }
+          is EndGroupMatcher -> do {
+            onState(toState);
+          }
+          // bad for DFA things
+          is BeginMatcher -> do {
+            ok = false;
+          }
+          is WordBoundaryMatcher -> do {
+            ok = false;
+          }
+          is EndMatcher -> do {
+            ok = false;
+          }
           else -> do {
-            continue;
+            bubble();
           }
         }
       }
+      done[state.id] = false;
     }
 
     for (var j = 0; j < row.name.name.length; j++) {
       onState(states[row.name.name[j]]);
+    }
+
+    if (other.name.length != 0) {
+     table.addEmpty(other);
     }
 
     for (var i = 0; i < keys.length; i++) {
@@ -253,7 +321,7 @@ export let dfa(engine: Engine): fn(String): Boolean {
 
     table.rows[i] = new Row(
       row.name,
-      row.other,
+      other,
       keys,
       map,
       row.name.name.getOr(0, -1) == 1
@@ -263,7 +331,13 @@ export let dfa(engine: Engine): fn(String): Boolean {
 
   table.finish();
 
-  return fn(str: String): Boolean {
-    return table.test(str);
+  if (ok && false) {
+    return fn(str: String): Boolean {
+      return table.test(str);
+    };
+  } else {
+    return fn(str: String): Boolean {
+      return engine.found(str, String.start) != StringIndex.none;
+    };
   }
 }
