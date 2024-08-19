@@ -1,9 +1,5 @@
-import {RegexBench} from 'temper-regex-engine/bench';
+import { RegexBench } from 'temper-regex-engine/bench';
 import { regexToString } from 'temper-regex-engine/util';
-
-Object.freeze = (x) => {
-    return x;
-};
 
 const init = new Date();
 
@@ -15,12 +11,19 @@ bench.addRegexDefaults();
 bench.addCheckDefaults();
 
 bench.addEngineTemper();
+bench.addEngineJavascript((s) => {
+    const got = {};
+    // console.log(s);
+    Function('module', s)(got);
+    return got.ret;
+});
+bench.addEngineDFA();
 bench.addEngineNFA();
 
 let last = new Set();
 
 bench.onEngineResult((result) => {
-    const pass = new Set(result.passed.map(x => `${regexToString(x[0])}: ${x[1]}`));
+    const pass = new Set(result.passed.map(x => `/${regexToString(x[0])}/.found("${x[1]}")`));
     const tooMany = pass.difference(last);
     const tooFew = last.difference(pass);
     if (last.size !== 0 && (tooMany.size !== 0 || tooFew.size !== 0)) {

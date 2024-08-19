@@ -1,16 +1,9 @@
 
-let {...} = import("../nfa/engine.temper");
 let {...} = import("../nfa/state.temper");
 let {...} = import("../nfa/matcher.temper");
+let {...} = import("../nfa/engine.temper");
 
-let concat<T>(a: Listed<T>, b: Listed<T>): Listed<T> {
-  let r = new ListBuilder<T>();
-  r.addAll(a);
-  r.addAll(b);
-  return r;
-}
-
-class Target {
+export class Target {
   public name: Listed<Int>;
   public var id: Int;
 
@@ -45,11 +38,23 @@ class Target {
     });
     return "{${body}}"
   }
+
+  public and(other: Int): Target {
+    let r = new ListBuilder<Int>();
+    for (var j = 0; j < name.length; j++) {
+      let exist = name[j];
+      if (exist != other) {
+        r.add(exist);
+      }
+    }
+    r.add(other);
+    return new Target(r);
+  }
 }
 
-let error = new Target([]);
+let noTarget = new Target([]);
 
-class Row {
+export class Row {
   public name: Target;
   public other: Target;
   public keys: Listed<Int>;
@@ -72,9 +77,9 @@ class Row {
   }
 }
 
-let noRow = new Row(error, error, [], new Map<Int, Target>([]), false);
+let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
 
-class Table {
+export class Table {
   public rows: ListBuilder<Row>;
 
   public targets: Listed<Target> = [];
@@ -134,7 +139,7 @@ class Table {
   }
 
   public addEmpty(name: Target): Void {
-    add(new Row(name, error, [], new Map<Int, Target>([]), false));
+    add(new Row(name, noTarget, [], new Map<Int, Target>([]), false));
   }
 
   public toString(): String {
@@ -153,9 +158,9 @@ class Table {
     bubble();
   }
 
-  public testFrom(str: String, from: StringIndex, stop: StringIndex): Boolean {
+  public foundAt(str: String, from: StringIndex, stop: StringIndex): Boolean {
     var head = from;
-    var target = 0;
+    var target = 1;
     while (true) {
       // let cur = find(target);
       let cur = rows.getOr(target, noRow);
@@ -172,11 +177,11 @@ class Table {
     }
   }
 
-  public test(str: String): Boolean {
+  public found(str: String): Boolean {
     let stop = str.end;
     var head = String.start;
     while (head.compareTo(stop) < 0) {
-      if (testFrom(str, head, stop)) {
+      if (foundAt(str, head, stop)) {
         return true;
       }
       head = str.next(head);
@@ -185,170 +190,169 @@ class Table {
   }
 }
 
-export let dfa(engine: Engine): fn(String): Boolean {
-  let states = new MapBuilder<Int, State>();
-  for (var i = 0; i < engine.states.length; i++) {
-    let state = engine.states[i];
-    states[state.id] = state;
+let noTable = new Table(new ListBuilder<Row>(), []);
+
+export class DFA {
+  public ok: Boolean;
+  public table: Table;
+
+  public static none() : DFA {
+    return new DFA(false, noTable);
   }
-  
-  let table = new Table(new ListBuilder<Row>());
-  table.addEmpty(new Target([0]));
 
-  var ok = true;
-  
-  for (var i = 0; i < table.rows.length; i++) {
-    let row = table.rows[i];
-
-    let other = new Target([]);
-    let keys = new ListBuilder<Int>();
-    let map = new MapBuilder<Int, Target>();
-
-    let done = new MapBuilder<Int, Boolean>();
-
-    let addOther(toState: State): Void {
-      for (var j = 0; j < toState.next.length; j++) {
-        let {toState, matcher} = toState.next[j];
-        match (matcher) {
-          is EpsilonMatcher,
-          is StartGroupMatcher,
-          is EndGroupMatcher -> do {
-            addOther(toState);
-          }
-          is WordBoundaryMatcher,
-          is BeginMatcher,
-          is EndMatcher -> do {
-            ok = false;
-          }
-          else -> do {}
-        }
-      }
-      let exists = other.name;
-      let r = new ListBuilder<Int>();
-      for (var j = 0; j < exists.length; j++) {
-        let exist = exists[j];
-        if (exist != toState.id) {
-          r.add(exist);
-        }
-      }
-      r.add(toState.id);
-      other = new Target(r);
+  public static fromEngine(engine: Engine): DFA {
+    let states = new MapBuilder<Int, State>();
+    for (var i = 0; i < engine.states.length; i++) {
+      let state = engine.states[i];
+      states[state.id] = state;
     }
+    
+    let table = new Table(new ListBuilder<Row>(), []);
+    table.addEmpty(new Target([]));
+    table.addEmpty(new Target([0]));
 
-    let add(char: Int, toState: State): Void {
-      for (var j = 0; j < toState.next.length; j++) {
-        let {toState, matcher} = toState.next[j];
-        match (matcher) {
-          is EpsilonMatcher,
-          is StartGroupMatcher,
-          is EndGroupMatcher -> do {
-            add(char, toState);
-          }
-          is WordBoundaryMatcher,
-          is BeginMatcher,
-          is EndMatcher -> do {
-            ok = false;
-          }
-          else -> do {}
-        }
-      }
-      if (!map.has(char)) {
-        keys.add(char);
-      }
-      let exists = map.getOr(char, new Target([])).name;
-      let r = new ListBuilder<Int>();
-      for (var j = 0; j < exists.length; j++) {
-        let exist = exists[j];
-        if (exist != toState.id) {
-          r.add(exist);
-        }
-      }
-      r.add(toState.id);
-      map[char] = new Target(r);
-    }
+    var ok = true;
+    
+    for (var i = 1; i < table.rows.length; i++) {
+      let row = table.rows[i];
 
-    let onState(state: State): Void {
-      if (done.getOr(state.id, false)) {
-        return;
-      }
-      done[state.id] = true;
-      for (var j = 0; j < state.next.length; j++) {
-        let {toState, matcher} = state.next[j];
-        match (matcher) {
-          // actual chars
-          is ContainsMatcher -> do {
-            if (!matcher.want) {
+      var other = new Target([]);
+      let keys = new ListBuilder<Int>();
+      let map = new MapBuilder<Int, Target>();
+
+      let done = new MapBuilder<Int, Boolean>();
+
+      let addOther(toState: State): Void {
+        for (var j = 0; j < toState.next.length; j++) {
+          let {toState, matcher} = toState.next[j];
+          match (matcher) {
+            is EpsilonMatcher,
+            is StartGroupMatcher,
+            is EndGroupMatcher -> do {
+              addOther(toState);
+            }
+            is WordBoundaryMatcher,
+            is EndMatcher -> do {
               ok = false;
-            } else {
-              for (var k = 0; k < matcher.options.length; k++) {
-                add(matcher.options[k], toState);
+            }
+            else -> do {}
+          }
+        }
+        other = other.and(toState.id);
+      }
+
+      let add(char: Int, toState: State): Void {
+        for (var j = 0; j < toState.next.length; j++) {
+          let {toState, matcher} = toState.next[j];
+          match (matcher) {
+            is EpsilonMatcher,
+            is StartGroupMatcher,
+            is EndGroupMatcher -> do {
+              add(char, toState);
+            }
+            is WordBoundaryMatcher,
+            is EndMatcher -> do {
+              ok = false;
+            }
+            else -> do {}
+          }
+        }
+        if (!map.has(char)) {
+          keys.add(char);
+          map[char] = new Target([toState.id]);
+        } else {
+          map[char] = map[char].and(toState.id);
+        }
+      }
+
+      let onState(state: State): Void {
+        if (done.getOr(state.id, false)) {
+          return;
+        }
+        done[state.id] = true;
+        for (var j = 0; j < state.next.length; j++) {
+          let {toState, matcher} = state.next[j];
+          match (matcher) {
+            // actual chars
+            is ContainsMatcher -> do {
+              if (!matcher.want) {
+                addOther(toState);
+                for (var k = 0; k < matcher.options.length; k++) {
+                  let char = matcher.options[k];
+                  if (!map.has(char)) {
+                    keys.add(char);
+                    map[char] = new Target([0]);
+                  } else {
+                    map[char] = map[char].and(0);
+                  }
+                }
+              } else {
+                for (var k = 0; k < matcher.options.length; k++) {
+                  add(matcher.options[k], toState);
+                }
               }
             }
-          }
-          is SingleMatcher -> do {
-            add(matcher.char, toState);
-          }
-          // epsilon & named epsilon
-          is EpsilonMatcher -> do {
-            onState(toState);
-          }
-          is StartGroupMatcher -> do {
-            onState(toState);
-          }
-          is EndGroupMatcher -> do {
-            onState(toState);
-          }
-          // bad for DFA things
-          is BeginMatcher -> do {
-            ok = false;
-          }
-          is WordBoundaryMatcher -> do {
-            ok = false;
-          }
-          is EndMatcher -> do {
-            ok = false;
-          }
-          else -> do {
-            bubble();
+            is SingleMatcher -> do {
+              add(matcher.char, toState);
+            }
+            // epsilon & named epsilon
+            is EpsilonMatcher -> do {
+              onState(toState);
+            }
+            is StartGroupMatcher -> do {
+              onState(toState);
+            }
+            is EndGroupMatcher -> do {
+              onState(toState);
+            }
+            // bad for DFA things
+            is BeginMatcher -> do {
+              ok = false;
+            }
+            is WordBoundaryMatcher -> do {
+              ok = false;
+            }
+            is EndMatcher -> do {
+              ok = false;
+            }
+            else -> do {
+              bubble();
+            }
           }
         }
+        done[state.id] = false;
       }
-      done[state.id] = false;
+
+      for (var j = 0; j < row.name.name.length; j++) {
+        onState(states[row.name.name[j]]);
+      }
+
+      if (other.name.length != 0) {
+        table.addEmpty(other);
+      }
+
+      for (var i = 0; i < keys.length; i++) {
+        let key = keys[i];
+        let val = map[key];
+        table.addEmpty(val);
+      }
+
+      table.rows[i] = new Row(
+        row.name,
+        other,
+        keys,
+        map,
+        row.name.name.getOr(0, -1) == 1
+        || row.name.name.getOr(1, -1) == 1
+      );
     }
 
-    for (var j = 0; j < row.name.name.length; j++) {
-      onState(states[row.name.name[j]]);
-    }
+    table.finish();
 
-    if (other.name.length != 0) {
-     table.addEmpty(other);
-    }
-
-    for (var i = 0; i < keys.length; i++) {
-      let key = keys[i];
-      let val = map[key];
-      table.addEmpty(val);
-    }
-
-    table.rows[i] = new Row(
-      row.name,
-      other,
-      keys,
-      map,
-      row.name.name.getOr(0, -1) == 1
-      || row.name.name.getOr(1, -1) == 1
-    );
+    return new DFA(ok, table);
   }
 
-  table.finish();
-
-  if (ok) {
-    return fn(str: String): Boolean {
-      return table.test(str);
-    };
-  } else {
-    return fn(str: String): Boolean {
-      return engine.found(str, String.start) != StringIndex.none;
-    };
-  }
+  public found(s: String): Boolean {
+    return table.found(s);
+  } 
 }

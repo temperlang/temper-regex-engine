@@ -1,6 +1,6 @@
 
-let { chr } = import("../util.temper");
-let { wordChars } = import("../ctype.temper");
+let { ... } = import("../ctype.temper");
+let { ... } = import("../util.temper");
 
 let noMatch: List<StringIndex> = [];
 

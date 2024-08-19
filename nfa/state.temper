@@ -1,5 +1,5 @@
 
-let { Matcher } = import("./matcher.temper");
+let { ... } = import("./matcher.temper");
 
 export class Next {
   public toState: State;

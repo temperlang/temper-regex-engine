@@ -1,12 +1,14 @@
 
-let {...} = import("std/regex");
-let { dfa } = import("../dfa/dfa.temper");
-let { TemperRegex } = import("../regex.temper");
-let { regexToString } = import("../util.temper");
-let { wordCharsList, spaceCharsList } = import("../ctype.temper");
-let { Engine } = import("./engine.temper");
-let { State } = import("./state.temper");
+let { ... } = import("std/regex.temper.md");
+let { ... } = import("./state.temper");
 let { ... } = import("./matcher.temper");
+let { ... } = import("./engine.temper");
+let { ... } = import("../util.temper");
+let { ... } = import("../regex.temper");
+let { ... } = import("../dfa/lua.temper");
+let { ... } = import("../dfa/javascript.temper");
+let { ... } = import("../dfa/dfa.temper");
+let { ... } = import("../ctype.temper");
 
 let noTest(str: String): Boolean {
   bubble();
@@ -14,13 +16,47 @@ let noTest(str: String): Boolean {
 
 export class TemperRegexNFA extends TemperRegex {
   public var engine: Engine;
-  public var test: fn(String): Boolean;
-  
+  public var runFound: fn(String): Boolean;
+
   public static fromRegex(regex: RegexNode): TemperRegexNFA {
-    let nfa = new TemperRegexNFA(new Engine(), noTest);
+    let nfa = new TemperRegexNFA(new Engine(), fn(String): Boolean {
+      return false;
+    });
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
-    // nfa.engine = nfa.engine.optEpsilonEllison();
-    nfa.test = dfa(nfa.engine);
+    nfa.runFound = fn(str: String): Boolean {
+      return nfa.engine.found(str, String.start) != StringIndex.none;
+    };
+    return nfa;
+  }
+  
+  public static fromRegexDFA(regex: RegexNode): TemperRegexNFA {
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa.ok) {
+      nfa.runFound = fn(str: String): Boolean {
+        return dfa.found(str);
+      }
+    }
+    return nfa;
+  }
+
+  public static fromRegexLua(regex: RegexNode, load: fn(String): fn(String): Boolean): TemperRegexNFA {
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa.ok) {
+      let lua = Lua.fromTable(dfa.table);
+      nfa.runFound = load(lua);
+    }
+    return nfa;
+  }
+
+  public static fromRegexJavascript(regex: RegexNode, load: fn(String): fn(String): Boolean): TemperRegexNFA {
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa.ok) {
+      let lua = Javascript.fromTable(dfa.table);
+      nfa.runFound = load(lua);
+    }
     return nfa;
   }
   
@@ -194,8 +230,7 @@ export class TemperRegexNFA extends TemperRegex {
   }
 
   public found(text: String): Boolean {
-    // return engine.found(text, String.start) != StringIndex.none;
-    return test(text);
+    return runFound(text);
   }
 
   public find(text: String): Mapped<String, Group> {

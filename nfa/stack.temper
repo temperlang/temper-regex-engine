@@ -1,5 +1,5 @@
 
-let { State } = import("./state.temper");
+let { ... } = import("./state.temper");
 
 let noGroups: Listed<String> = [];
 

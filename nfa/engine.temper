@@ -1,9 +1,9 @@
 
 let { ... } = import("std/regex");
-let { State, Next } = import("./state.temper");
-let { Stack, StackStart, StackSlot } = import("./stack.temper");
-let { ord, chr, idString, slice } = import("../util.temper");
+let { ... } = import("./state.temper");
+let { ... } = import("./stack.temper");
 let { ... } = import("./matcher.temper");
+let { ... } = import("../util.temper");
 
 let group(str: String, name: String, value: String, start: StringIndex): Group {
   return new Group(name, value, start);

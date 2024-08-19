@@ -11,12 +11,23 @@ local bench = RegexBench(clock);
 bench:addRegexDefaults();
 bench:addCheckDefaults();
 
-bench:addEngineTemper();
+-- bench:addEngineTemper();
+local load = load or loadstring
+assert(load)
+bench:addEngineLua(function(str)
+    -- print(str)
+    local loader, err = load(str)
+    if loader == nil then
+        error(err)
+    end
+    return loader()
+end);
 bench:addEngineNFA();
+bench:addEngineDFA();
 
 local found
 
-local check = false
+local check = true
 
 bench:onEngineResult(function (result)
     if check and found then

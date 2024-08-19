@@ -1,10 +1,10 @@
 let { ... } = import("std/regex");
 
-let { TemperRegex } = import("./regex.temper");
-let { regexToString } = import("./util.temper");
+let { ... } = import("./regex.temper");
+let { ... } = import("./util.temper");
 
-let { TemperRegexNFA } = import("./nfa/nfa.temper");
-let { TemperRegexNative } = import("./native.temper");
+let { ... } = import("./nfa/nfa.temper");
+let { ... } = import("./native.temper");
 
 class Engine {
   public name: String;
@@ -68,7 +68,7 @@ export class RegexBench {
     addRegex(/h(i|[eu]l+o)/.data);
     addRegex(/(a+a)+a/.data);
     addRegex(/([Hh][eu]l+l)/.data);
-    addRegex(/^hi|[^a-gi-ln-z]i$/.data);
+    addRegex(/[^a-gi-ln-z]i/.data);
     addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
   }
 
@@ -91,7 +91,7 @@ export class RegexBench {
     if (false) {
       for (var i = 0; i < len; i++) {
         let ls = new ListBuilder<String>();
-        for (var i = 0; i < 100; i++) {
+        for (var j = 0; j < 100; j++) {
           ls.add(" ");
         }
         ls.add(checks[i]);
@@ -137,6 +137,33 @@ export class RegexBench {
       "NFA",
       fn(regex: RegexNode): TemperRegex {
         return TemperRegexNFA.fromRegex(regex);
+      }
+    );
+  }
+
+  public addEngineDFA(): Void {
+    addEngine(
+      "DFA",
+      fn(regex: RegexNode): TemperRegex {
+        return TemperRegexNFA.fromRegexDFA(regex);
+      }
+    );
+  }
+
+  public addEngineLua(load: fn(String): fn(String): Boolean): Void {
+    addEngine(
+      "Opt",
+      fn(regex: RegexNode): TemperRegex {
+        return TemperRegexNFA.fromRegexLua(regex, load);
+      }
+    );
+  }
+
+  public addEngineJavascript(eval: fn(String): fn(String): Boolean): Void {
+    addEngine(
+      "Opt",
+      fn(regex: RegexNode): TemperRegex {
+        return TemperRegexNFA.fromRegexJavascript(regex, eval);
       }
     );
   }
