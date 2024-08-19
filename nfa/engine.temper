@@ -155,15 +155,12 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            let type = matcher.type();
             match (matcher) {
-              StartGroupMatcher.id -> do {
-                let matcher = matcher.as<StartGroupMatcher>();
+              is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
                 stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
               }
-              EndGroupMatcher.id -> do {
-                let matcher = matcher.as<EndGroupMatcher>();
+              is EndGroupMatcher -> do {
                 pairs[matcher.name] = new Pair(pending[matcher.name], index);
                 let next = new ListBuilder<String>();
                 next.add(matcher.name);

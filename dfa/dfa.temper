@@ -195,7 +195,7 @@ export let dfa(engine: Engine): fn(String): Boolean {
   let table = new Table(new ListBuilder<Row>());
   table.addEmpty(new Target([0]));
 
-  let ok = true;
+  var ok = true;
   
   for (var i = 0; i < table.rows.length; i++) {
     let row = table.rows[i];
@@ -214,6 +214,11 @@ export let dfa(engine: Engine): fn(String): Boolean {
           is StartGroupMatcher,
           is EndGroupMatcher -> do {
             addOther(toState);
+          }
+          is WordBoundaryMatcher,
+          is BeginMatcher,
+          is EndMatcher -> do {
+            ok = false;
           }
           else -> do {}
         }
@@ -238,6 +243,11 @@ export let dfa(engine: Engine): fn(String): Boolean {
           is StartGroupMatcher,
           is EndGroupMatcher -> do {
             add(char, toState);
+          }
+          is WordBoundaryMatcher,
+          is BeginMatcher,
+          is EndMatcher -> do {
+            ok = false;
           }
           else -> do {}
         }
@@ -269,9 +279,10 @@ export let dfa(engine: Engine): fn(String): Boolean {
           is ContainsMatcher -> do {
             if (!matcher.want) {
               ok = false;
-            }
-            for (var k = 0; k < matcher.options.length; k++) {
-              add(matcher.options[k], toState);
+            } else {
+              for (var k = 0; k < matcher.options.length; k++) {
+                add(matcher.options[k], toState);
+              }
             }
           }
           is SingleMatcher -> do {
@@ -331,7 +342,7 @@ export let dfa(engine: Engine): fn(String): Boolean {
 
   table.finish();
 
-  if (ok && false) {
+  if (ok) {
     return fn(str: String): Boolean {
       return table.test(str);
     };
