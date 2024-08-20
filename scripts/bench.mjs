@@ -13,7 +13,6 @@ bench.addCheckDefaults();
 bench.addEngineTemper();
 bench.addEngineJavascript((s) => {
     const got = {};
-    // console.log(s);
     Function('module', s)(got);
     return got.ret;
 });

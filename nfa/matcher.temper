@@ -9,19 +9,12 @@ export let charCodeMatcher(c: Int): Matcher {
 }
 
 export interface Matcher {
-  public type(): Int;
-
   public matches(str: String, index: StringIndex): StringIndexOption;
 
   public toString(): String;
 }
 
 export class BeginMatcher extends Matcher {
-  public static id: Int = 0;
-  public type(): Int {
-    return BeginMatcher.id;
-  }
-
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (index.compareTo(String.start) == 0) {
       return index;
@@ -36,11 +29,6 @@ export class BeginMatcher extends Matcher {
 }
 
 export class EndMatcher extends Matcher {
-  public static id: Int = 1;
-  public type(): Int {
-    return BeginMatcher.id;
-  }
-
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (index.compareTo(str.end) == 0) {
       return index;
@@ -55,11 +43,6 @@ export class EndMatcher extends Matcher {
 }
 
 export class WordBoundaryMatcher extends Matcher {
-  public static id: Int = 2;
-  public type(): Int {
-    return WordBoundaryMatcher.id;
-  }
-
   public matches(str: String, index: StringIndex): StringIndexOption {
     let code1 = str.codeAt(str.prev(index));
     let code2 = str.codeAt(index);
@@ -89,11 +72,6 @@ export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
 export class SingleMatcher extends Matcher {
   public char: Int;
 
-  public static id: Int = 3;
-  public type(): Int {
-    return SingleMatcher.id;
-  }
-
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (char == str.codeAt(index)) {
       return str.next(index);
@@ -111,11 +89,6 @@ export class ContainsMatcher extends Matcher {
   public bitset: DenseBitVector;
   public options: Listed<Int>;
   public want: Boolean;
-
-  public static id: Int = 4;
-  public type(): Int {
-    return ContainsMatcher.id;
-  }
 
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (bitset[str.codeAt(index)] == want) {
@@ -138,11 +111,6 @@ export class ContainsMatcher extends Matcher {
 export class StartGroupMatcher extends Matcher {
   public name: String;
 
-  public static id: Int = 5;
-  public type(): Int {
-    return ContainsMatcher.id;
-  }
-
   public matches(str: String, index: StringIndex): StringIndexOption {
     return index;
   }
@@ -155,11 +123,6 @@ export class StartGroupMatcher extends Matcher {
 export class EndGroupMatcher extends Matcher {
   public name: String;
 
-  public static id: Int = 6;
-  public type(): Int {
-    return ContainsMatcher.id;
-  }
-  
   public matches(str: String, index: StringIndex): StringIndexOption {
     return index;
   }
@@ -170,12 +133,6 @@ export class EndGroupMatcher extends Matcher {
 }
 
 export class EpsilonMatcher extends Matcher {
-  public static id: Int = 7;
-
-  public type(): Int {
-    return ContainsMatcher.id;
-  }
-  
   public matches(str: String, index: StringIndex): StringIndexOption {
     return index;
   }

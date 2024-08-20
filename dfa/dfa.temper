@@ -158,49 +158,82 @@ export class Table {
     bubble();
   }
 
-  public foundAt(str: String, from: StringIndex, stop: StringIndex): Boolean {
-    var head = from;
-    var target = 1;
-    while (true) {
-      // let cur = find(target);
-      let cur = rows.getOr(target, noRow);
+  public foundAt(str: String, start: StringIndex): StringIndexOption {
+    let stop = str.end;
+    var head = start;
+    var target = 0;
+    inner: while (true) {
+      var cur = rows.getOr(target, noRow);
       if (cur.ok) {
-        return true;
+        return head;
       }
-      let char = str.codeAt(head);
-      let next = cur.map.getOr(char, cur.other);
-      if (next.id < 0 || head == stop) {
-        return false;
+      var char = str.codeAt(head);
+      while (true) {
+        let c = if (char >= 128) { 128 } else { 0 };
+        let next = cur.map.getOr((char & 127) + c, cur.other);
+        if (next.id < 0 || head == stop) {
+          break inner;
+        }
+        target = next.id;
+        head = str.next(head);
+        if (c == 0) {
+          break;
+        }
+        char = char / 128;
+        cur = rows.getOr(target, noRow);
+        if (cur.ok) {
+          return head;
+        }
       }
-      target = next.id;
-      head = str.next(head);
     }
+    return StringIndex.none;
   }
 
-  public found(str: String): Boolean {
+  public found(str: String, start: StringIndex): StringIndexOption {
     let stop = str.end;
-    var head = String.start;
-    while (head.compareTo(stop) < 0) {
-      if (foundAt(str, head, stop)) {
-        return true;
+    while (start != stop) {
+      var head = start;
+      var target = 0;
+      inner: while (true) {
+        var cur = rows.getOr(target, noRow);
+        if (cur.ok) {
+          return head;
+        }
+        var char = str.codeAt(head);
+        while (true) {
+          let c = if (char >= 128) { 128 } else { 0 };
+          let next = cur.map.getOr((char & 127) + c, cur.other);
+          if (next.id < 0 || head == stop) {
+            break inner;
+          }
+          target = next.id;
+          head = str.next(head);
+          if (c == 0) {
+            break;
+          }
+          char = char / 128;
+          cur = rows.getOr(target, noRow);
+          if (cur.ok) {
+            return head;
+          }
+        }
       }
-      head = str.next(head);
+      start = str.next(start);
     }
-    return false;
+    return StringIndex.none;
   }
 }
 
 let noTable = new Table(new ListBuilder<Row>(), []);
 
 export class DFA {
-  public ok: Boolean;
   public table: Table;
 
-  public static none() : DFA {
-    return new DFA(false, noTable);
+  public static none(): DFA {
+    return new DFA(noTable);
   }
 
-  public static fromEngine(engine: Engine): DFA {
+  public static fromEngine(engine: Engine): DFA | Null {
     let states = new MapBuilder<Int, State>();
     for (var i = 0; i < engine.states.length; i++) {
       let state = engine.states[i];
@@ -208,12 +241,11 @@ export class DFA {
     }
     
     let table = new Table(new ListBuilder<Row>(), []);
-    table.addEmpty(new Target([]));
     table.addEmpty(new Target([0]));
 
     var ok = true;
     
-    for (var i = 1; i < table.rows.length; i++) {
+    for (var i = 0; i < table.rows.length; i++) {
       let row = table.rows[i];
 
       var other = new Target([]);
@@ -226,12 +258,13 @@ export class DFA {
         for (var j = 0; j < toState.next.length; j++) {
           let {toState, matcher} = toState.next[j];
           match (matcher) {
-            is EpsilonMatcher,
-            is StartGroupMatcher,
-            is EndGroupMatcher -> do {
+            is EpsilonMatcher -> do {
               addOther(toState);
             }
+            is StartGroupMatcher,
+            is EndGroupMatcher,
             is WordBoundaryMatcher,
+            is BeginMatcher,
             is EndMatcher -> do {
               ok = false;
             }
@@ -245,12 +278,13 @@ export class DFA {
         for (var j = 0; j < toState.next.length; j++) {
           let {toState, matcher} = toState.next[j];
           match (matcher) {
-            is EpsilonMatcher,
-            is StartGroupMatcher,
-            is EndGroupMatcher -> do {
+            is EpsilonMatcher -> do {
               add(char, toState);
             }
+            is StartGroupMatcher,
+            is EndGroupMatcher,
             is WordBoundaryMatcher,
+            is BeginMatcher,
             is EndMatcher -> do {
               ok = false;
             }
@@ -275,20 +309,9 @@ export class DFA {
           match (matcher) {
             // actual chars
             is ContainsMatcher -> do {
-              if (!matcher.want) {
-                addOther(toState);
-                for (var k = 0; k < matcher.options.length; k++) {
-                  let char = matcher.options[k];
-                  if (!map.has(char)) {
-                    keys.add(char);
-                    map[char] = new Target([0]);
-                  } else {
-                    map[char] = map[char].and(0);
-                  }
-                }
-              } else {
-                for (var k = 0; k < matcher.options.length; k++) {
-                  add(matcher.options[k], toState);
+              for (var k = 0; k < 256; k++) {
+                if (matcher.bitset[k] == matcher.want) {
+                  add(k, toState);
                 }
               }
             }
@@ -299,24 +322,9 @@ export class DFA {
             is EpsilonMatcher -> do {
               onState(toState);
             }
-            is StartGroupMatcher -> do {
-              onState(toState);
-            }
-            is EndGroupMatcher -> do {
-              onState(toState);
-            }
             // bad for DFA things
-            is BeginMatcher -> do {
-              ok = false;
-            }
-            is WordBoundaryMatcher -> do {
-              ok = false;
-            }
-            is EndMatcher -> do {
-              ok = false;
-            }
             else -> do {
-              bubble();
+              ok = false;
             }
           }
         }
@@ -349,10 +357,14 @@ export class DFA {
 
     table.finish();
 
-    return new DFA(ok, table);
+    if (!ok) {
+      return null
+    } else {
+      return new DFA(table);
+    }
   }
 
-  public found(s: String): Boolean {
-    return table.found(s);
+  public found(s: String, start: StringIndex): StringIndexOption {
+    return table.foundAt(s, start);
   } 
 }

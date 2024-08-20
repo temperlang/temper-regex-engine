@@ -70,6 +70,7 @@ export class RegexBench {
     addRegex(/([Hh][eu]l+l)/.data);
     addRegex(/[^a-gi-ln-z]i/.data);
     addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
+    console.log(TemperRegexNFA.fromRegexDFA(/a[^a]/.data).found("a🌍").toString());
   }
 
   public addCheckDefaults(): Void {
@@ -150,7 +151,7 @@ export class RegexBench {
     );
   }
 
-  public addEngineLua(load: fn(String): fn(String): Boolean): Void {
+  public addEngineLua(load: fn(String): fn(String, StringIndex): StringIndexOption): Void {
     addEngine(
       "Opt",
       fn(regex: RegexNode): TemperRegex {
@@ -159,7 +160,7 @@ export class RegexBench {
     );
   }
 
-  public addEngineJavascript(eval: fn(String): fn(String): Boolean): Void {
+  public addEngineJavascript(eval: fn(String): fn(String, StringIndex): StringIndexOption): Void {
     addEngine(
       "Opt",
       fn(regex: RegexNode): TemperRegex {
@@ -169,8 +170,8 @@ export class RegexBench {
   }
 
   public isFound(tcre: TemperRegex, check: String): Boolean {
-    // return tcre.find(check).has("full");
-    return tcre.found(check);
+    return tcre.find(check).has("full");
+    // return tcre.found(check);
   }
 
   public run(): Void {

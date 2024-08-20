@@ -28,7 +28,7 @@ export class Lua {
     addString(" = function");
     addString("(str, head)\n");
     if (row.ok) {
-      addString("  return true\n");
+      addString("  return head\n");
     } else {
       addString("  local char = str:byte(head)\n");
       for (var i = 0; i < row.keys.length; i++) {
@@ -42,7 +42,7 @@ export class Lua {
         addString(key.toString());
         addString(" then\n");
         if (row.map[key].id < 0) {
-          addString("    return false\n");
+          addString("    return -1\n");
         } else {
           addString("    return ");
           addTarget(row.map[key]);
@@ -52,7 +52,7 @@ export class Lua {
       if (row.keys.length != 0) {
         addString("  else\n")
         if (row.other.id < 0) {
-          addString("    return false\n");
+          addString("    return -1\n");
         } else {
           addString("    return ");
           addTarget(row.other);
@@ -61,7 +61,7 @@ export class Lua {
         addString("  end\n")
       } else {
         if (row.other.id < 0) {
-          addString("  return false\n");
+          addString("  return -1\n");
         } else {
           addString("  return ");
           addTarget(row.other);
@@ -81,13 +81,14 @@ export class Lua {
     for (var i = 0; i < table.rows.length; i++) {
       addRow(table.rows[i]);
     }
-    addString("return function(str)\n");
-    addString("  for i=1, #str do\n");
-    addString("    if q1(str, i) then\n");
-    addString("      return true\n");
+    addString("return function(str, start)\n");
+    addString("  for i=start, #str do\n");
+    addString("    local got = q0(str, i)\n");
+    addString("    if got ~= -1 then\n");
+    addString("      return got\n");
     addString("    end\n");
     addString("  end\n");
-    addString("  return false\n");
+    addString("  return -1\n");
     addString("end\n");
   }
 }

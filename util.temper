@@ -22,7 +22,8 @@ export let regexToString(base: RegexNode): String {
           }
         }
       }
-      return "[${ret.join("", fn(s: String): String{s})}]";
+      let inv = if (base.negated) { "^" } else { "" };
+      return "[${inv}${ret.join("", fn(s: String): String{s})}]";
     }
     is Or -> do {
       var ret = new MapBuilder<String, Boolean>();

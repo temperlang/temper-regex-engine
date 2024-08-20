@@ -29,17 +29,17 @@ export class Javascript {
     addString(" = ");
     addString("(str, head) => {\n");
     if (row.ok) {
-      addString("  return true;\n")
+      addString("  return head;\n")
     } else {
       if (row.keys.length != 0) {
-        addString("  switch (str.codePointAt(head)) {\n");
+        addString("  switch (start.codePointAt(head)) {\n");
         for (var i = 0; i < row.keys.length; i++) {
           let key = row.keys[i];
           addString("  case ");
           addString(key.toString());
           addString(":\n");
           if (row.map[key].id < 0) {
-            addString("    return false;\n");
+            addString("    return -1;\n");
           } else {
             addString("    return ");
             addTarget(row.map[key]);
@@ -48,7 +48,7 @@ export class Javascript {
         }
         addString("  default:\n")
         if (row.other.id < 0) {
-          addString("    return false;\n");
+          addString("    return -1;\n");
         } else {
           addString("    return ");
           addTarget(row.other);
@@ -57,7 +57,7 @@ export class Javascript {
         addString("  }\n")
       } else {
         if (row.other.id < 0) {
-          addString("  return false;\n");
+          addString("  return -1;\n");
         } else {
           addString("  return ");
           addTarget(row.other);
@@ -72,14 +72,15 @@ export class Javascript {
     for (var i = 0; i < table.rows.length; i++) {
       addRow(table.rows[i]);
     }
-    addString("module.ret = (str) => {\n");
+    addString("module.ret = (str, start) => {\n");
     addString("  const len = str.length;\n");
-    addString("  for (let i = 0; i < len; i++) {\n");
-    addString("    if (q1(str, i)) {\n");
-    addString("      return true;\n");
+    addString("  for (let i = start; i < len; i++) {\n");
+    addString("    const start = q0(str, i);");
+    addString("    if (start !== -1) {\n");
+    addString("      return start;\n");
     addString("    }\n");
     addString("  }\n");
-    addString("  return false;\n");
+    addString("  return -1;\n");
     addString("};\n");
   };
 }

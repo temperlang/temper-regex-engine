@@ -13,7 +13,6 @@ bench:addCheckDefaults();
 
 -- bench:addEngineTemper();
 local load = load or loadstring
-assert(load)
 bench:addEngineLua(function(str)
     -- print(str)
     local loader, err = load(str)
