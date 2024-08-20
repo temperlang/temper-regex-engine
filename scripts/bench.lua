@@ -11,8 +11,9 @@ local bench = RegexBench(clock);
 bench:addRegexDefaults();
 bench:addCheckDefaults();
 
--- bench:addEngineTemper();
 local load = load or loadstring
+
+bench:addEngineTemper();
 bench:addEngineLua(function(str)
     -- print(str)
     local loader, err = load(str)

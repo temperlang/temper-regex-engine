@@ -32,7 +32,7 @@ export class Javascript {
       addString("  return head;\n")
     } else {
       if (row.keys.length != 0) {
-        addString("  switch (start.codePointAt(head)) {\n");
+        addString("  switch (str.codePointAt(head)) {\n");
         for (var i = 0; i < row.keys.length; i++) {
           let key = row.keys[i];
           addString("  case ");
@@ -70,12 +70,14 @@ export class Javascript {
 
   public addTable(table: Table): Void {
     for (var i = 0; i < table.rows.length; i++) {
-      addRow(table.rows[i]);
+      if (table.rows[i].name.id >= 0) {
+        addRow(table.rows[i]);
+      }
     }
     addString("module.ret = (str, start) => {\n");
     addString("  const len = str.length;\n");
     addString("  for (let i = start; i < len; i++) {\n");
-    addString("    const start = q0(str, i);");
+    addString("    const start = q0(str, i);\n");
     addString("    if (start !== -1) {\n");
     addString("      return start;\n");
     addString("    }\n");

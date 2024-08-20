@@ -74,12 +74,16 @@ export class Lua {
 
   public addTable(table: Table): Void {
     for (var i = 0; i < table.rows.length; i++) {
-      addString("local ")
-      addTarget(table.rows[i].name);
-      addString("\n")
+      if (table.rows[i].name.id >= 0) {
+        addString("local ")
+        addTarget(table.rows[i].name);
+        addString("\n")
+      }
     }
     for (var i = 0; i < table.rows.length; i++) {
-      addRow(table.rows[i]);
+      if (table.rows[i].name.id >= 0) {
+        addRow(table.rows[i]);
+      }
     }
     addString("return function(str, start)\n");
     addString("  for i=start, #str do\n");

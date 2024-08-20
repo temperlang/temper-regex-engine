@@ -65,12 +65,13 @@ export class RegexBench {
   }
 
   public addRegexDefaults(): Void {
-    addRegex(/h(i|[eu]l+o)/.data);
-    addRegex(/(a+a)+a/.data);
-    addRegex(/([Hh][eu]l+l)/.data);
-    addRegex(/[^a-gi-ln-z]i/.data);
-    addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
-    console.log(TemperRegexNFA.fromRegexDFA(/a[^a]/.data).found("a🌍").toString());
+    // addRegex(/h(i|[eu]l+o)/.data);
+    // addRegex(/(a+a)+a/.data);
+    // addRegex(/([Hh][eu]l+l)/.data);
+    addRegex(/[^h]i/.data);
+    // addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
+    // console.log(TemperRegexNFA.fromRegexDFA(/[^h]i/.data).found("hi").toString());
+    // console.log(TemperRegexNFA.fromRegexDFA(/a[^a]/.data).found("a🌍").toString());
   }
 
   public addCheckDefaults(): Void {

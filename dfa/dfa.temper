@@ -50,6 +50,14 @@ export class Target {
     r.add(other);
     return new Target(r);
   }
+
+  public ands(other: Target): Target {
+    var ret = new Target(this.name);
+    for (var i = 0; i < other.name.length; i++) {
+      ret = ret.and(other.name[i]);
+    }
+    return ret;
+  }
 }
 
 let noTarget = new Target([]);
@@ -168,59 +176,59 @@ export class Table {
         return head;
       }
       var char = str.codeAt(head);
-      while (true) {
-        let c = if (char >= 128) { 128 } else { 0 };
-        let next = cur.map.getOr((char & 127) + c, cur.other);
-        if (next.id < 0 || head == stop) {
-          break inner;
-        }
-        target = next.id;
-        head = str.next(head);
-        if (c == 0) {
-          break;
-        }
-        char = char / 128;
-        cur = rows.getOr(target, noRow);
-        if (cur.ok) {
-          return head;
-        }
+      let next = cur.map.getOr(char, cur.other);
+      if (next.id < 0 || head == stop) {
+        break inner;
       }
+      target = next.id;
+      head = str.next(head);
     }
     return StringIndex.none;
   }
+}
 
-  public found(str: String, start: StringIndex): StringIndexOption {
-    let stop = str.end;
-    while (start != stop) {
-      var head = start;
-      var target = 0;
-      inner: while (true) {
-        var cur = rows.getOr(target, noRow);
-        if (cur.ok) {
-          return head;
-        }
-        var char = str.codeAt(head);
-        while (true) {
-          let c = if (char >= 128) { 128 } else { 0 };
-          let next = cur.map.getOr((char & 127) + c, cur.other);
-          if (next.id < 0 || head == stop) {
-            break inner;
+class Alphabet {
+  public keys: ListBuilder<Int>;
+  public map: MapBuilder<Int, Boolean>;
+
+  public constructor(): Void {
+    keys = new ListBuilder<Int>();
+    map = new MapBuilder<Int>();
+  }
+
+  public add(key: Int): Void {
+    if (!map.getOr(key, false)) {
+      keys.add(key);
+      map[key] = true;
+    }
+  }
+
+  public static fromEngine(engine: Engine): Alphabet {
+    let ret = new Alphabet();
+    for (var i = 0; i < engine.states.length; i++) {
+      let state = engine.states[i];
+      for (var j = 0; j < state.next.length; j++) {
+        let {matcher} = state.next[j];
+        match (matcher) {
+          is ContainsMatcher -> do {
+            if (matcher.want) {
+              for (var k = 0; k < matcher.options.length; k++) {
+                ret.add(matcher.options[k]);
+              }
+            } else {
+              for (var k = 0; k < matcher.options.length; k++) {
+                ret.add(matcher.options[k]);
+              }
+            }
           }
-          target = next.id;
-          head = str.next(head);
-          if (c == 0) {
-            break;
+          is SingleMatcher -> do {
+            ret.add(matcher.char);
           }
-          char = char / 128;
-          cur = rows.getOr(target, noRow);
-          if (cur.ok) {
-            return head;
-          }
+          else -> do {}
         }
       }
-      start = str.next(start);
     }
-    return StringIndex.none;
+    return ret;
   }
 }
 
@@ -234,12 +242,14 @@ export class DFA {
   }
 
   public static fromEngine(engine: Engine): DFA | Null {
+    let alphabet = Alphabet.fromEngine(engine);
+    
     let states = new MapBuilder<Int, State>();
     for (var i = 0; i < engine.states.length; i++) {
       let state = engine.states[i];
       states[state.id] = state;
     }
-    
+
     let table = new Table(new ListBuilder<Row>(), []);
     table.addEmpty(new Target([0]));
 
@@ -309,10 +319,23 @@ export class DFA {
           match (matcher) {
             // actual chars
             is ContainsMatcher -> do {
-              for (var k = 0; k < 256; k++) {
-                if (matcher.bitset[k] == matcher.want) {
-                  add(k, toState);
+              if (matcher.want) {
+                for (var k = 0; k < matcher.options.length; k++) {
+                  add(matcher.options[k], toState);
                 }
+              } else {
+                for (var k = 0; k < alphabet.keys.length; k++) {
+                  let chr = alphabet.keys[k];
+                  if (!matcher.bitset[chr]) {
+                    add(chr, toState);
+                  } else {
+                    if (!map.has(chr)) {
+                      map[chr] = new Target([]);
+                      keys.add(chr);
+                    }
+                  }
+                }
+                addOther(toState);
               }
             }
             is SingleMatcher -> do {
