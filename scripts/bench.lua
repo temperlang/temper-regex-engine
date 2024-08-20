@@ -15,19 +15,19 @@ local load = load or loadstring
 
 bench:addEngineTemper();
 bench:addEngineLua(function(str)
-    -- print(str)
     local loader, err = load(str)
     if loader == nil then
+        print(err)
         error(err)
     end
     return loader()
 end);
-bench:addEngineNFA();
-bench:addEngineDFA();
+-- bench:addEngineNFA();
+-- bench:addEngineDFA();
 
 local found
 
-local check = true
+local check = false
 
 bench:onEngineResult(function (result)
     if check and found then

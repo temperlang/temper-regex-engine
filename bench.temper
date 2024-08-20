@@ -45,6 +45,7 @@ export class RegexBench {
   private onSingleResultCallback: fn(SingleResult): Void;
   private onEngineResultCallback: fn(EngineResult): Void;
   private timePerRunInternal: Float64;
+  private isFound: fn(TemperRegex, String): Boolean;
 
   public constructor(getTime: fn(): Float64): Void {
     time = getTime;
@@ -54,6 +55,34 @@ export class RegexBench {
     onSingleResultCallback = fn(r: SingleResult): Void {};
     onEngineResultCallback = fn(r: EngineResult): Void {};
     timePerRunInternal = 1000.0;
+    useFind();
+  }
+
+  public useFind(): Void {
+    isFound = fn(tcre: TemperRegex, str: String): Boolean {
+      return tcre.find(str).has("full");
+    };
+  }
+
+  public useReplace(): Void {
+    let replace(g: Mapped<String, Group>): String {
+      return "@";
+    }
+    isFound = fn(tcre: TemperRegex, str: String): Boolean {
+      return tcre.replace(str, replace) != str;
+    };
+  }
+
+  public useSplit(): Void {
+    isFound = fn(tcre: TemperRegex, str: String): Boolean {
+      return tcre.split(str).length != 1;
+    };
+  }
+
+  public useFound(): Void {
+    isFound = fn(tcre: TemperRegex, str: String): Boolean {
+      return tcre.found(str);
+    };
   }
 
   public onSingleResult(v: fn(SingleResult): Void): Void {
@@ -65,13 +94,12 @@ export class RegexBench {
   }
 
   public addRegexDefaults(): Void {
-    // addRegex(/h(i|[eu]l+o)/.data);
-    // addRegex(/(a+a)+a/.data);
-    // addRegex(/([Hh][eu]l+l)/.data);
+    addRegex(/h(i|[eu]l+o)/.data);
+    addRegex(/(a+a)+a/.data);
+    addRegex(/([Hh][eu]l+l)/.data);
     addRegex(/[^h]i/.data);
-    // addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
-    // console.log(TemperRegexNFA.fromRegexDFA(/[^h]i/.data).found("hi").toString());
-    // console.log(TemperRegexNFA.fromRegexDFA(/a[^a]/.data).found("a🌍").toString());
+    addRegex(/a+(?b=b+)c((?d=d)|(?e=e))+/.data);
+    addRegex(/.*[el].*[le].*/.data);
   }
 
   public addCheckDefaults(): Void {
@@ -89,6 +117,7 @@ export class RegexBench {
     checks.add(many_a);
     checks.add(many_h);
     checks.add("🌍aaabbceef");
+    checks.add("let x = 1 + 2 * 3 + 4;");
     let len = checks.length;
     if (false) {
       for (var i = 0; i < len; i++) {
@@ -170,12 +199,22 @@ export class RegexBench {
     );
   }
 
-  public isFound(tcre: TemperRegex, check: String): Boolean {
-    return tcre.find(check).has("full");
-    // return tcre.found(check);
+  public run(): Void {
+    useFound();
+    console.log("::found");
+    once();
+    useFind();
+    console.log("\n::find");
+    once();
+    useReplace();
+    console.log("\n::replace");
+    once();
+    useSplit();
+    console.log("\n::split");
+    once();
   }
 
-  public run(): Void {
+  public once(): Void {
     var runs = new ListBuilder<SingleResult>();
 
     let timePerRun = timePerRunInternal / (checks.length * regex.length).toFloat64();

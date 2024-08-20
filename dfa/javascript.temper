@@ -29,10 +29,44 @@ export class Javascript {
     addString(" = ");
     addString("(str, head) => {\n");
     if (row.ok) {
-      addString("  return head;\n")
+        addString("  let ret = -1;\n");
+      if (row.keys.length != 0) {
+        addString("  switch (str.codePointAt(head)|0) {\n");
+        for (var i = 0; i < row.keys.length; i++) {
+          let key = row.keys[i];
+          addString("  case ");
+          addString(key.toString());
+          addString(":\n");
+          if (row.map[key].id >= 0) {
+            addString("    ret = ");
+            addTarget(row.map[key]);
+            addString("(str, head + 1);\n");
+          }
+          addString("    break;\n");
+        }
+        addString("  default:\n")
+        if (row.other.id >= 0) {
+          addString("    ret = ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+        addString("    break;\n");
+        addString("  }\n")
+      } else {
+        if (row.other.id >= 0) {
+          addString("  ret = ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+      }
+      addString("  if (ret < 0) {\n");
+      addString("    return head;\n");
+      addString("  } else {\n");
+      addString("    return ret;\n");
+      addString("  }\n");
     } else {
       if (row.keys.length != 0) {
-        addString("  switch (str.codePointAt(head)) {\n");
+        addString("  switch (str.codePointAt(head)|0) {\n");
         for (var i = 0; i < row.keys.length; i++) {
           let key = row.keys[i];
           addString("  case ");
@@ -45,6 +79,7 @@ export class Javascript {
             addTarget(row.map[key]);
             addString("(str, head + 1);\n");
           }
+          addString("    break;\n");
         }
         addString("  default:\n")
         if (row.other.id < 0) {
@@ -54,6 +89,7 @@ export class Javascript {
           addTarget(row.other);
           addString("(str, head + 1);\n");
         }
+        addString("    break;\n");
         addString("  }\n")
       } else {
         if (row.other.id < 0) {
@@ -74,15 +110,6 @@ export class Javascript {
         addRow(table.rows[i]);
       }
     }
-    addString("module.ret = (str, start) => {\n");
-    addString("  const len = str.length;\n");
-    addString("  for (let i = start; i < len; i++) {\n");
-    addString("    const start = q0(str, i);\n");
-    addString("    if (start !== -1) {\n");
-    addString("      return start;\n");
-    addString("    }\n");
-    addString("  }\n");
-    addString("  return -1;\n");
-    addString("};\n");
+    addString("module.ret = q0;\n");
   };
 }

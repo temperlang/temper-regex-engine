@@ -156,31 +156,32 @@ export class Table {
     })
   }
 
-  public find(name: Target): Row {
-    for (var i = 0; i < rows.length; i++) {
-      let row = rows[i];
-      if (row.name.eq(name)) {
-        return row;
-      }
-    }
-    bubble();
-  }
-
-  public foundAt(str: String, start: StringIndex): StringIndexOption {
+  public foundAt(str: String, head: StringIndex): StringIndexOption {
     let stop = str.end;
-    var head = start;
     var target = 0;
     inner: while (true) {
       var cur = rows.getOr(target, noRow);
-      if (cur.ok) {
-        return head;
-      }
       var char = str.codeAt(head);
       let next = cur.map.getOr(char, cur.other);
       if (next.id < 0 || head == stop) {
-        break inner;
+        if (cur.ok) {
+          return head;
+        } else {
+          return StringIndex.none;
+        }
       }
       target = next.id;
+      head = str.next(head);
+    }
+  }
+
+  public foundAfter(str: String, head: StringIndex): StringIndexOption {
+    let stop = str.end;
+    while (head != stop) {
+      let got = foundAt(str, head);
+      if (got != StringIndex.none) {
+        return got;
+      }
       head = str.next(head);
     }
     return StringIndex.none;

@@ -28,9 +28,10 @@ export class Lua {
     addString(" = function");
     addString("(str, head)\n");
     if (row.ok) {
-      addString("  return head\n");
-    } else {
-      addString("  local char = str:byte(head)\n");
+      addString("  if head > #str then return #str + 1 end\n");
+      addString("  local next = utf8_offset(str, 2, head)\n");
+      addString("  local code = utf8_codepoint(str, head)\n");
+      addString("  local ret = -1\n");
       for (var i = 0; i < row.keys.length; i++) {
         let key = row.keys[i];
         if (i == 0) {
@@ -38,7 +39,47 @@ export class Lua {
         } else {
           addString("  elseif ")
         }
-        addString("char == ");
+        addString("code == ");
+        addString(key.toString());
+        addString(" then\n");
+        if (row.map[key].id >= 0) {
+          addString("    ret = ");
+          addTarget(row.map[key]);
+          addString("(str, next)\n");
+        }
+      }
+      if (row.keys.length != 0) {
+        addString("  else\n")
+        if (row.other.id >= 0) {
+          addString("    ret = ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+        addString("  end\n")
+      } else {
+        if (row.other.id >= 0) {
+          addString("  ret = ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+      }
+      addString("  if ret < 0 then\n");
+      addString("    return head\n");
+      addString("  else\n");
+      addString("    return ret\n");
+      addString("  end\n");
+    } else {
+      addString("  if head > #str then return -1 end\n");
+      addString("  local next = utf8_offset(str, 2, head)\n");
+      addString("  local code = utf8_codepoint(str, head)\n");
+      for (var i = 0; i < row.keys.length; i++) {
+        let key = row.keys[i];
+        if (i == 0) {
+          addString("  if ")
+        } else {
+          addString("  elseif ")
+        }
+        addString("code == ");
         addString(key.toString());
         addString(" then\n");
         if (row.map[key].id < 0) {
@@ -46,7 +87,7 @@ export class Lua {
         } else {
           addString("    return ");
           addTarget(row.map[key]);
-          addString("(str, head + 1)\n");
+          addString("(str, next)\n");
         }
       }
       if (row.keys.length != 0) {
@@ -56,7 +97,7 @@ export class Lua {
         } else {
           addString("    return ");
           addTarget(row.other);
-          addString("(str, head + 1)\n");
+          addString("(str, next)\n");
         }
         addString("  end\n")
       } else {
@@ -65,7 +106,7 @@ export class Lua {
         } else {
           addString("  return ");
           addTarget(row.other);
-          addString("(str, head + 1)\n");
+          addString("(str, next)\n");
         }
       }
     }
@@ -73,6 +114,9 @@ export class Lua {
   }
 
   public addTable(table: Table): Void {
+    addString("local temper = package.loaded['temper-core/prelude']\n");
+    addString("local utf8_codepoint = utf8.codepoint\n");
+    addString("local utf8_offset = utf8.offset\n");
     for (var i = 0; i < table.rows.length; i++) {
       if (table.rows[i].name.id >= 0) {
         addString("local ")
@@ -85,14 +129,6 @@ export class Lua {
         addRow(table.rows[i]);
       }
     }
-    addString("return function(str, start)\n");
-    addString("  for i=start, #str do\n");
-    addString("    local got = q0(str, i)\n");
-    addString("    if got ~= -1 then\n");
-    addString("      return got\n");
-    addString("    end\n");
-    addString("  end\n");
-    addString("  return -1\n");
-    addString("end\n");
+    addString("return q0\n");
   }
 }

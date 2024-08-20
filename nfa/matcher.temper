@@ -46,7 +46,7 @@ export class WordBoundaryMatcher extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     let code1 = str.codeAt(str.prev(index));
     let code2 = str.codeAt(index);
-    if (wordChars[code1] != wordChars[code2]) {
+    if ((index != String.start && isWordChar(code1)) != (isWordChar(code2) && index != str.end)) {
       return index;
     } else {
       return StringIndex.none;
