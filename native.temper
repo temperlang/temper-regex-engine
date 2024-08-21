@@ -1,6 +1,6 @@
 
 let { ... } = import("std/regex");
-let { TemperRegex } = import("./regex");
+let { ... } = import("./regex");
 
 export class TemperRegexNative extends TemperRegex {
   public data: Regex;
@@ -9,11 +9,21 @@ export class TemperRegexNative extends TemperRegex {
     data = new Regex(re);
   }
 
+  public split(text: String): Listed<String> {
+    return data.split(text);
+  }
+
+  public replace(text: String, format: fn(Mapped<String, Group>): String): String {
+    return data.replace(text, fn(groups: Mapped<String, Group>): String {
+      return format(groups.toMap());
+    });
+  }
+
   public found(text: String): Boolean {
     return data.found(text);
   }
   
-  public find(text: String): Map<String, Group> | Bubble {
-    return data.find(text);
+  public find(text: String): Mapped<String, Group> {
+    return data.find(text) orelse new Map<String, Group>([]);
   }
 }

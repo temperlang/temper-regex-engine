@@ -1,0 +1,115 @@
+
+let {...} = import("./dfa.temper");
+
+export class Javascript {
+  public buf: ListBuilder<String>;
+
+  public static fromTable(table: Table): String {
+    let r = new Javascript(new ListBuilder<String>());
+    r.addTable(table);
+    return r.buf.join("", fn(s: String): String { s });
+  }
+
+  public addString(string: String): Void {
+    buf.add(string);
+  }
+
+  public addTarget(target: Target): Void {
+    if (target.id < 0) {
+      bubble();
+    } else {
+      addString("q");
+      addString(target.id.toString());
+    }
+  }
+
+  public addRow(row: Row): Void {
+    addString("const ");
+    addTarget(row.name);
+    addString(" = ");
+    addString("(str, head) => {\n");
+    if (row.ok) {
+        addString("  let ret = -1;\n");
+      if (row.keys.length != 0) {
+        addString("  switch (str.codePointAt(head)|0) {\n");
+        for (var i = 0; i < row.keys.length; i++) {
+          let key = row.keys[i];
+          addString("  case ");
+          addString(key.toString());
+          addString(":\n");
+          if (row.map[key].id >= 0) {
+            addString("    ret = ");
+            addTarget(row.map[key]);
+            addString("(str, head + 1);\n");
+          }
+          addString("    break;\n");
+        }
+        addString("  default:\n")
+        if (row.other.id >= 0) {
+          addString("    ret = ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+        addString("    break;\n");
+        addString("  }\n")
+      } else {
+        if (row.other.id >= 0) {
+          addString("  ret = ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+      }
+      addString("  if (ret < 0) {\n");
+      addString("    return head;\n");
+      addString("  } else {\n");
+      addString("    return ret;\n");
+      addString("  }\n");
+    } else {
+      if (row.keys.length != 0) {
+        addString("  switch (str.codePointAt(head)|0) {\n");
+        for (var i = 0; i < row.keys.length; i++) {
+          let key = row.keys[i];
+          addString("  case ");
+          addString(key.toString());
+          addString(":\n");
+          if (row.map[key].id < 0) {
+            addString("    return -1;\n");
+          } else {
+            addString("    return ");
+            addTarget(row.map[key]);
+            addString("(str, head + 1);\n");
+          }
+          addString("    break;\n");
+        }
+        addString("  default:\n")
+        if (row.other.id < 0) {
+          addString("    return -1;\n");
+        } else {
+          addString("    return ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+        addString("    break;\n");
+        addString("  }\n")
+      } else {
+        if (row.other.id < 0) {
+          addString("  return -1;\n");
+        } else {
+          addString("  return ");
+          addTarget(row.other);
+          addString("(str, head + 1);\n");
+        }
+      }
+    }
+    addString("};\n");
+  }
+
+  public addTable(table: Table): Void {
+    for (var i = 0; i < table.rows.length; i++) {
+      if (table.rows[i].name.id >= 0) {
+        addRow(table.rows[i]);
+      }
+    }
+    addString("module.ret = q0;\n");
+  };
+}

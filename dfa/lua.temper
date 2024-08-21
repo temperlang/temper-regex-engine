@@ -1,0 +1,134 @@
+
+let {...} = import("./dfa.temper");
+
+export class Lua {
+  public buf: ListBuilder<String>;
+
+  public static fromTable(table: Table): String {
+    let r = new Lua(new ListBuilder<String>());
+    r.addTable(table);
+    return r.buf.join("", fn(s: String): String { s });
+  }
+
+  public addString(string: String): Void {
+    buf.add(string);
+  }
+
+  public addTarget(target: Target): Void {
+    if (target.id < 0) {
+      bubble();
+    } else {
+      addString("q");
+      addString(target.id.toString());
+    }
+  }
+
+  public addRow(row: Row): Void {
+    addTarget(row.name);
+    addString(" = function");
+    addString("(str, head)\n");
+    if (row.ok) {
+      addString("  if head > #str then return #str + 1 end\n");
+      addString("  local next = utf8_offset(str, 2, head)\n");
+      addString("  local code = utf8_codepoint(str, head)\n");
+      addString("  local ret = -1\n");
+      for (var i = 0; i < row.keys.length; i++) {
+        let key = row.keys[i];
+        if (i == 0) {
+          addString("  if ")
+        } else {
+          addString("  elseif ")
+        }
+        addString("code == ");
+        addString(key.toString());
+        addString(" then\n");
+        if (row.map[key].id >= 0) {
+          addString("    ret = ");
+          addTarget(row.map[key]);
+          addString("(str, next)\n");
+        }
+      }
+      if (row.keys.length != 0) {
+        addString("  else\n")
+        if (row.other.id >= 0) {
+          addString("    ret = ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+        addString("  end\n")
+      } else {
+        if (row.other.id >= 0) {
+          addString("  ret = ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+      }
+      addString("  if ret < 0 then\n");
+      addString("    return head\n");
+      addString("  else\n");
+      addString("    return ret\n");
+      addString("  end\n");
+    } else {
+      addString("  if head > #str then return -1 end\n");
+      addString("  local next = utf8_offset(str, 2, head)\n");
+      addString("  local code = utf8_codepoint(str, head)\n");
+      for (var i = 0; i < row.keys.length; i++) {
+        let key = row.keys[i];
+        if (i == 0) {
+          addString("  if ")
+        } else {
+          addString("  elseif ")
+        }
+        addString("code == ");
+        addString(key.toString());
+        addString(" then\n");
+        if (row.map[key].id < 0) {
+          addString("    return -1\n");
+        } else {
+          addString("    return ");
+          addTarget(row.map[key]);
+          addString("(str, next)\n");
+        }
+      }
+      if (row.keys.length != 0) {
+        addString("  else\n")
+        if (row.other.id < 0) {
+          addString("    return -1\n");
+        } else {
+          addString("    return ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+        addString("  end\n")
+      } else {
+        if (row.other.id < 0) {
+          addString("  return -1\n");
+        } else {
+          addString("  return ");
+          addTarget(row.other);
+          addString("(str, next)\n");
+        }
+      }
+    }
+    addString("end\n");
+  }
+
+  public addTable(table: Table): Void {
+    addString("local temper = package.loaded['temper-core/prelude']\n");
+    addString("local utf8_codepoint = utf8.codepoint\n");
+    addString("local utf8_offset = utf8.offset\n");
+    for (var i = 0; i < table.rows.length; i++) {
+      if (table.rows[i].name.id >= 0) {
+        addString("local ")
+        addTarget(table.rows[i].name);
+        addString("\n")
+      }
+    }
+    for (var i = 0; i < table.rows.length; i++) {
+      if (table.rows[i].name.id >= 0) {
+        addRow(table.rows[i]);
+      }
+    }
+    addString("return q0\n");
+  }
+}

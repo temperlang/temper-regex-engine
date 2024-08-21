@@ -1,0 +1,143 @@
+
+let { ... } = import("../ctype.temper");
+let { ... } = import("../util.temper");
+
+let noMatch: List<StringIndex> = [];
+
+export let charCodeMatcher(c: Int): Matcher {
+  return fromChars([c], true);
+}
+
+export interface Matcher {
+  public matches(str: String, index: StringIndex): StringIndexOption;
+
+  public toString(): String;
+}
+
+export class BeginMatcher extends Matcher {
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    if (index.compareTo(String.start) == 0) {
+      return index;
+    } else {
+      return StringIndex.none;
+    }
+  }
+
+  public toString(): String {
+    return "^";
+  }
+}
+
+export class EndMatcher extends Matcher {
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    if (index.compareTo(str.end) == 0) {
+      return index;
+    } else {
+      return StringIndex.none;
+    }
+  }
+
+  public toString(): String {
+    return "$";
+  }
+}
+
+export class WordBoundaryMatcher extends Matcher {
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    let code1 = str.codeAt(str.prev(index));
+    let code2 = str.codeAt(index);
+    if ((index != String.start && isWordChar(code1)) != (isWordChar(code2) && index != str.end)) {
+      return index;
+    } else {
+      return StringIndex.none;
+    }
+  }
+
+  public toString(): String {
+    return "\\b";
+  }
+}
+
+export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
+  if (options.length == 1 && want) {
+    return new SingleMatcher(options[0]);
+  }
+  let bitset = new DenseBitVector(0);
+  for (var i = 0; i < options.length; i++) {
+    bitset[options[i]] = true;
+  }
+  return new ContainsMatcher(bitset, options, want);
+}
+
+export class SingleMatcher extends Matcher {
+  public char: Int;
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    if (char == str.codeAt(index)) {
+      return str.next(index);
+    } else {
+      return StringIndex.none;
+    }
+  }
+
+  public toString(): String {
+    return String.fromCodePoint(char);
+  }
+}
+
+export class ContainsMatcher extends Matcher {
+  public bitset: DenseBitVector;
+  public options: Listed<Int>;
+  public want: Boolean;
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    if (bitset[str.codeAt(index)] == want) {
+      return str.next(index);
+    } else {
+      return StringIndex.none;
+    }
+  }
+
+  public toString(): String {
+    let inner = options.join("", chr);
+    if (!want) {
+      return "[^${inner}]";
+    } else {
+      return "[${inner}]";
+    }
+  }
+}
+
+export class StartGroupMatcher extends Matcher {
+  public name: String;
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return index;
+  }
+
+  public toString(): String {
+    return "<${name}>";
+  }
+}
+
+export class EndGroupMatcher extends Matcher {
+  public name: String;
+
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return index;
+  }
+
+  public toString(): String {
+    return "</${name}>";
+  }
+}
+
+export class EpsilonMatcher extends Matcher {
+  public matches(str: String, index: StringIndex): StringIndexOption {
+    return index;
+  }
+
+  public toString(): String {
+    return "ε";
+  }
+}
