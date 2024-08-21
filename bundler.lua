@@ -23,8 +23,3 @@ for i=1, #arg do
 end
 output:flush()
 output:close()
-
-package.path = '?.lua'
-
-arg = {[-1] = arg[-1], [0] = 'scripts/luft.lua', '-i', '-m', bundle}
-require('scripts.luft')

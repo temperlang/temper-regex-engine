@@ -78,8 +78,19 @@ export class TemperRegexNFA extends TemperRegex {
   }
   
   public static fromRegexDFA(regex: RegexNode): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
+    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+      let sub = TemperRegexNFA.fromRegex(subRegex);
+      let dfa = DFA.fromEngine(sub.engine);
+      match (dfa) {
+        is DFA -> do {
+          return new DFAMatcher(dfa.table, subRegex);
+        }
+        else -> do {
+          return null;
+        }
+      }
+    });
     match (dfa) {
       is DFA -> do {
         let table = dfa.table;
@@ -89,25 +100,26 @@ export class TemperRegexNFA extends TemperRegex {
         return nfa;
       }
       else -> do {
-        return TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
-          let sub = TemperRegexNFA.fromRegex(subRegex);
-          let dfa = DFA.fromEngine(sub.engine);
-          match (dfa) {
-            is DFA -> do {
-              return new DFAMatcher(dfa.table, subRegex);
-            }
-            else -> do {
-              return null;
-            }
-          }
-        });
+        return nfa;
       }
     }
   }
 
   public static fromRegexLua(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
+    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+      let sub = TemperRegexNFA.fromRegex(subRegex);
+      let dfa = DFA.fromEngine(sub.engine);
+      match (dfa) {
+        is DFA -> do {
+          let lua = Lua.fromTable(dfa.table);
+          return new EvalMatcher(load(lua), subRegex);
+        }
+        else -> do {
+          return null;
+        }
+      }
+    });
     match (dfa) {
       is DFA -> do {
         let lua = Lua.fromTable(dfa.table);
@@ -115,26 +127,26 @@ export class TemperRegexNFA extends TemperRegex {
         return nfa;
       }
       else -> do {
-        return TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
-          let sub = TemperRegexNFA.fromRegex(subRegex);
-          let dfa = DFA.fromEngine(sub.engine);
-          match (dfa) {
-            is DFA -> do {
-              let lua = Lua.fromTable(dfa.table);
-              return new EvalMatcher(load(lua), subRegex);
-            }
-            else -> do {
-              return null;
-            }
-          }
-        });
+        return nfa;
       }
     }
   }
 
   public static fromRegexJavascript(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
+    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+      let sub = TemperRegexNFA.fromRegex(subRegex);
+      let dfa = DFA.fromEngine(sub.engine);
+      match (dfa) {
+        is DFA -> do {
+          let javascript = Javascript.fromTable(dfa.table);
+          return new EvalMatcher(load(javascript), subRegex);
+        }
+        else -> do {
+          return null;
+        }
+      }
+    });
     match (dfa) {
       is DFA -> do {
         let javascript = Javascript.fromTable(dfa.table);
@@ -142,19 +154,7 @@ export class TemperRegexNFA extends TemperRegex {
         return nfa;
       }
       else -> do {
-        return TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
-          let sub = TemperRegexNFA.fromRegex(subRegex);
-          let dfa = DFA.fromEngine(sub.engine);
-          match (dfa) {
-            is DFA -> do {
-              let javascript = Javascript.fromTable(dfa.table);
-              return new EvalMatcher(load(javascript), subRegex);
-            }
-            else -> do {
-              return null;
-            }
-          }
-        });
+        return nfa;
       }
     }
   }
