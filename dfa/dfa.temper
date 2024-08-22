@@ -31,8 +31,8 @@ export class Target {
     let pre = if (id < 0) {
       ""
     } else {
-      "[${id.toString()}]";
-    }
+      "[${id.toString()}]"
+    };
     let body = name.join(",", fn(x: Int): String {
       return "v${x.toString()}";
     });
@@ -161,7 +161,7 @@ export class Table {
     var target = 0;
     inner: while (true) {
       var cur = rows.getOr(target, noRow);
-      var char = str.codeAt(head);
+      var char = str[head];
       let next = cur.map.getOr(char, cur.other);
       if (next.id < 0 || head == stop) {
         if (cur.ok) {

@@ -74,7 +74,7 @@ export let regexToString(base: RegexNode): String {
         }
         is CodePoints -> do {
           var points = base.item.as<CodePoints>();
-          if (points.value.hasIndex(String.start) && !points.value.hasIndex(points.value.next(String.start))) {
+          if (points.value.hasIndex(String.begin) && !points.value.hasIndex(points.value.next(String.begin))) {
             pat = str;
           } else {
             pat = "${str}";
@@ -126,22 +126,18 @@ export let idString(s: String): String {
   return s;
 }
 
-export let ord(s: String): Int {
-  return s.codeAt(String.start);
-}
-
 export let chr(i: Int): String {
   return String.fromCodePoint(i);
 }
 
 export let slice(s: String, start: Int, end: Int): String {
-  var p = String.start;
+  var p = String.begin;
   for (var i = 0; i < start; i++) {
     p = s.next(p);
   }
   let r = new ListBuilder<Int>();
   for (var i = start; i < end; i++) {
-    r.add(s.codeAt(p));
+    r.add(s[p]);
     p = s.next(p);
   }
   return r.join("", chr);

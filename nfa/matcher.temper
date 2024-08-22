@@ -16,7 +16,7 @@ export interface Matcher {
 
 export class BeginMatcher extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
-    if (index.compareTo(String.start) == 0) {
+    if (index.compareTo(String.begin) == 0) {
       return index;
     } else {
       return StringIndex.none;
@@ -44,9 +44,9 @@ export class EndMatcher extends Matcher {
 
 export class WordBoundaryMatcher extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
-    let code1 = str.codeAt(str.prev(index));
-    let code2 = str.codeAt(index);
-    if ((index != String.start && isWordChar(code1)) != (isWordChar(code2) && index != str.end)) {
+    let code1 = str[str.prev(index)];
+    let code2 = str[index];
+    if ((index != String.begin && isWordChar(code1)) != (isWordChar(code2) && index != str.end)) {
       return index;
     } else {
       return StringIndex.none;
@@ -73,7 +73,7 @@ export class SingleMatcher extends Matcher {
   public char: Int;
 
   public matches(str: String, index: StringIndex): StringIndexOption {
-    if (char == str.codeAt(index)) {
+    if (char == str[index]) {
       return str.next(index);
     } else {
       return StringIndex.none;
@@ -91,7 +91,7 @@ export class ContainsMatcher extends Matcher {
   public want: Boolean;
 
   public matches(str: String, index: StringIndex): StringIndexOption {
-    if (bitset[str.codeAt(index)] == want) {
+    if (bitset[str[index]] == want) {
       return str.next(index);
     } else {
       return StringIndex.none;
