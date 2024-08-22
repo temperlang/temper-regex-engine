@@ -4,9 +4,41 @@ A regex engine in temper.
 
 It does the naive aproach to regex. Not very fast, but works on backends without regex engines in them (like lua).
 
+## Example bundling for Temper
+
+First install luamin.
+
+```bash
+npm install -g luamin
+```
+
+Then you can run the following.
+
+```bash
+temper build
+
+lua bundler.lua \
+    temper.out/lua/temper-regex-engine/ctype.lua \
+    temper.out/lua/temper-regex-engine/dfa/dfa.lua \
+    temper.out/lua/temper-regex-engine/dfa/javascript.lua \
+    temper.out/lua/temper-regex-engine/dfa/lua.lua \
+    temper.out/lua/temper-regex-engine/init.lua \
+    temper.out/lua/temper-regex-engine/nfa/engine.lua \
+    temper.out/lua/temper-regex-engine/nfa/matcher.lua \
+    temper.out/lua/temper-regex-engine/nfa/nfa.lua \
+    temper.out/lua/temper-regex-engine/nfa/stack.lua \
+    temper.out/lua/temper-regex-engine/nfa/state.lua \
+    temper.out/lua/temper-regex-engine/regex.lua \
+    temper.out/lua/temper-regex-engine/util.lua
+
+luamin -f bundle.lua > bundle.min.lua
+```
+
 ## Example usage
 
 ### Windows PowerShell
+
+TODO Some of these examples might should change.
 
 ```
 temper-regex-engine> temper build

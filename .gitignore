@@ -3,6 +3,7 @@ temper.out
 node_modules
 out.*
 bundle.lua
+bundle.min.lua
 *.cpuprofile
 package-lock.json
 package.json
