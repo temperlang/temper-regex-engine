@@ -24,7 +24,7 @@ let noRunFound(str: String): StringIndexOption {
 
 let oneToMany(foundAt: fn(str: String, index: StringIndex): StringIndexOption): fn(str: String): StringIndexOption {
   return fn(str: String): StringIndexOption {
-    var head = String.start;
+    var head = String.begin;
     let stop = str.end;
     while (head != stop) {
       let got = foundAt(str, head);
@@ -72,7 +72,7 @@ export class TemperRegexNFA extends TemperRegex {
     let nfa = new TemperRegexNFA(new Engine(), noRunFound, subRegex);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
     nfa.runFound = fn(str: String): StringIndexOption {
-      return nfa.engine.found(str, String.start);
+      return nfa.engine.found(str, String.begin);
     };
     return nfa;
   }
@@ -95,7 +95,7 @@ export class TemperRegexNFA extends TemperRegex {
       is DFA -> do {
         let table = dfa.table;
         nfa.runFound = fn(str: String): StringIndexOption {
-          return table.foundAfter(str, String.start);
+          return table.foundAfter(str, String.begin);
         };
         return nfa;
       }
@@ -178,9 +178,9 @@ export class TemperRegexNFA extends TemperRegex {
       }
       is CodePoints -> do {
         var lastState = input;
-        var index = String.start;
+        var index = String.begin;
         while (regex.value.hasIndex(index)) {
-          let chr = regex.value.codeAt(index);
+          let chr = regex.value[index];
           index = regex.value.next(index);
           var curState = if (regex.value.hasIndex(index)) {
             engine.newState()
@@ -204,7 +204,7 @@ export class TemperRegexNFA extends TemperRegex {
             is CodePoints -> do {
               var split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
-                ls.add(split[i].codeAt(String.start));
+                ls.add(split[i][String.begin]);
               }
             }
           }

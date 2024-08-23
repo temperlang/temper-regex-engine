@@ -41,9 +41,9 @@ export class Engine {
     let pending = new MapBuilder<String, StringIndex>();
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
-    var last = String.start;
+    var last = String.begin;
     let ret = new ListBuilder<String>();
-    for (var i = String.start; str.hasIndex(i); i = str.next(i)) {
+    for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart, []);
       while (stack != stackStart) {
         var index = stack.index;
@@ -53,7 +53,7 @@ export class Engine {
         if (state.id == endState.id) {
           let cur = new ListBuilder<Int>();
           for (var j = last; j.compareTo(i) < 0; j = str.next(j)) {
-            cur.add(str.codeAt(j));
+            cur.add(str[j]);
           }
           ret.add(cur.join("", chr));
           
@@ -64,7 +64,7 @@ export class Engine {
             let val = pairs[key];
             let res = new ListBuilder<Int>();
             for (var j = val.key; j.compareTo(val.value) < 0; j = str.next(j)) {
-              res.add(str.codeAt(j));
+              res.add(str[j]);
             }
             for (var s = 0; s < sgroups.length; s++) {
               if (key == sgroups.getOr(s, "")) {
@@ -75,7 +75,7 @@ export class Engine {
           if (!groups.has("full")) {
             let full = new ListBuilder<Int>();
             for (var j = i; j.compareTo(index) < 0; j = str.next(j)) {
-              full.add(str.codeAt(j));
+              full.add(str[j]);
             }
             groups["full"] = group(str, "full", full.join("", chr), i);
           }
@@ -113,7 +113,7 @@ export class Engine {
     }
     let cur = new ListBuilder<Int>();
     for (var j = last; str.hasIndex(j); j = str.next(j)) {
-      cur.add(str.codeAt(j));
+      cur.add(str[j]);
     }
     ret.add(cur.join("", chr));
     return ret.join("", idString);
@@ -122,9 +122,9 @@ export class Engine {
   public split(str: String): Listed<String> {
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
-    var last = String.start;
+    var last = String.begin;
     let ret = new ListBuilder<String>();
-    for (var i = String.start; str.hasIndex(i); i = str.next(i)) {
+    for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart);
       while (stack != stackStart) {
         var index = stack.index;
@@ -133,7 +133,7 @@ export class Engine {
         if (state.id == endState.id) {
           let cur = new ListBuilder<Int>();
           for (var j = last; j.compareTo(i) < 0; j = str.next(j)) {
-            cur.add(str.codeAt(j));
+            cur.add(str[j]);
           }
           i = str.prev(index);
           last = index;
@@ -153,7 +153,7 @@ export class Engine {
     }
     let cur = new ListBuilder<Int>();
     for (var j = last; str.hasIndex(j); j = str.next(j)) {
-      cur.add(str.codeAt(j));
+      cur.add(str[j]);
     }
     ret.add(cur.join("", chr));
     return ret;
@@ -162,7 +162,7 @@ export class Engine {
   public found(str: String, start: StringIndex): StringIndexOption {
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
-    for (var i = String.start; str.hasIndex(i); i = str.next(i)) {
+    for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart);
       while (stack != stackStart) {
         var index = stack.index;
@@ -190,7 +190,7 @@ export class Engine {
     let pending = new MapBuilder<String, StringIndex>();
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
-    for (var i = String.start; str.hasIndex(i); i = str.next(i)) {
+    for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart);
       while (stack != stackStart) {
         var index = stack.index;
@@ -205,7 +205,7 @@ export class Engine {
             let val = pairs[key];
             let res = new ListBuilder<Int>();
             for (var j = val.key; j.compareTo(val.value) < 0; j = str.next(j)) {
-              res.add(str.codeAt(j));
+              res.add(str[j]);
             }
             for (var i = 0; i < sgroups.length; i++) {
               if (sgroups.getOr(i, "") == key) {
@@ -216,7 +216,7 @@ export class Engine {
           if (!groups.has("full")) {
             let full = new ListBuilder<Int>();
             for (var j = i; j.compareTo(index) < 0; j = str.next(j)) {
-              full.add(str.codeAt(j));
+              full.add(str[j]);
             }
             groups["full"] = group(str, "full", full.join("", chr), i);
           }
