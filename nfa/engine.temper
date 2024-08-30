@@ -42,16 +42,16 @@ export class Engine {
   public replace(str: String, replacer: fn(Match): String): String {
     let pairs = new MapBuilder<String, Pair<StringIndex, StringIndex>>();
     let pending = new MapBuilder<String, StringIndex>();
-    var stackStart = new StackStart();
-    var badNext = new Next(endState, epsilon);
+    let stackStart = new StackStart();
+    let badNext = new Next(endState, epsilon);
     var last = String.begin;
     let ret = new StringBuilder();
     for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart, []);
       while (stack != stackStart) {
-        var index = stack.index;
-        var state = stack.state;
-        var sgroups = stack.groups;
+        let index = stack.index;
+        let state = stack.state;
+        let sgroups = stack.groups;
         stack = stack.next;
         if (state.id == endState.id) {
           ret.appendBetween(str, last, i);
@@ -60,8 +60,8 @@ export class Engine {
           last = index;
           break;
         }
-        var next = state.next;
-        var len =  next.length;
+        let next = state.next;
+        let len =  next.length;
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
@@ -153,13 +153,13 @@ export class Engine {
     let pairs = new MapBuilder<String, Pair<StringIndex, StringIndex>>();
     let pending = new MapBuilder<String, StringIndex>();
     var stackStart = new StackStart();
-    var badNext = new Next(endState, epsilon);
+    let badNext = new Next(endState, epsilon);
     for (var i = begin; str.hasIndex(i); i = str.next(i)) {
       var stack: Stack = new StackSlot(i, startState, stackStart);
       while (stack != stackStart) {
-        var index = stack.index;
-        var state = stack.state;
-        var sgroups = stack.groups;
+        let index = stack.index;
+        let state = stack.state;
+        let sgroups = stack.groups;
         stack = stack.next;
         if (state.id == endState.id) {
           return buildMatch(str, i, index, pairs, sgroups);
@@ -246,7 +246,7 @@ let buildMatch(
   begin: StringIndex,
   end: StringIndex,
   pairs: Mapped<String, Pair<StringIndex, StringIndex>>,
-  stackGroups: Listed<String>, // TODO Actually needed???
+  stackGroups: Listed<String>,
 ): Match {
   let groups = new MapBuilder<String, Group>();
   let keys = pairs.keys;
