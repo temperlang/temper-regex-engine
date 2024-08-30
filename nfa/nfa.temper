@@ -328,7 +328,7 @@ export class TemperRegexNFA extends TemperRegex {
     }
   }
 
-  public replace(text: String, format: fn(Mapped<String, Group>): String): String {
+  public replace(text: String, format: fn(Match): String): String {
     return engine.replace(text, format);
   }
 
@@ -340,7 +340,7 @@ export class TemperRegexNFA extends TemperRegex {
     return runFound(text) != StringIndex.none;
   }
 
-  public find(text: String): Mapped<String, Group> {
-    return engine.find(text);
+  public find(text: String, begin: StringIndex): Match {
+    return engine.find(text, begin);
   }
 }

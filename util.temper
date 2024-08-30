@@ -122,23 +122,14 @@ export let regexToString(base: RegexNode): String {
   }
 }
 
-export let idString(s: String): String {
-  return s;
+export let bogusMatch(): Match {
+  let bogusEnd = String.begin;
+  new Match(
+    full = new Group(name = "", value = "", begin = bogusEnd, end = bogusEnd),
+    groups = new Map<String, Group>([]),
+  )
 }
 
 export let chr(i: Int): String {
   return String.fromCodePoint(i);
-}
-
-export let slice(s: String, start: Int, end: Int): String {
-  var p = String.begin;
-  for (var i = 0; i < start; i++) {
-    p = s.next(p);
-  }
-  let r = new ListBuilder<Int>();
-  for (var i = start; i < end; i++) {
-    r.add(s[p]);
-    p = s.next(p);
-  }
-  return r.join("", chr);
 }
