@@ -16,10 +16,10 @@ do
     local re = regex('(?b=a)b|(?c=a)c')
     local b = re:find('ab')
     local c = re:find('ac')
-    assert(b.b ~= nil, 'find ab works')
-    assert(c.c ~= nil, 'find ac works')
-    assert(b.c == nil, 'no false c')
-    assert(c.b == nil, 'no false b')
+    assert(b.groups.b ~= nil, 'find ab works')
+    assert(c.groups.c ~= nil, 'find ac works')
+    assert(b.groups.c == nil, 'no false c')
+    assert(c.groups.b == nil, 'no false b')
 end
 
 do

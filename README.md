@@ -4,6 +4,68 @@ A regex engine in temper.
 
 It does the naive aproach to regex. Not very fast, but works on backends without regex engines in them (like lua).
 
+## Example testing
+
+Add this import to config.temper.md:
+
+```ts
+    import("https://github.com/temperlang/temper-regex-parser/tree/regex-range");
+```
+
+Because remote imports still can be unstable, this is isn't included by default,
+but it's needed for test code to run. Remote imports sometimes hang temper
+builds, and we need to fix that.
+
+Set up your environment for testing Lua:
+
+```bash
+export LUA_PATH="temper.out/lua/?.lua;temper.out/lua/?/init.lua"
+# TODO Setup for other backends.
+```
+
+Then run:
+
+```
+temper build
+```
+
+Finally, try test scripts:
+
+```
+$ lua ./scripts/bench.lua
+::found
+Temper: 306.05
+Opt: 396.2
+
+::find
+Temper: 38.51
+Opt: 43.41
+
+::replace
+Temper: 33.04
+Opt: 32.89
+
+::split
+Temper: 42.57
+Opt: 49.07
+```
+
+The "scripts/test.lua" script currently fails on `re:found` here, but other
+parts of it pass:
+
+```lua
+do
+    local re = regex('[12]+1')
+    assert(re:found('121'))
+end
+```
+
+This is the error message I get:
+
+```
+String::get failed
+```
+
 ## Example bundling for Temper
 
 First install luamin.
@@ -32,60 +94,4 @@ lua bundler.lua \
     temper.out/lua/temper-regex-engine/util.lua
 
 luamin -f bundle.lua > bundle.min.lua
-```
-
-## Example usage
-
-### Windows PowerShell
-
-TODO Some of these examples might should change.
-
-```
-temper-regex-engine> temper build
-temper-regex-engine> npm i
-
-added 4 packages, and audited 6 packages in 2s
-
-found 0 vulnerabilities
-temper-regex-engine> node .\perf\perf.mjs
-OptRegex: 44135.33
-Temper: 40919.4
-DFA: 7272.16
-NFA: 1916.28
-Walker: 409.75
-temper-regex-engine> $env:LUA_PATH = "temper.out/lua/?.lua;temper.out/lua/?/init.lua"
-temper-regex-engine> lua .\perf\bench.lua
-OptRegex: 3307.28
-Temper: 2.07
-DFA: 287.58
-NFA: 37.71
-Walker: 15.94
-temper-regex-engine> $env:PYTHONPATH = "temper.out/py/temper-core;temper.out/py/std;temper.out/py/temper-regex-engine;temper.out/py/temper-regex-parser"
-temper-regex-engine> python .\perf\bench.py
-OptRegex: 2116.87
-Temper: 1309.75
-DFA: 33.13
-NFA: 23.83
-Walker: 2.64
-temper-regex-engine> node .\script\re2nfa2dot.mjs "a.b"
-digraph {
-  rankdir="LR";
-  q0 -> q3 [label="a"];
-  q2 -> q1 [label="b"];
-  q3 -> q2 [label="."];
-}
-temper-regex-engine> lua .\script\re2nfa2dot.lua "a.b"
-digraph {
-  rankdir="LR";
-  q0 -> q3 [label="a"];
-  q2 -> q1 [label="b"];
-  q3 -> q2 [label="."];
-}
-temper-regex-engine> python .\script\re2nfa2dot.py "a.b"
-digraph {
-  rankdir="LR";
-  q0 -> q3 [label="a"];
-  q2 -> q1 [label="b"];
-  q3 -> q2 [label="."];
-}
 ```

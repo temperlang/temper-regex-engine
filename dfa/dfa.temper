@@ -28,11 +28,6 @@ export class Target {
     if (name.length == 0) {
       return "<error>";
     }
-    let pre = if (id < 0) {
-      ""
-    } else {
-      "[${id.toString()}]"
-    };
     let body = name.join(",", fn(x: Int): String {
       return "v${x.toString()}";
     });

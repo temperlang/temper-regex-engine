@@ -60,12 +60,12 @@ export class RegexBench {
 
   public useFind(): Void {
     isFound = fn(tcre: TemperRegex, str: String): Boolean {
-      return tcre.find(str).has("full");
+      return !tcre.find(str, String.begin).full.name.isEmpty;
     };
   }
 
   public useReplace(): Void {
-    let replace(g: Mapped<String, Group>): String {
+    let replace(g: Match): String {
       return "@";
     }
     isFound = fn(tcre: TemperRegex, str: String): Boolean {
