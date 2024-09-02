@@ -340,7 +340,7 @@ export class TemperRegexNFA extends TemperRegex {
     return runFound(text) != StringIndex.none;
   }
 
-  public find(text: String, begin: StringIndex): Match {
+  public find(text: String, begin: StringIndex = String.begin): Match {
     return engine.find(text, begin);
   }
 }

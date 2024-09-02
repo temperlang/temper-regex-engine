@@ -6,5 +6,5 @@ export interface TemperRegex {
   public replace(text: String, format: fn(Match): String): String;
   public split(text: String): Listed<String>;
   public found(text: String): Boolean;
-  public find(text: String, begin: StringIndex): Match;
+  public find(text: String, begin: StringIndex = String.begin): Match;
 }

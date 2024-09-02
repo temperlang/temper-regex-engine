@@ -22,7 +22,7 @@ export class TemperRegexNative extends TemperRegex {
     return data.found(text);
   }
 
-  public find(text: String, begin: StringIndex): Match {
+  public find(text: String, begin: StringIndex = String.begin): Match {
     return data.find(text, begin) orelse bogusMatch();
   }
 }

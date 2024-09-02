@@ -149,7 +149,7 @@ export class Engine {
     return StringIndex.none;
   }
 
-  public find(str: String, begin: StringIndex): Match {
+  public find(str: String, begin: StringIndex = String.begin): Match {
     let pairs = new MapBuilder<String, Pair<StringIndex, StringIndex>>();
     let pending = new MapBuilder<String, StringIndex>();
     var stackStart = new StackStart();
