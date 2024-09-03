@@ -1,0 +1,28 @@
+
+let { ... } = import("std/regex");
+let { TemperRegexNFA } = import("./nfa");
+
+test("charset member after charset") {
+  // Check out a standard Temper regex.
+  let standard = new Sequence([
+    oneOrMore(new CodeSet([new CodePoints("12")])),
+    new CodePoints("1"),
+  ]).compiled();
+  // The [12]+ part can match until the end, but it shouldn't.
+  assert(standard.found("121"));
+  // And one specifically from this library.
+  let here = TemperRegexNFA.fromRegex(standard.data);
+  assert(here.found("121"));
+}
+
+test("word boundary at edge") {
+  // Find word boundary alone, including at string edges.
+  let regex = TemperRegexNFA.fromRegex(WordBoundary);
+  assert(!regex.found(""));
+  assert(!regex.found("!"));
+  assert(regex.found("!a!"));
+  assert(regex.found("a"));
+  // Make sure we also can find trailing edges.
+  let r2 = TemperRegexNFA.fromRegex(new Sequence([Dot, WordBoundary]));
+  assert(r2.found("a"));
+}

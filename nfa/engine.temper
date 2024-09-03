@@ -1,10 +1,10 @@
 
 let { ... } = import("std/regex");
 let { ... } = import("std/strings");
-let { ... } = import("./state.temper");
-let { ... } = import("./stack.temper");
-let { ... } = import("./matcher.temper");
-let { ... } = import("../util.temper");
+let { ... } = import("./state");
+let { ... } = import("./stack");
+let { ... } = import("./matcher");
+let { ... } = import("../util");
 
 let group(
   str: String, name: String, value: String, begin: StringIndex, end: StringIndex
@@ -137,7 +137,7 @@ export class Engine {
         }
         var next = state.next;
         var len =  next.length;
-        out: for (var c = 0; c < len; c += 1) {
+        for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
