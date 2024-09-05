@@ -1,6 +1,6 @@
 
-let { ... } = import("../ctype.temper");
-let { ... } = import("../util.temper");
+let { ... } = import("../ctype");
+let { ... } = import("../util");
 
 let noMatch: List<StringIndex> = [];
 
@@ -44,9 +44,10 @@ export class EndMatcher extends Matcher {
 
 export class WordBoundaryMatcher extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
-    let code1 = str[str.prev(index)];
-    let code2 = str[index];
-    if ((index != String.begin && isWordChar(code1)) != (isWordChar(code2) && index != str.end)) {
+    if (
+      (index > String.begin && isWordChar(str[str.prev(index)])) !=
+      (index < str.end && isWordChar(str[index]))
+    ) {
       return index;
     } else {
       return StringIndex.none;
@@ -73,7 +74,7 @@ export class SingleMatcher extends Matcher {
   public char: Int;
 
   public matches(str: String, index: StringIndex): StringIndexOption {
-    if (char == str[index]) {
+    if (index < str.end && char == str[index]) {
       return str.next(index);
     } else {
       return StringIndex.none;
@@ -91,7 +92,7 @@ export class ContainsMatcher extends Matcher {
   public want: Boolean;
 
   public matches(str: String, index: StringIndex): StringIndexOption {
-    if (bitset[str[index]] == want) {
+    if (index < str.end && bitset[str[index]] == want) {
       return str.next(index);
     } else {
       return StringIndex.none;

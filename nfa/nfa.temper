@@ -1,14 +1,15 @@
 
-let { ... } = import("std/regex.temper.md");
-let { ... } = import("./state.temper");
-let { ... } = import("./matcher.temper");
-let { ... } = import("./engine.temper");
-let { ... } = import("../util.temper");
-let { ... } = import("../regex.temper");
-let { ... } = import("../dfa/lua.temper");
-let { ... } = import("../dfa/javascript.temper");
-let { ... } = import("../dfa/dfa.temper");
-let { ... } = import("../ctype.temper");
+let { ... } = import("std/regex");
+let { ... } = import("./state");
+let { ... } = import("./matcher");
+let { ... } = import("./engine");
+let { ... } = import("../util");
+let { ... } = import("../regex");
+let { ... } = import("../dfa/lua");
+let { ... } = import("../dfa/javascript");
+let { ... } = import("../dfa/dfa");
+let { ... } = import("../ctype");
+import("./test");
 
 let noTest(str: String): Boolean {
   bubble();
