@@ -2,7 +2,7 @@
 let {...} = import("std/regex");
 
 export let regexToString(base: RegexNode): String {
-  match (base) {
+  when (base) {
     is Capture -> do {
       return "(?${base.name}=${regexToString(base.item)})";
     }
@@ -13,7 +13,7 @@ export let regexToString(base: RegexNode): String {
       var ret = new ListBuilder<String>();
       for (var j = 0; j < base.items.length; j++) {
         var subBase = base.items[j];
-        match (subBase) {
+        when (subBase) {
           is CodeRange -> do {
             ret.add("${String.fromCodePoint(subBase.min)}-${String.fromCodePoint(subBase.max)}");
           }
@@ -28,7 +28,7 @@ export let regexToString(base: RegexNode): String {
     is Or -> do {
       var ret = new MapBuilder<String, Boolean>();
       let add(ent: RegexNode): Void {
-        match (ent) {
+        when (ent) {
           is Or -> do {
             for (var i = 0; i < ent.items.length; i++) {
               add(ent.items[i]);
@@ -68,7 +68,7 @@ export let regexToString(base: RegexNode): String {
       };
       var str = regexToString(base.item);
       var pat = "%";
-      match (base.item) {
+      when (base.item) {
         is CodeSet -> do {
           pat = str;
         }

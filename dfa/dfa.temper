@@ -205,7 +205,7 @@ class Alphabet {
       let state = engine.states[i];
       for (var j = 0; j < state.next.length; j++) {
         let {matcher} = state.next[j];
-        match (matcher) {
+        when (matcher) {
           is ContainsMatcher -> do {
             if (matcher.want) {
               for (var k = 0; k < matcher.options.length; k++) {
@@ -263,7 +263,7 @@ export class DFA {
       let addOther(toState: State): Void {
         for (var j = 0; j < toState.next.length; j++) {
           let {toState, matcher} = toState.next[j];
-          match (matcher) {
+          when (matcher) {
             is EpsilonMatcher -> do {
               addOther(toState);
             }
@@ -283,7 +283,7 @@ export class DFA {
       let add(char: Int, toState: State): Void {
         for (var j = 0; j < toState.next.length; j++) {
           let {toState, matcher} = toState.next[j];
-          match (matcher) {
+          when (matcher) {
             is EpsilonMatcher -> do {
               add(char, toState);
             }
@@ -312,7 +312,7 @@ export class DFA {
         done[state.id] = true;
         for (var j = 0; j < state.next.length; j++) {
           let {toState, matcher} = state.next[j];
-          match (matcher) {
+          when (matcher) {
             // actual chars
             is ContainsMatcher -> do {
               if (matcher.want) {

@@ -66,7 +66,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            match (matcher) {
+            when (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
                 stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
@@ -170,7 +170,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            match (matcher) {
+            when (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
                 stack = new StackSlot(index, toState, stack, sgroups);

@@ -83,7 +83,7 @@ export class TemperRegexNFA extends TemperRegex {
     let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
-      match (dfa) {
+      when (dfa) {
         is DFA -> do {
           return new DFAMatcher(dfa.table, subRegex);
         }
@@ -92,7 +92,7 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
     });
-    match (dfa) {
+    when (dfa) {
       is DFA -> do {
         let table = dfa.table;
         nfa.runFound = fn(str: String): StringIndexOption {
@@ -111,7 +111,7 @@ export class TemperRegexNFA extends TemperRegex {
     let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
-      match (dfa) {
+      when (dfa) {
         is DFA -> do {
           let lua = Lua.fromTable(dfa.table);
           return new EvalMatcher(load(lua), subRegex);
@@ -121,7 +121,7 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
     });
-    match (dfa) {
+    when (dfa) {
       is DFA -> do {
         let lua = Lua.fromTable(dfa.table);
         nfa.runFound = oneToMany(load(lua));
@@ -138,7 +138,7 @@ export class TemperRegexNFA extends TemperRegex {
     let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
-      match (dfa) {
+      when (dfa) {
         is DFA -> do {
           let javascript = Javascript.fromTable(dfa.table);
           return new EvalMatcher(load(javascript), subRegex);
@@ -148,7 +148,7 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
     });
-    match (dfa) {
+    when (dfa) {
       is DFA -> do {
         let javascript = Javascript.fromTable(dfa.table);
         nfa.runFound = oneToMany(load(javascript));
@@ -162,14 +162,14 @@ export class TemperRegexNFA extends TemperRegex {
 
   public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
     let subMatcher = subRegex(regex);
-    match (subMatcher) {
+    when (subMatcher) {
       is Matcher -> do {
         input.addNext(subMatcher, output);
         return;
       }
       else -> do {}
     }
-    match (regex) {
+    when (regex) {
       is Capture -> do {
         var mid1 = engine.newState();
         var mid2 = engine.newState();
@@ -196,7 +196,7 @@ export class TemperRegexNFA extends TemperRegex {
         let ls = new ListBuilder<Int>();
         for (var j = 0; j < regex.items.length; j++) {
           var subRegex = regex.items[j];
-          match (subRegex) {
+          when (subRegex) {
             is CodeRange -> do {
               for (var i = subRegex.min; i <= subRegex.max; i++) {
                 ls.add(i);
@@ -252,7 +252,7 @@ export class TemperRegexNFA extends TemperRegex {
         }
       }
       is Sequence -> do {
-        match (regex.items.length) {
+        when (regex.items.length) {
           0 -> input.addNext(engine.epsilon, output);
           1 -> buildRegex(regex.items[0], input, output);
           else -> do {
@@ -261,7 +261,7 @@ export class TemperRegexNFA extends TemperRegex {
             let addAll(items: Listed<RegexNode>): Void {
               for (var i = 0; i < items.length; i++) {
                 let item = items[i];
-                match (item) {
+                when (item) {
                   Begin, End, WordBoundary, Dot, is Group -> do {
                     if (last.length != 0) {
                       seqs.add(last);
