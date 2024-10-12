@@ -85,7 +85,7 @@ let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
 export class Table {
   public rows: ListBuilder<Row>;
 
-  public targets: Listed<Target> = [];
+  public targets: Listed<Target>;
 
   let update(t: Target): Void {
     if (t.name.length == 0) {
@@ -246,13 +246,13 @@ export class DFA {
       states[state.id] = state;
     }
 
-    let table = new Table(new ListBuilder<Row>(), []);
-    table.addEmpty(new Target([0]));
+    let newTable: Table = new Table(new ListBuilder<Row>(), []);
+    newTable.addEmpty(new Target([0]));
 
     var ok = true;
     
-    for (var i = 0; i < table.rows.length; i++) {
-      let row = table.rows[i];
+    for (var i = 0; i < newTable.rows.length; i++) {
+      let row = newTable.rows[i];
 
       var other = new Target([]);
       let keys = new ListBuilder<Int>();
@@ -355,16 +355,16 @@ export class DFA {
       }
 
       if (other.name.length != 0) {
-        table.addEmpty(other);
+        newTable.addEmpty(other);
       }
 
       for (var i = 0; i < keys.length; i++) {
         let key = keys[i];
         let val = map[key];
-        table.addEmpty(val);
+        newTable.addEmpty(val);
       }
 
-      table.rows[i] = new Row(
+      newTable.rows[i] = new Row(
         row.name,
         other,
         keys,
@@ -374,12 +374,12 @@ export class DFA {
       );
     }
 
-    table.finish();
+    newTable.finish();
 
     if (!ok) {
       return null
     } else {
-      return new DFA(table);
+      return new DFA(newTable);
     }
   }
 

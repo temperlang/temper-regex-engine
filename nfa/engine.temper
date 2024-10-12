@@ -47,7 +47,7 @@ export class Engine {
     var last = String.begin;
     let ret = new StringBuilder();
     for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
-      var stack: Stack = new StackSlot(i, startState, stackStart, []);
+      var stack: Stack = new StackSlot(i, startState, stackStart, noGroups);
       while (stack != stackStart) {
         let index = stack.index;
         let state = stack.state;
@@ -96,7 +96,7 @@ export class Engine {
     var last = String.begin;
     let ret = new ListBuilder<String>();
     for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
-      var stack: Stack = new StackSlot(i, startState, stackStart);
+      var stack: Stack = new StackSlot(i, startState, stackStart, noGroups);
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
@@ -114,7 +114,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            stack = new StackSlot(skip.as<StringIndex>(), toState, stack);
+            stack = new StackSlot(skip.as<StringIndex>(), toState, stack, noGroups);
           }
         }
       }
@@ -127,7 +127,7 @@ export class Engine {
     var stackStart = new StackStart();
     var badNext = new Next(endState, epsilon);
     for (var i = String.begin; str.hasIndex(i); i = str.next(i)) {
-      var stack: Stack = new StackSlot(i, startState, stackStart);
+      var stack: Stack = new StackSlot(i, startState, stackStart, noGroups);
       while (stack != stackStart) {
         var index = stack.index;
         var state = stack.state;
@@ -141,7 +141,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            stack = new StackSlot(skip.as<StringIndex>(), toState, stack);
+            stack = new StackSlot(skip.as<StringIndex>(), toState, stack, noGroups);
           }
         }
       }
@@ -155,7 +155,7 @@ export class Engine {
     var stackStart = new StackStart();
     let badNext = new Next(endState, epsilon);
     for (var i = begin; str.hasIndex(i); i = str.next(i)) {
-      var stack: Stack = new StackSlot(i, startState, stackStart);
+      var stack: Stack = new StackSlot(i, startState, stackStart, noGroups);
       while (stack != stackStart) {
         let index = stack.index;
         let state = stack.state;
