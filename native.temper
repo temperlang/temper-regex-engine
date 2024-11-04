@@ -4,7 +4,7 @@ let { ... } = import("./regex");
 let { ... } = import("./util");
 
 // TODO Use non-property constructor param.
-export class TemperRegexNative(private re: RegexNode) extends TemperRegex {
+export class TemperRegexNative(@noProperty re: RegexNode) extends TemperRegex {
   public data: Regex = new Regex(re);
 
   public split(text: String): Listed<String> {
