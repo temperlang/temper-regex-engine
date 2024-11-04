@@ -256,7 +256,3 @@ let buildMatch(
   let full = group(str, "full", str.slice(begin, end), begin, end);
   new Match(full, groups.toMap())
 }
-
-let maxIndex(a: StringIndex, b: StringIndex): StringIndex {
-  if (a > b) { a } else { b }
-}
