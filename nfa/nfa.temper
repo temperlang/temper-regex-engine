@@ -38,10 +38,10 @@ let oneToMany(foundAt: fn(str: String, index: StringIndex): StringIndexOption): 
   };
 }
 
-class DFAMatcher extends Matcher {
-  public table: Table;
-  public source: RegexNode;
-
+class DFAMatcher(
+  public table: Table,
+  public source: RegexNode,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     return table.foundAt(str, index);
   }
@@ -51,10 +51,10 @@ class DFAMatcher extends Matcher {
   }
 }
 
-class EvalMatcher extends Matcher {
-  public matcher: fn(str: String, index: StringIndex): StringIndexOption;
-  public source: RegexNode;
-
+class EvalMatcher(
+  public matcher: fn(str: String, index: StringIndex): StringIndexOption,
+  public source: RegexNode,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     return matcher(str, index);
   }
@@ -64,11 +64,11 @@ class EvalMatcher extends Matcher {
   }
 }
 
-export class TemperRegexNFA extends TemperRegex {
-  public var engine: Engine;
-  public var runFound: fn(String): StringIndexOption;
-  public var subRegex: fn(RegexNode): Matcher | Null;
-
+export class TemperRegexNFA(
+  public var engine: Engine,
+  public var runFound: fn(String): StringIndexOption,
+  public var subRegex: fn(RegexNode): Matcher | Null,
+) extends TemperRegex {
   public static fromRegex(regex: RegexNode, subRegex: fn(RegexNode): Matcher | Null = noThen): TemperRegexNFA {
     let nfa = new TemperRegexNFA(new Engine(), noRunFound, subRegex);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);

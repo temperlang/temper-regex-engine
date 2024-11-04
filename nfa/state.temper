@@ -1,19 +1,15 @@
 
 let { ... } = import("./matcher.temper");
 
-export class Next {
-  public toState: State;
-  public matcher: Matcher;
-}
+export class Next(
+  public toState: State,
+  public matcher: Matcher,
+) {}
 
-export class State {
-  public id: Int;
-  public next: ListBuilder<Next>;
-  
-  public constructor(identify: Int): Void {
-    id = identify; 
-    next = new ListBuilder<Next>();
-  }
+export class State(
+  public id: Int,
+) {
+  public next: ListBuilder<Next> = new ListBuilder<Next>();
 
   public addNext(matcher: Matcher, toState: State): Void {
     next.add(new Next(toState, matcher));

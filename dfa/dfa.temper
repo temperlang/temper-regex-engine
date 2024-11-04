@@ -3,14 +3,10 @@ let {...} = import("../nfa/state.temper");
 let {...} = import("../nfa/matcher.temper");
 let {...} = import("../nfa/engine.temper");
 
-export class Target {
-  public name: Listed<Int>;
-  public var id: Int;
-
-  public constructor(arg: Listed<Int>): Void {
-    name = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
-    id = -1;
-  }
+// TODO Use non-property constructor param.
+export class Target(private arg: Listed<Int>) {
+  public name: Listed<Int> = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
+  public var id: Int = -1;
 
   public eq(other: Target): Boolean {
     if (other.name.length != name.length) {
@@ -57,13 +53,13 @@ export class Target {
 
 let noTarget = new Target([]);
 
-export class Row {
-  public name: Target;
-  public other: Target;
-  public keys: Listed<Int>;
-  public map: Mapped<Int, Target>;
-  public ok: Boolean;
-
+export class Row(
+  public name: Target,
+  public other: Target,
+  public keys: Listed<Int>,
+  public map: Mapped<Int, Target>,
+  public ok: Boolean,
+) {
   public toString(): String {
     let nameStr = name.toString();
     let mapStr = keys.join("", fn(key: Int) {
@@ -82,12 +78,11 @@ export class Row {
 
 let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
 
-export class Table {
-  public rows: ListBuilder<Row>;
-
-  public targets: Listed<Target>;
-
-  let update(t: Target): Void {
+export class Table(
+  public rows: ListBuilder<Row>,
+  public targets: Listed<Target>,
+) {
+  private update(t: Target): Void {
     if (t.name.length == 0) {
       t.id = -1;
       return;
@@ -184,13 +179,8 @@ export class Table {
 }
 
 class Alphabet {
-  public keys: ListBuilder<Int>;
-  public map: MapBuilder<Int, Boolean>;
-
-  public constructor(): Void {
-    keys = new ListBuilder<Int>();
-    map = new MapBuilder<Int>();
-  }
+  public keys: ListBuilder<Int> = new ListBuilder<Int>();
+  public map: MapBuilder<Int, Boolean> = new MapBuilder<Int>();
 
   public add(key: Int): Void {
     if (!map.getOr(key, false)) {
@@ -230,16 +220,16 @@ class Alphabet {
 
 let noTable = new Table(new ListBuilder<Row>(), []);
 
-export class DFA {
-  public table: Table;
-
+export class DFA(
+  public table: Table,
+) {
   public static none(): DFA {
     return new DFA(noTable);
   }
 
   public static fromEngine(engine: Engine): DFA | Null {
     let alphabet = Alphabet.fromEngine(engine);
-    
+
     let states = new MapBuilder<Int, State>();
     for (var i = 0; i < engine.states.length; i++) {
       let state = engine.states[i];
@@ -250,7 +240,7 @@ export class DFA {
     newTable.addEmpty(new Target([0]));
 
     var ok = true;
-    
+
     for (var i = 0; i < newTable.rows.length; i++) {
       let row = newTable.rows[i];
 

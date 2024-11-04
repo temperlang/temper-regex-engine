@@ -1,9 +1,9 @@
 
 let {...} = import("./dfa.temper");
 
-export class Lua {
-  public buf: ListBuilder<String>;
-
+export class Lua(
+  public buf: ListBuilder<String>,
+) {
   public static fromTable(table: Table): String {
     let r = new Lua(new ListBuilder<String>());
     r.addTable(table);
