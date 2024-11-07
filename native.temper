@@ -3,12 +3,8 @@ let { ... } = import("std/regex");
 let { ... } = import("./regex");
 let { ... } = import("./util");
 
-export class TemperRegexNative extends TemperRegex {
-  public data: Regex;
-
-  public constructor(re: RegexNode) {
-    data = new Regex(re);
-  }
+export class TemperRegexNative(@noProperty re: RegexNode) extends TemperRegex {
+  public data: Regex = new Regex(re);
 
   public split(text: String): Listed<String> {
     return data.split(text);

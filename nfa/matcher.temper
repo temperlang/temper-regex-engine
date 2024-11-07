@@ -70,9 +70,9 @@ export let fromChars(options: Listed<Int>, want: Boolean): Matcher {
   return new ContainsMatcher(bitset, options, want);
 }
 
-export class SingleMatcher extends Matcher {
-  public char: Int;
-
+export class SingleMatcher(
+  public char: Int,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (index < str.end && char == str[index]) {
       return str.next(index);
@@ -86,11 +86,11 @@ export class SingleMatcher extends Matcher {
   }
 }
 
-export class ContainsMatcher extends Matcher {
-  public bitset: DenseBitVector;
-  public options: Listed<Int>;
-  public want: Boolean;
-
+export class ContainsMatcher(
+  public bitset: DenseBitVector,
+  public options: Listed<Int>,
+  public want: Boolean,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     if (index < str.end && bitset[str[index]] == want) {
       return str.next(index);
@@ -109,9 +109,9 @@ export class ContainsMatcher extends Matcher {
   }
 }
 
-export class StartGroupMatcher extends Matcher {
-  public name: String;
-
+export class StartGroupMatcher(
+  public name: String,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     return index;
   }
@@ -121,9 +121,9 @@ export class StartGroupMatcher extends Matcher {
   }
 }
 
-export class EndGroupMatcher extends Matcher {
-  public name: String;
-
+export class EndGroupMatcher(
+  public name: String,
+) extends Matcher {
   public matches(str: String, index: StringIndex): StringIndexOption {
     return index;
   }

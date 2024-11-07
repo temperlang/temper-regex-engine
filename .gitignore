@@ -7,3 +7,6 @@ bundle.min.lua
 *.cpuprofile
 package-lock.json
 package.json
+
+# TODO Stop ignoring keep once we've stabilized it.
+temper.keep

@@ -21,18 +21,11 @@ let skip(s: String, c: StringIndex, i: Int): StringIndex {
 }
 
 export class Engine {
-  public states: ListBuilder<State>;
-  public startState: State;
-  public endState: State;
-  public epsilon: EpsilonMatcher;
+  public states: ListBuilder<State> = new ListBuilder<State>();
+  public startState: State = newState();
+  public endState: State = newState();
+  public epsilon: EpsilonMatcher = new EpsilonMatcher();
 
-  public constructor() {
-    states = new ListBuilder<State>();
-    startState = newState();
-    endState = newState();
-    epsilon = new EpsilonMatcher();
-  }
-  
   public newState(): State {
     var ret = new State(states.length);
     states.add(ret);

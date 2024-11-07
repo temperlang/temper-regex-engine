@@ -1,9 +1,9 @@
 
 let {...} = import("./dfa.temper");
 
-export class Javascript {
-  public buf: ListBuilder<String>;
-
+export class Javascript(
+  public buf: ListBuilder<String>,
+) {
   public static fromTable(table: Table): String {
     let r = new Javascript(new ListBuilder<String>());
     r.addTable(table);

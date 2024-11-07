@@ -11,24 +11,22 @@ export interface Stack {
   public get next(): Stack;
 }
 
-export class StackStart extends Stack {
-  public index: StringIndex;
-  public state: State;
-  public groups: Listed<String>;
-
-  public constructor(): Void {}
-  
+export class StackStart(
+  public index: StringIndex = String.begin,
+  public state: State = new State(0),
+  public groups: Listed<String> = [],
+) extends Stack {
   public get next(): Stack {
     return this;
   }
 }
 
-export class StackSlot extends Stack {
-  public index: StringIndex;
-  public state: State;
-  public slot: Stack;
-  public groups: Listed<String>;
-
+export class StackSlot(
+  public index: StringIndex,
+  public state: State,
+  public slot: Stack,
+  public groups: Listed<String>,
+) extends Stack {
   public get next(): Stack {
     return slot;
   }

@@ -2,7 +2,6 @@
 let { ... } = import("std/regex");
 
 export interface TemperRegex {
-  public constructor(data: RegexNode);
   public replace(text: String, format: fn(Match): String): String;
   public split(text: String): Listed<String>;
   public found(text: String): Boolean;

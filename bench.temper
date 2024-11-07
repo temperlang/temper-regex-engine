@@ -6,62 +6,56 @@ let { ... } = import("./util.temper");
 let { ... } = import("./nfa/nfa.temper");
 let { ... } = import("./native.temper");
 
-class Engine {
-  public name: String;
-  public cons: fn(RegexNode): TemperRegex;
-
+class Engine(
+  public name: String,
+  public cons: fn(RegexNode): TemperRegex,
+) {
   public invoke(re: RegexNode): TemperRegex {
     return cons(re);
   }
 }
 
-export class SingleResult {
-  public engine: String;
-  public str: String;
-  public regex: String;
-  public found: Boolean;
-  public score: Float64;
-
+export class SingleResult(
+  public engine: String,
+  public str: String,
+  public regex: String,
+  public found: Boolean,
+  public score: Float64,
+) {
   public toString(): String {
     return "${engine} score: ${score.toString()} (found: ${found.toString()}) (str: ${str}) (regex: ${regex})";
   }
 }
 
-class EngineResult {
-  public engine: String;
-  public score: Float64;
-  public passed: Listed<Pair<RegexNode, String>>;
-
+class EngineResult(
+  public engine: String,
+  public score: Float64,
+  public passed: Listed<Pair<RegexNode, String>>,
+) {
   public toString(): String {
     return "${engine}: ${((score * 100.0).toInt().toFloat64() / 100.0 orelse 0.0).toString()}";
   }
 }
 
-export class RegexBench {
-  private time: fn(): Float64;
-  private engines: ListBuilder<Engine>;
-  private checks: ListBuilder<String>;
-  private regex: ListBuilder<RegexNode>;
-  private onSingleResultCallback: fn(SingleResult): Void;
-  private onEngineResultCallback: fn(EngineResult): Void;
-  private timePerRunInternal: Float64;
-  private isFound: fn(TemperRegex, String): Boolean;
+let find(tcre: TemperRegex, str: String): Boolean {
+  return !tcre.find(str, String.begin).full.name.isEmpty;
+}
 
-  public constructor(getTime: fn(): Float64): Void {
-    time = getTime;
-    engines = new ListBuilder<Engine>();
-    checks = new ListBuilder<String>();
-    regex = new ListBuilder<RegexNode>();
-    onSingleResultCallback = fn(r: SingleResult): Void {};
-    onEngineResultCallback = fn(r: EngineResult): Void {};
-    timePerRunInternal = 1000.0;
-    useFind();
-  }
+export class RegexBench(
+  private time: fn(): Float64,
+) {
+  private engines: ListBuilder<Engine> = new ListBuilder<Engine>();
+  private checks: ListBuilder<String> = new ListBuilder<String>();
+  private regex: ListBuilder<RegexNode> = new ListBuilder<RegexNode>();
+  private onSingleResultCallback: fn(SingleResult): Void =
+    fn(r: SingleResult): Void {};
+  private onEngineResultCallback: fn(EngineResult): Void =
+    fn(r: EngineResult): Void {};
+  private timePerRunInternal: Float64 = 1000.0;
+  private isFound: fn(TemperRegex, String): Boolean = find;
 
   public useFind(): Void {
-    isFound = fn(tcre: TemperRegex, str: String): Boolean {
-      return !tcre.find(str, String.begin).full.name.isEmpty;
-    };
+    isFound = find;
   }
 
   public useReplace(): Void {
