@@ -1,6 +1,6 @@
 
-let { ... } = import("../ctype");
-let { ... } = import("../util");
+let { ... } = import("../../ctype");
+let { ... } = import("../../util");
 
 let noMatch: List<StringIndex> = [];
 

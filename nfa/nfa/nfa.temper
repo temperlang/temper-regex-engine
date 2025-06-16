@@ -1,15 +1,15 @@
 
 let { ... } = import("std/regex");
-let { ... } = import("./state");
-let { ... } = import("./matcher");
-let { ... } = import("./engine");
-let { ... } = import("../util");
-let { ... } = import("../regex");
-let { ... } = import("../dfa/lua");
-let { ... } = import("../dfa/javascript");
-let { ... } = import("../dfa/dfa");
-let { ... } = import("../ctype");
-import("./test");
+let { ... } = import("../state");
+let { ... } = import("../matcher");
+let { ... } = import("../engine");
+let { ... } = import("../../util");
+let { ... } = import("../../regex");
+let { ... } = import("../../dfa/lua");
+let { ... } = import("../../dfa/javascript");
+let { ... } = import("../../dfa/dfa");
+let { ... } = import("../../ctype");
+import("../test");
 
 let noTest(str: String): Boolean {
   bubble();

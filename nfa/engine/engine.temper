@@ -1,10 +1,10 @@
 
 let { ... } = import("std/regex");
 let { ... } = import("std/strings");
-let { ... } = import("./state");
-let { ... } = import("./stack");
-let { ... } = import("./matcher");
-let { ... } = import("../util");
+let { ... } = import("../state");
+let { ... } = import("../stack");
+let { ... } = import("../matcher");
+let { ... } = import("../../util");
 
 let group(
   str: String, name: String, value: String, begin: StringIndex, end: StringIndex

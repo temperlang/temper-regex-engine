@@ -1,10 +1,10 @@
 let { ... } = import("std/regex");
 
-let { ... } = import("./regex.temper");
-let { ... } = import("./util.temper");
+let { ... } = import("../regex");
+let { ... } = import("../util");
 
-let { ... } = import("./nfa/nfa.temper");
-let { ... } = import("./native.temper");
+let { ... } = import("../nfa/nfa");
+let { ... } = import("../native");
 
 class Engine(
   public name: String,

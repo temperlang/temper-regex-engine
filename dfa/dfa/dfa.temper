@@ -1,7 +1,7 @@
 
-let {...} = import("../nfa/state.temper");
-let {...} = import("../nfa/matcher.temper");
-let {...} = import("../nfa/engine.temper");
+let {...} = import("../../nfa/state");
+let {...} = import("../../nfa/matcher");
+let {...} = import("../../nfa/engine");
 
 export class Target(@noProperty arg: Listed<Int>) {
   public name: Listed<Int> = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });

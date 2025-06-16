@@ -1,7 +1,7 @@
 
 let { ... } = import("std/regex");
-let { ... } = import("./regex");
-let { ... } = import("./util");
+let { ... } = import("../regex");
+let { ... } = import("../util");
 
 export class TemperRegexNative(@noProperty re: RegexNode) extends TemperRegex {
   public data: Regex = new Regex(re);

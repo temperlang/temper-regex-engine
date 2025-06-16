@@ -1,5 +1,5 @@
 
-let {...} = import("./dfa.temper");
+let {...} = import("../dfa");
 
 export class Javascript(
   public buf: ListBuilder<String>,
