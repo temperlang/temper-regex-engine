@@ -211,7 +211,7 @@ export class RegexBench(
   public once(): Void {
     var runs = new ListBuilder<SingleResult>();
 
-    let timePerRun = timePerRunInternal / (checks.length * regex.length).toFloat64();
+    let timePerRun = (timePerRunInternal / (checks.length * regex.length).toFloat64()) orelse panic();
 
     for (var i = 0; i < engines.length; i++) {
       var engine = engines[i];
@@ -240,7 +240,7 @@ export class RegexBench(
           var score = iters.toFloat64() / ms orelse 0.0;
           count += 1.0;
           total += score;
-          var thisRun = new SingleResult(engine.name, check, regexToString(re), found, score);
+          var thisRun = new SingleResult(engine.name, check, regexToString(re) orelse panic(), found, score);
           onSingleResultCallback(thisRun);
           runs.add(thisRun);
         }

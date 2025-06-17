@@ -16,7 +16,7 @@ export class Lua(
 
   public addTarget(target: Target): Void {
     if (target.id < 0) {
-      bubble();
+      panic();
     } else {
       addString("q");
       addString(target.id.toString());
@@ -42,9 +42,10 @@ export class Lua(
         addString("code == ");
         addString(key.toString());
         addString(" then\n");
-        if (row.map[key].id >= 0) {
+        let target = row.map[key] orelse panic();
+        if (target.id >= 0) {
           addString("    ret = ");
-          addTarget(row.map[key]);
+          addTarget(target);
           addString("(str, next)\n");
         }
       }
@@ -82,11 +83,12 @@ export class Lua(
         addString("code == ");
         addString(key.toString());
         addString(" then\n");
-        if (row.map[key].id < 0) {
+        let target = row.map[key] orelse panic();
+        if (target.id < 0) {
           addString("    return -1\n");
         } else {
           addString("    return ");
-          addTarget(row.map[key]);
+          addTarget(target);
           addString("(str, next)\n");
         }
       }

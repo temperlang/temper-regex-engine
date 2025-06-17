@@ -62,17 +62,17 @@ export class Engine {
             when (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
-                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
+                stack = new StackSlot(skip, toState, stack, sgroups);
               }
               is EndGroupMatcher -> do {
-                pairs[matcher.name] = new Pair(pending[matcher.name], index);
+                pairs[matcher.name] = new Pair(pending[matcher.name] orelse panic(), index);
                 let next = new ListBuilder<String>();
                 next.add(matcher.name);
                 next.addAll(sgroups);
-                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, next);
+                stack = new StackSlot(skip, toState, stack, next);
               }
               else -> do {
-                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
+                stack = new StackSlot(skip, toState, stack, sgroups);
               }
             }
           }
@@ -107,7 +107,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            stack = new StackSlot(skip.as<StringIndex>(), toState, stack, noGroups);
+            stack = new StackSlot(skip, toState, stack, noGroups);
           }
         }
       }
@@ -134,7 +134,7 @@ export class Engine {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
           if (skip.is<StringIndex>()) {
-            stack = new StackSlot(skip.as<StringIndex>(), toState, stack, noGroups);
+            stack = new StackSlot(skip, toState, stack, noGroups);
           }
         }
       }
@@ -169,14 +169,14 @@ export class Engine {
                 stack = new StackSlot(index, toState, stack, sgroups);
               }
               is EndGroupMatcher -> do {
-                pairs[matcher.name] = new Pair(pending[matcher.name], index);
+                pairs[matcher.name] = new Pair(pending[matcher.name] orelse panic(), index);
                 let next = new ListBuilder<String>();
                 next.add(matcher.name);
                 next.addAll(sgroups);
                 stack = new StackSlot(index, toState, stack, next);
               }
               else -> do {
-                stack = new StackSlot(skip.as<StringIndex>(), toState, stack, sgroups);
+                stack = new StackSlot(skip, toState, stack, sgroups);
               }
             }
           }
@@ -245,7 +245,8 @@ let buildMatch(
   let keys = pairs.keys();
   for (var i = 0; i < keys.length; i++) {
     let key = keys[i];
-    let val = pairs[key];
+    // TODO Under what conditions should we expect bad keys? Ever?
+    let val = pairs[key] orelse panic();
     let res = str.slice(val.key, val.value);
     for (var s = 0; s < stackGroups.length; s++) {
       if (key == stackGroups.getOr(s, "")) {

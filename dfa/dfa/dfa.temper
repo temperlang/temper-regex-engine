@@ -2,6 +2,7 @@
 let {...} = import("../../nfa/state");
 let {...} = import("../../nfa/matcher");
 let {...} = import("../../nfa/engine");
+let {...} = import("../../util");
 
 export class Target(@noProperty arg: Listed<Int>) {
   public name: Listed<Int> = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
@@ -63,11 +64,11 @@ export class Row(
     let nameStr = name.toString();
     let mapStr = keys.join("", fn(key: Int) {
       let keyStr = if (32 <= key && key <= 126) {
-        "#${String.fromCodePoint(key)}"
+        "#${chr(key)}"
       } else {
         key.toString()
       };
-      let valueStr = map[key].toString();
+      let valueStr = (map[key] orelse panic()).toString();
       return "\n  ${keyStr} => ${valueStr}";
     });
     let elseStr = "\n  else => ${other.toString()}"
@@ -92,7 +93,8 @@ export class Table(
         return;
       }
     }
-    bubble();
+    // TODO Does this actually represent an error on our part?
+    panic();
   }
 
   public finish(): Void {
@@ -114,7 +116,7 @@ export class Table(
       update(row.other);
       outer: for (var j = 0; j < row.keys.length; j++) {
         let key = row.keys[j];
-        let cur = row.map[key];
+        let cur = row.map[key] orelse panic();
         update(cur);
       }
     }
@@ -290,7 +292,7 @@ export class DFA(
           keys.add(char);
           map[char] = new Target([toState.id]);
         } else {
-          map[char] = map[char].and(toState.id);
+          map[char] = (map[char] orelse panic()).and(toState.id);
         }
       }
 
@@ -340,7 +342,7 @@ export class DFA(
       }
 
       for (var j = 0; j < row.name.name.length; j++) {
-        onState(states[row.name.name[j]]);
+        onState(states[row.name.name[j]] orelse panic());
       }
 
       if (other.name.length != 0) {
@@ -349,7 +351,7 @@ export class DFA(
 
       for (var i = 0; i < keys.length; i++) {
         let key = keys[i];
-        let val = map[key];
+        let val = map[key] orelse panic();
         newTable.addEmpty(val);
       }
 

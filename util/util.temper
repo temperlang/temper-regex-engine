@@ -132,6 +132,7 @@ export let bogusMatch(): Match {
   }
 }
 
-export let chr(i: Int): String | Bubble {
-  return String.fromCodePoint(i);
+export let chr(i: Int): String {
+  // TODO Instead use U+FFFD REPLACEMENT CHARACTER (�)?
+  return String.fromCodePoint(i) orelse panic();
 }
