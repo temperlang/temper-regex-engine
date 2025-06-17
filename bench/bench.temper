@@ -27,7 +27,7 @@ export class SingleResult(
   }
 }
 
-class EngineResult(
+export class EngineResult(
   public engine: String,
   public score: Float64,
   public passed: Listed<Pair<RegexNode, String>>,
@@ -47,12 +47,12 @@ export class RegexBench(
   private engines: ListBuilder<Engine> = new ListBuilder<Engine>();
   private checks: ListBuilder<String> = new ListBuilder<String>();
   private regex: ListBuilder<RegexNode> = new ListBuilder<RegexNode>();
-  private onSingleResultCallback: fn(SingleResult): Void =
+  private var onSingleResultCallback: fn(SingleResult): Void =
     fn(r: SingleResult): Void {};
-  private onEngineResultCallback: fn(EngineResult): Void =
+  private var onEngineResultCallback: fn(EngineResult): Void =
     fn(r: EngineResult): Void {};
   private timePerRunInternal: Float64 = 1000.0;
-  private isFound: fn(TemperRegex, String): Boolean = find;
+  private var isFound: fn(TemperRegex, String): Boolean = find;
 
   public useFind(): Void {
     isFound = find;

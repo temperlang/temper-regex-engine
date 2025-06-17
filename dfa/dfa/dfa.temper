@@ -80,8 +80,11 @@ let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
 
 export class Table(
   public rows: ListBuilder<Row>,
-  public targets: Listed<Target>,
+  @noProperty targets: Listed<Target>,
 ) {
+  public get targets(): Listed<Target> { targetsVar };
+  private var targetsVar: Listed<Target> = targets;
+
   private update(t: Target): Void {
     if (t.name.length == 0) {
       t.id = -1;
@@ -99,7 +102,7 @@ export class Table(
 
   public finish(): Void {
     let build = new ListBuilder<Target>();
-    targets = build;
+    targetsVar = build;
     outer: for (var i = 0; i < rows.length; i++) {
       let row = rows[i];
       for (var j = 0; j < build.length; j++) {
@@ -181,7 +184,7 @@ export class Table(
 
 class Alphabet {
   public keys: ListBuilder<Int> = new ListBuilder<Int>();
-  public map: MapBuilder<Int, Boolean> = new MapBuilder<Int>();
+  public map: MapBuilder<Int, Boolean> = new MapBuilder<Int, Boolean>();
 
   public add(key: Int): Void {
     if (!map.getOr(key, false)) {
