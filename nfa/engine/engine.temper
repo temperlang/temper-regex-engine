@@ -22,14 +22,18 @@ let skip(s: String, c: StringIndex, i: Int): StringIndex {
 
 export class Engine {
   public states: ListBuilder<State> = new ListBuilder<State>();
-  public startState: State = newState();
-  public endState: State = newState();
+  public startState: State = Engine.newStateIn(states);
+  public endState: State = Engine.newStateIn(states);
   public epsilon: EpsilonMatcher = new EpsilonMatcher();
 
-  public newState(): State {
+  private static newStateIn(states: ListBuilder<State>): State {
     var ret = new State(states.length);
     states.add(ret);
     return ret;
+  }
+
+  public newState(): State {
+    Engine.newStateIn(states)
   }
 
   public replace(str: String, replacer: fn(Match): String): String {
