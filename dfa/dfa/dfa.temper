@@ -150,7 +150,7 @@ export class Table(
     })
   }
 
-  public foundAt(str: String, head: StringIndex): StringIndexOption {
+  public foundAt(str: String, var head: StringIndex): StringIndexOption {
     let stop = str.end;
     var target = 0;
     inner: while (true) {
@@ -169,7 +169,7 @@ export class Table(
     }
   }
 
-  public foundAfter(str: String, head: StringIndex): StringIndexOption {
+  public foundAfter(str: String, var head: StringIndex): StringIndexOption {
     let stop = str.end;
     while (head != stop) {
       let got = foundAt(str, head);
