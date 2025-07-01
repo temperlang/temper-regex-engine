@@ -1,19 +1,15 @@
 
 let { ... } = import("std/regex");
-let { ... } = import("./state");
-let { ... } = import("./matcher");
-let { ... } = import("./engine");
-let { ... } = import("../util");
-let { ... } = import("../regex");
-let { ... } = import("../dfa/lua");
-let { ... } = import("../dfa/javascript");
-let { ... } = import("../dfa/dfa");
-let { ... } = import("../ctype");
-import("./test");
-
-let noTest(str: String): Boolean {
-  bubble();
-}
+let { ... } = import("../state");
+let { ... } = import("../matcher");
+let { ... } = import("../engine");
+let { ... } = import("../../util");
+let { ... } = import("../../regex");
+let { ... } = import("../../dfa/lua");
+let { ... } = import("../../dfa/javascript");
+let { ... } = import("../../dfa/dfa");
+let { ... } = import("../../ctype");
+import("../test");
 
 let noThen(regex: RegexNode): Matcher | Null {
   return null;
@@ -47,7 +43,7 @@ class DFAMatcher(
   }
 
   public toString(): String {
-    return "/${regexToString(source)}/";
+    return "/${regexToString(source) orelse panic()}/";
   }
 }
 
@@ -60,7 +56,7 @@ class EvalMatcher(
   }
 
   public toString(): String {
-    return "/${regexToString(source)}/";
+    return "/${regexToString(source) orelse panic()}/";
   }
 }
 
@@ -160,7 +156,7 @@ export class TemperRegexNFA(
     }
   }
 
-  public buildRegex(regex: RegexNode, input: State, output: State): Void | Bubble {
+  public buildRegex(regex: RegexNode, input: State, output: State): Void {
     let subMatcher = subRegex(regex);
     when (subMatcher) {
       is Matcher -> do {
@@ -195,7 +191,7 @@ export class TemperRegexNFA(
       is CodeSet -> do {
         let ls = new ListBuilder<Int>();
         for (var j = 0; j < regex.items.length; j++) {
-          var subRegex = regex.items[j];
+          let subRegex = regex.items[j];
           when (subRegex) {
             is CodeRange -> do {
               for (var i = subRegex.min; i <= subRegex.max; i++) {
@@ -203,15 +199,12 @@ export class TemperRegexNFA(
               }
             }
             is CodePoints -> do {
-              var split = subRegex.value.split("");
+              let split = subRegex.value.split("");
               for (var i = 0; i < split.length ; i++) {
                 ls.add(split[i][String.begin]);
               }
             }
           }
-        }
-        let make(i: Int): RegexNode {
-          return new CodePoints(String.fromCodePoint(i));
         }
         input.addNext(fromChars(ls, !regex.negated), output);
       }
@@ -228,9 +221,9 @@ export class TemperRegexNFA(
           lastState = curState;
         }
         if (regex.max != null) {
-          var max = regex.max.as<Int>();
+          let max = regex.max.as<Int>() orelse panic();
           for (var i = regex.min; i < max; i++) {
-            var curState = engine.newState();
+            let curState = engine.newState();
             if (!regex.reluctant) {
               lastState.addNext(engine.epsilon, output);
               buildRegex(regex.item, lastState, curState);
@@ -262,7 +255,7 @@ export class TemperRegexNFA(
               for (var i = 0; i < items.length; i++) {
                 let item = items[i];
                 when (item) {
-                  Begin, End, WordBoundary, Dot, is Group -> do {
+                  Begin, End, WordBoundary, Dot -> do {
                     if (last.length != 0) {
                       seqs.add(last);
                     }
@@ -323,7 +316,7 @@ export class TemperRegexNFA(
         } else if (regex == Word) {
           input.addNext(fromChars(wordCharsList, true), output);
         } else {
-          bubble();
+          panic();
         }
       }
     }

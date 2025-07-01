@@ -1,7 +1,8 @@
 
-let {...} = import("../nfa/state.temper");
-let {...} = import("../nfa/matcher.temper");
-let {...} = import("../nfa/engine.temper");
+let {...} = import("../../nfa/state");
+let {...} = import("../../nfa/matcher");
+let {...} = import("../../nfa/engine");
+let {...} = import("../../util");
 
 export class Target(@noProperty arg: Listed<Int>) {
   public name: Listed<Int> = arg.sorted(fn(x: Int, y: Int): Int { return x - y; });
@@ -63,11 +64,11 @@ export class Row(
     let nameStr = name.toString();
     let mapStr = keys.join("", fn(key: Int) {
       let keyStr = if (32 <= key && key <= 126) {
-        "#${String.fromCodePoint(key)}"
+        "#${chr(key)}"
       } else {
         key.toString()
       };
-      let valueStr = map[key].toString();
+      let valueStr = (map[key] orelse panic()).toString();
       return "\n  ${keyStr} => ${valueStr}";
     });
     let elseStr = "\n  else => ${other.toString()}"
@@ -79,8 +80,11 @@ let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
 
 export class Table(
   public rows: ListBuilder<Row>,
-  public targets: Listed<Target>,
+  @noProperty targets: Listed<Target>,
 ) {
+  public get targets(): Listed<Target> { targetsVar };
+  private var targetsVar: Listed<Target> = targets;
+
   private update(t: Target): Void {
     if (t.name.length == 0) {
       t.id = -1;
@@ -92,12 +96,13 @@ export class Table(
         return;
       }
     }
-    bubble();
+    // TODO Does this actually represent an error on our part?
+    panic();
   }
 
   public finish(): Void {
     let build = new ListBuilder<Target>();
-    targets = build;
+    targetsVar = build;
     outer: for (var i = 0; i < rows.length; i++) {
       let row = rows[i];
       for (var j = 0; j < build.length; j++) {
@@ -114,7 +119,7 @@ export class Table(
       update(row.other);
       outer: for (var j = 0; j < row.keys.length; j++) {
         let key = row.keys[j];
-        let cur = row.map[key];
+        let cur = row.map[key] orelse panic();
         update(cur);
       }
     }
@@ -145,7 +150,7 @@ export class Table(
     })
   }
 
-  public foundAt(str: String, head: StringIndex): StringIndexOption {
+  public foundAt(str: String, var head: StringIndex): StringIndexOption {
     let stop = str.end;
     var target = 0;
     inner: while (true) {
@@ -164,7 +169,7 @@ export class Table(
     }
   }
 
-  public foundAfter(str: String, head: StringIndex): StringIndexOption {
+  public foundAfter(str: String, var head: StringIndex): StringIndexOption {
     let stop = str.end;
     while (head != stop) {
       let got = foundAt(str, head);
@@ -179,7 +184,7 @@ export class Table(
 
 class Alphabet {
   public keys: ListBuilder<Int> = new ListBuilder<Int>();
-  public map: MapBuilder<Int, Boolean> = new MapBuilder<Int>();
+  public map: MapBuilder<Int, Boolean> = new MapBuilder<Int, Boolean>();
 
   public add(key: Int): Void {
     if (!map.getOr(key, false)) {
@@ -290,7 +295,7 @@ export class DFA(
           keys.add(char);
           map[char] = new Target([toState.id]);
         } else {
-          map[char] = map[char].and(toState.id);
+          map[char] = (map[char] orelse panic()).and(toState.id);
         }
       }
 
@@ -340,7 +345,7 @@ export class DFA(
       }
 
       for (var j = 0; j < row.name.name.length; j++) {
-        onState(states[row.name.name[j]]);
+        onState(states[row.name.name[j]] orelse panic());
       }
 
       if (other.name.length != 0) {
@@ -349,7 +354,7 @@ export class DFA(
 
       for (var i = 0; i < keys.length; i++) {
         let key = keys[i];
-        let val = map[key];
+        let val = map[key] orelse panic();
         newTable.addEmpty(val);
       }
 

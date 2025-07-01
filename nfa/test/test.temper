@@ -1,6 +1,6 @@
 
 let { ... } = import("std/regex");
-let { TemperRegexNFA } = import("./nfa");
+let { TemperRegexNFA } = import("../nfa");
 
 test("charset member after charset") {
   // Check out a standard Temper regex.

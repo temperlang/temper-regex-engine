@@ -1,6 +1,6 @@
 
-let { ... } = import("../ctype");
-let { ... } = import("../util");
+let { ... } = import("../../ctype");
+let { ... } = import("../../util");
 
 let noMatch: List<StringIndex> = [];
 
@@ -82,7 +82,7 @@ export class SingleMatcher(
   }
 
   public toString(): String {
-    return String.fromCodePoint(char);
+    return chr(char);
   }
 }
 

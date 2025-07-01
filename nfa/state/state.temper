@@ -1,5 +1,5 @@
 
-let { ... } = import("./matcher.temper");
+let { ... } = import("../matcher");
 
 export class Next(
   public toState: State,
@@ -9,7 +9,8 @@ export class Next(
 export class State(
   public id: Int,
 ) {
-  public next: ListBuilder<Next> = new ListBuilder<Next>();
+  public get next(): ListBuilder<Next> { nextVar }
+  public var nextVar: ListBuilder<Next> = new ListBuilder<Next>();
 
   public addNext(matcher: Matcher, toState: State): Void {
     next.add(new Next(toState, matcher));
@@ -17,7 +18,7 @@ export class State(
 
   public addNextFirst(matcher: Matcher, toState: State): Void {
     var oldNext = next;
-    next = new ListBuilder<Next>();
+    nextVar = new ListBuilder<Next>();
     next.add(new Next(toState, matcher));
     for (var i = 0; i < oldNext.length; i++) {
       next.add(oldNext[i]);

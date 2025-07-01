@@ -1,10 +1,10 @@
 let { ... } = import("std/regex");
 
-let { ... } = import("./regex.temper");
-let { ... } = import("./util.temper");
+let { ... } = import("../regex");
+let { ... } = import("../util");
 
-let { ... } = import("./nfa/nfa.temper");
-let { ... } = import("./native.temper");
+let { ... } = import("../nfa/nfa");
+let { ... } = import("../native");
 
 class Engine(
   public name: String,
@@ -27,7 +27,7 @@ export class SingleResult(
   }
 }
 
-class EngineResult(
+export class EngineResult(
   public engine: String,
   public score: Float64,
   public passed: Listed<Pair<RegexNode, String>>,
@@ -47,12 +47,12 @@ export class RegexBench(
   private engines: ListBuilder<Engine> = new ListBuilder<Engine>();
   private checks: ListBuilder<String> = new ListBuilder<String>();
   private regex: ListBuilder<RegexNode> = new ListBuilder<RegexNode>();
-  private onSingleResultCallback: fn(SingleResult): Void =
+  private var onSingleResultCallback: fn(SingleResult): Void =
     fn(r: SingleResult): Void {};
-  private onEngineResultCallback: fn(EngineResult): Void =
+  private var onEngineResultCallback: fn(EngineResult): Void =
     fn(r: EngineResult): Void {};
   private timePerRunInternal: Float64 = 1000.0;
-  private isFound: fn(TemperRegex, String): Boolean = find;
+  private var isFound: fn(TemperRegex, String): Boolean = find;
 
   public useFind(): Void {
     isFound = find;
@@ -211,7 +211,7 @@ export class RegexBench(
   public once(): Void {
     var runs = new ListBuilder<SingleResult>();
 
-    let timePerRun = timePerRunInternal / (checks.length * regex.length).toFloat64();
+    let timePerRun = (timePerRunInternal / (checks.length * regex.length).toFloat64()) orelse panic();
 
     for (var i = 0; i < engines.length; i++) {
       var engine = engines[i];
@@ -240,7 +240,7 @@ export class RegexBench(
           var score = iters.toFloat64() / ms orelse 0.0;
           count += 1.0;
           total += score;
-          var thisRun = new SingleResult(engine.name, check, regexToString(re), found, score);
+          var thisRun = new SingleResult(engine.name, check, regexToString(re) orelse panic(), found, score);
           onSingleResultCallback(thisRun);
           runs.add(thisRun);
         }

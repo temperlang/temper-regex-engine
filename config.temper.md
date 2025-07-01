@@ -2,7 +2,7 @@
 
     export let name = "temper-regex-engine";
 
-    import("./bench.temper");
+    import("./bench");
 
-    import("./nfa/nfa.temper");
+    import("./nfa/nfa");
 
