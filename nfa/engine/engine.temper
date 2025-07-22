@@ -1,6 +1,5 @@
 
 let { ... } = import("std/regex");
-let { ... } = import("std/strings");
 let { ... } = import("../state");
 let { ... } = import("../stack");
 let { ... } = import("../matcher");
