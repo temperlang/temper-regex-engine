@@ -11,7 +11,7 @@ let { ... } = import("../../dfa/dfa");
 let { ... } = import("../../ctype");
 import("../test");
 
-let noThen(regex: RegexNode): Matcher | Null {
+let noThen(regex: RegexNode): Matcher? {
   return null;
 }
 
@@ -63,9 +63,9 @@ class EvalMatcher(
 export class TemperRegexNFA(
   public var engine: Engine,
   public var runFound: fn(String): StringIndexOption,
-  public var subRegex: fn(RegexNode): Matcher | Null,
+  public var subRegex: fn(RegexNode): Matcher?,
 ) extends TemperRegex {
-  public static fromRegex(regex: RegexNode, subRegex: fn(RegexNode): Matcher | Null = noThen): TemperRegexNFA {
+  public static fromRegex(regex: RegexNode, subRegex: fn(RegexNode): Matcher? = noThen): TemperRegexNFA {
     let nfa = new TemperRegexNFA(new Engine(), noRunFound, subRegex);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
     nfa.runFound = fn(str: String): StringIndexOption {
@@ -73,10 +73,10 @@ export class TemperRegexNFA(
     };
     return nfa;
   }
-  
+
   public static fromRegexDFA(regex: RegexNode): TemperRegexNFA {
     let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
       when (dfa) {
@@ -104,7 +104,7 @@ export class TemperRegexNFA(
 
   public static fromRegexLua(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
     let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
       when (dfa) {
@@ -131,7 +131,7 @@ export class TemperRegexNFA(
 
   public static fromRegexJavascript(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
     let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher | Null {
+    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
       let sub = TemperRegexNFA.fromRegex(subRegex);
       let dfa = DFA.fromEngine(sub.engine);
       when (dfa) {
@@ -221,7 +221,7 @@ export class TemperRegexNFA(
           lastState = curState;
         }
         if (regex.max != null) {
-          let max = regex.max.as<Int>() orelse panic();
+          let max = regex.max as Int orelse panic();
           for (var i = regex.min; i < max; i++) {
             let curState = engine.newState();
             if (!regex.reluctant) {
@@ -303,7 +303,7 @@ export class TemperRegexNFA(
           input.addNext(fromChars([0], false), output);
         } else if (regex == End) {
           input.addNext(new EndMatcher(), output);
-        } else if (regex == WordBoundary) { 
+        } else if (regex == WordBoundary) {
           input.addNext(new WordBoundaryMatcher(), output);
         } else if (regex == Digit) {
           let ls = new ListBuilder<Int>();
