@@ -231,7 +231,7 @@ export class DFA(
     return new DFA(noTable);
   }
 
-  public static fromEngine(engine: Engine): DFA | Null {
+  public static fromEngine(engine: Engine): DFA? {
     let alphabet = Alphabet.fromEngine(engine);
 
     let states = new MapBuilder<Int, State>();
@@ -379,5 +379,5 @@ export class DFA(
 
   public found(s: String, start: StringIndex): StringIndexOption {
     return table.foundAt(s, start);
-  } 
+  }
 }

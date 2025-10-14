@@ -1,7 +1,7 @@
 
 let {...} = import("std/regex");
 
-export let regexToString(base: RegexNode): String | Bubble {
+export let regexToString(base: RegexNode): String throws Bubble {
   when (base) {
     is Capture -> do {
       return "(?${base.name}=${regexToString(base.item)})";
@@ -27,7 +27,7 @@ export let regexToString(base: RegexNode): String | Bubble {
     }
     is Or -> do {
       let ret = new MapBuilder<String, Boolean>();
-      let add(ent: RegexNode): Void | Bubble {
+      let add(ent: RegexNode): Void throws Bubble {
         when (ent) {
           is Or -> do {
             for (var i = 0; i < ent.items.length; i++) {
@@ -59,7 +59,7 @@ export let regexToString(base: RegexNode): String | Bubble {
       } else if (base.max == null) {
         "{${base.min.toString()},}"
       } else {
-        "{${base.min.toString()},${base.max.as<Int>().toString()}}"
+        "{${base.min.toString()},${(base.max as Int).toString()}}"
       };
       let q = if (base.reluctant) {
         "?"
@@ -73,7 +73,7 @@ export let regexToString(base: RegexNode): String | Bubble {
           pat = str;
         }
         is CodePoints -> do {
-          let points = base.item.as<CodePoints>();
+          let points = base.item as CodePoints;
           if (points.value.hasIndex(String.begin) && !points.value.hasIndex(points.value.next(String.begin))) {
             pat = str;
           } else {
@@ -104,11 +104,11 @@ export let regexToString(base: RegexNode): String | Bubble {
     is Special -> do {
       if (base == Begin) {
         return "^";
-      } else if (base == Dot) { 
+      } else if (base == Dot) {
         return ".";
       } else if (base == End) {
         return "$";
-      } else if (base == WordBoundary) { 
+      } else if (base == WordBoundary) {
         return "\\b";
       } else if (base == Digit) {
         return "\\d";

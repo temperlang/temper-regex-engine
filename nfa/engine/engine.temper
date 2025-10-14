@@ -61,7 +61,7 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.is<StringIndex>()) {
+          if (skip is StringIndex) {
             when (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
@@ -109,7 +109,7 @@ export class Engine {
         out: for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.is<StringIndex>()) {
+          if (skip is StringIndex) {
             stack = new StackSlot(skip, toState, stack, noGroups);
           }
         }
@@ -136,7 +136,7 @@ export class Engine {
         for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.is<StringIndex>()) {
+          if (skip is StringIndex) {
             stack = new StackSlot(skip, toState, stack, noGroups);
           }
         }
@@ -165,7 +165,7 @@ export class Engine {
         for (var c = 0; c < len; c += 1) {
           let {matcher, toState} = next.getOr(c, badNext);
           let skip = matcher.matches(str, index);
-          if (skip.is<StringIndex>()) {
+          if (skip is StringIndex) {
             when (matcher) {
               is StartGroupMatcher -> do {
                 pending[matcher.name] = index;
