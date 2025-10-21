@@ -97,7 +97,7 @@ export let regexToString(base: RegexNode): String throws Bubble {
         for (var i = 0; i < base.items.length; i += 1) {
           strings.add(regexToString(base.items[i]));
         }
-        let inner = strings.join("") { (x);; x };
+        let inner = strings.join("") { x => x };
         return "(${inner})";
       }
     }

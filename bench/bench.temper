@@ -33,7 +33,7 @@ export class EngineResult(
   public passed: Listed<Pair<RegexNode, String>>,
 ) {
   public toString(): String {
-    return "${engine}: ${((score * 100.0).toInt32().toFloat64() / 100.0 orelse 0.0).toString()}";
+    return "${engine}: ${((score * 100.0).floor() / 100.0 orelse 0.0).toString()}";
   }
 }
 
