@@ -1,16 +1,18 @@
 
-local bundle = 'bundle.lua'
+-- Usage: lua bundler.lua OUTPUT MODULE.lua...
+-- Each module is named by its path under temper.out/lua/.
+local bundle = arg[1]
 local output = io.open(bundle, 'w')
 if output == nil then
-    error('failed to open ' .. bundle .. 'for writing')
+    error('failed to open ' .. bundle .. ' for writing')
 end
-for i=1, #arg do
+for i=2, #arg do
     local path = arg[i]
     local input = io.open(path, 'r')
     if input == nil then
         error('failed to read ' .. path)
     end
-    local mod = path:gsub('^temper.out/lua/', ''):gsub('.lua$', '')
+    local mod = path:gsub('^.*temper%.out/lua/', ''):gsub('%.lua$', '')
     output:write('package.preload[\'')
     output:write(mod)
     output:write('\'] = function()\n')

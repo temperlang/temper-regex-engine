@@ -20,8 +20,17 @@ let spaceCharsCalc(): DenseBitVector {
   bitset[char'\r'] = true;
   bitset[char'\n'] = true;
   bitset[char'\t'] = true;
+  // Vertical tab and form feed.
+  bitset[11] = true;
   bitset[12] = true;
-  bitset[14] = true;
+  return bitset;
+}
+
+let digitCharsCalc(): DenseBitVector {
+  let bitset = new DenseBitVector(0);
+  for (var i = char'0'; i <= char'9'; i++) {
+    bitset[i] = true;
+  }
   return bitset;
 }
 
@@ -39,7 +48,8 @@ export let wordChars = wordCharsCalc();
 export let spaceChars = spaceCharsCalc();
 
 export let wordCharsList = bitsToList(wordChars, 128);
-export let spaceCharsList = bitsToList(spaceChars, 32);
+export let spaceCharsList = bitsToList(spaceChars, 128);
+export let digitCharsList = bitsToList(digitCharsCalc(), 128);
 
 export let isWordChar(c: Int): Boolean {
   return wordChars[c] || c >= 256;

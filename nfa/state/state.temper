@@ -11,15 +11,18 @@ export class State(
 ) {
   public get next(): ListBuilder<Next> { nextVar }
   public var nextVar: ListBuilder<Next> = new ListBuilder<Next>();
+  public var incoming: Int = 0;
 
   public addNext(matcher: Matcher, toState: State): Void {
     next.add(new Next(toState, matcher));
+    toState.incoming += 1;
   }
 
   public addNextFirst(matcher: Matcher, toState: State): Void {
     var oldNext = next;
     nextVar = new ListBuilder<Next>();
     next.add(new Next(toState, matcher));
+    toState.incoming += 1;
     for (var i = 0; i < oldNext.length; i++) {
       next.add(oldNext[i]);
     }

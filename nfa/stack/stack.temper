@@ -1,33 +1,25 @@
 
 let { ... } = import("../state");
 
-export let noGroups: Listed<String> = [];
+/**
+ * A capture group on one backtracking path, most recent first. `end` is null
+ * while the group is open.
+ */
+export class Span(
+  public name: String,
+  public begin: StringIndex,
+  public end: StringIndex?,
+  public rest: Span?,
+) {}
 
-export interface Stack {
-  public index: StringIndex;
-  public state: State;
-  public groups: Listed<String>;
-
-  public get next(): Stack;
-}
-
-export class StackStart(
-  public index: StringIndex = String.begin,
-  public state: State = new State(0),
-  public groups: Listed<String> = [],
-) extends Stack {
-  public get next(): Stack {
-    return this;
-  }
-}
-
+/**
+ * One pending path in the backtracking search. `pos` counts code points from
+ * where the search started.
+ */
 export class StackSlot(
   public index: StringIndex,
+  public pos: Int,
   public state: State,
-  public slot: Stack,
-  public groups: Listed<String>,
-) extends Stack {
-  public get next(): Stack {
-    return slot;
-  }
-}
+  public next: StackSlot?,
+  public spans: Span?,
+) {}

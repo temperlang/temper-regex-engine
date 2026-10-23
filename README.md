@@ -2,7 +2,14 @@
 
 A regex engine in temper.
 
-It does the naive aproach to regex. Not very fast, but works on backends without regex engines in them (like lua).
+It's a backtracking NFA that remembers which states it has tried at each
+position, so it takes time linear in the pattern times the text, and a DFA that
+skips start positions where no match can begin when the pattern has no anchors.
+It works on backends without regex engines in them (like lua), and Temper's Lua
+backend bundles it as `std/regex`.
+
+Building needs a Temper compiler whose `std/regex` exports the special classes,
+such as `BeginSpecial`.
 
 ## Example testing
 
@@ -50,28 +57,12 @@ Temper: 42.57
 Opt: 49.07
 ```
 
-The "scripts/test.lua" script currently fails on `re:found` here, but other
-parts of it pass:
-
-```lua
-do
-    local re = regex('[12]+1')
-    assert(re:found('121'))
-end
-```
-
-This is the error message I get:
-
-```
-String::get failed
-```
-
 ## Example bundling for Temper
 
-First install luamin.
+First install luamin into this directory.
 
 ```bash
-npm install -g luamin
+npm install luamin@1.0.4
 ```
 
 Then you can run the following.
@@ -79,7 +70,7 @@ Then you can run the following.
 ```bash
 temper build
 
-lua bundler.lua \
+lua bundler.lua bundle.lua \
     temper.out/lua/temper-regex-engine/ctype.lua \
     temper.out/lua/temper-regex-engine/dfa/dfa.lua \
     temper.out/lua/temper-regex-engine/dfa/javascript.lua \
@@ -93,5 +84,8 @@ lua bundler.lua \
     temper.out/lua/temper-regex-engine/regex.lua \
     temper.out/lua/temper-regex-engine/util.lua
 
-luamin -f bundle.lua > bundle.min.lua
+node scripts/minify.mjs bundle.lua bundle.min.lua
 ```
+
+Temper's Lua backend uses the result as
+`be-lua/src/commonMain/resources/lang/temper/be/lua/temper-core/regex/runtime.lua`.

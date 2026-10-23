@@ -5,5 +5,7 @@ export interface TemperRegex {
   public replace(text: String, format: fn(Match): String): String;
   public split(text: String): Listed<String>;
   public found(text: String): Boolean;
-  public find(text: String, begin: StringIndex = String.begin): Match;
+  // Implementations default a null begin to String.begin. Declaring that here
+  // makes the Rust backend wrap begin in Option twice.
+  public find(text: String, begin: StringIndex?): Match;
 }

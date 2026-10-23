@@ -11,62 +11,51 @@ let { ... } = import("../../dfa/dfa");
 let { ... } = import("../../ctype");
 import("../test");
 
-let noThen(regex: RegexNode): Matcher? {
-  return null;
-}
-
 let noRunFound(str: String): StringIndexOption {
   return StringIndex.none;
 }
 
-let oneToMany(foundAt: fn(str: String, index: StringIndex): StringIndexOption): fn(str: String): StringIndexOption {
-  return fn(str: String): StringIndexOption {
-    var head = String.begin;
-    let stop = str.end;
-    while (head != stop) {
-      let got = foundAt(str, head);
-      if (got != StringIndex.none) {
-        return got;
+/** Finds the first position where `foundAt`, which tries one, finds a match. */
+let firstStartWith(foundAt: fn(String, StringIndex): StringIndexOption): fn(String, StringIndex): StringIndexOption {
+  return fn(str: String, from: StringIndex): StringIndexOption {
+    var head = from;
+    while (foundAt(str, head) == StringIndex.none) {
+      if (!str.hasIndex(head)) {
+        return StringIndex.none;
       }
       head = str.next(head);
     }
-    return StringIndex.none;
+    head
   };
 }
 
-class DFAMatcher(
-  public table: Table,
-  public source: RegexNode,
-) extends Matcher {
-  public matches(str: String, index: StringIndex): StringIndexOption {
-    return table.foundAt(str, index);
-  }
+let useFindStart(nfa: TemperRegexNFA, findStart: fn(String, StringIndex): StringIndexOption): Void {
+  nfa.engine.findStart = findStart;
+  nfa.runFound = fn(str: String): StringIndexOption {
+    return findStart(str, String.begin);
+  };
+}
 
-  public toString(): String {
-    return "/${regexToString(source) orelse panic()}/";
+let setChars(special: SpecialSet): Listed<Int> {
+  when (special) {
+    is DigitSpecial -> digitCharsList;
+    is SpaceSpecial -> spaceCharsList;
+    else -> wordCharsList;
   }
 }
 
-class EvalMatcher(
-  public matcher: fn(str: String, index: StringIndex): StringIndexOption,
-  public source: RegexNode,
-) extends Matcher {
-  public matches(str: String, index: StringIndex): StringIndexOption {
-    return matcher(str, index);
-  }
-
-  public toString(): String {
-    return "/${regexToString(source) orelse panic()}/";
-  }
-}
-
+/**
+ * Matches with a backtracking NFA. When the regex has no anchors, a DFA can
+ * find where matches start, which answers `found` alone and lets the others
+ * skip start positions. Only the NFA knows the priorities of alternatives and
+ * repeats, though, so it still picks the match.
+ */
 export class TemperRegexNFA(
   public var engine: Engine,
   public var runFound: fn(String): StringIndexOption,
-  public var subRegex: fn(RegexNode): Matcher?,
 ) extends TemperRegex {
-  public static fromRegex(regex: RegexNode, subRegex: fn(RegexNode): Matcher? = noThen): TemperRegexNFA {
-    let nfa = new TemperRegexNFA(new Engine(), noRunFound, subRegex);
+  public static fromRegex(regex: RegexNode): TemperRegexNFA {
+    let nfa = new TemperRegexNFA(new Engine(), noRunFound);
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
     nfa.runFound = fn(str: String): StringIndexOption {
       return nfa.engine.found(str, String.begin);
@@ -75,96 +64,37 @@ export class TemperRegexNFA(
   }
 
   public static fromRegexDFA(regex: RegexNode): TemperRegexNFA {
-    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
-      let sub = TemperRegexNFA.fromRegex(subRegex);
-      let dfa = DFA.fromEngine(sub.engine);
-      when (dfa) {
-        is DFA -> do {
-          return new DFAMatcher(dfa.table, subRegex);
-        }
-        else -> do {
-          return null;
-        }
-      }
-    });
-    when (dfa) {
-      is DFA -> do {
-        let table = dfa.table;
-        nfa.runFound = fn(str: String): StringIndexOption {
-          return table.foundAfter(str, String.begin);
-        };
-        return nfa;
-      }
-      else -> do {
-        return nfa;
-      }
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa != null) {
+      let table = dfa.table;
+      useFindStart(nfa, fn(str: String, from: StringIndex): StringIndexOption {
+        return table.firstStart(str, from);
+      });
     }
+    return nfa;
   }
 
   public static fromRegexLua(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
-      let sub = TemperRegexNFA.fromRegex(subRegex);
-      let dfa = DFA.fromEngine(sub.engine);
-      when (dfa) {
-        is DFA -> do {
-          let lua = Lua.fromTable(dfa.table);
-          return new EvalMatcher(load(lua), subRegex);
-        }
-        else -> do {
-          return null;
-        }
-      }
-    });
-    when (dfa) {
-      is DFA -> do {
-        let lua = Lua.fromTable(dfa.table);
-        nfa.runFound = oneToMany(load(lua));
-        return nfa;
-      }
-      else -> do {
-        return nfa;
-      }
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa != null) {
+      useFindStart(nfa, firstStartWith(load(Lua.fromTable(dfa.table))));
     }
+    return nfa;
   }
 
   public static fromRegexJavascript(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let dfa = DFA.fromEngine(TemperRegexNFA.fromRegex(regex).engine);
-    let nfa = TemperRegexNFA.fromRegex(regex, fn(subRegex: RegexNode): Matcher? {
-      let sub = TemperRegexNFA.fromRegex(subRegex);
-      let dfa = DFA.fromEngine(sub.engine);
-      when (dfa) {
-        is DFA -> do {
-          let javascript = Javascript.fromTable(dfa.table);
-          return new EvalMatcher(load(javascript), subRegex);
-        }
-        else -> do {
-          return null;
-        }
-      }
-    });
-    when (dfa) {
-      is DFA -> do {
-        let javascript = Javascript.fromTable(dfa.table);
-        nfa.runFound = oneToMany(load(javascript));
-        return nfa;
-      }
-      else -> do {
-        return nfa;
-      }
+    let nfa = TemperRegexNFA.fromRegex(regex);
+    let dfa = DFA.fromEngine(nfa.engine);
+    if (dfa != null) {
+      useFindStart(nfa, firstStartWith(load(Javascript.fromTable(dfa.table))));
     }
+    return nfa;
   }
 
+  // Edges are tried in the order they're added, so add preferred paths first.
   public buildRegex(regex: RegexNode, input: State, output: State): Void {
-    let subMatcher = subRegex(regex);
-    when (subMatcher) {
-      is Matcher -> do {
-        input.addNext(subMatcher, output);
-        return;
-      }
-      else -> do {}
-    }
     when (regex) {
       is Capture -> do {
         var mid1 = engine.newState();
@@ -204,6 +134,7 @@ export class TemperRegexNFA(
                 ls.add(split[i][String.begin]);
               }
             }
+            is SpecialSet -> ls.addAll(setChars(subRegex));
           }
         }
         input.addNext(fromChars(ls, !regex.negated), output);
@@ -220,11 +151,11 @@ export class TemperRegexNFA(
           buildRegex(regex.item, lastState, curState);
           lastState = curState;
         }
-        if (regex.max != null) {
-          let max = regex.max as Int orelse panic();
+        let max = regex.max;
+        if (max != null) {
           for (var i = regex.min; i < max; i++) {
             let curState = engine.newState();
-            if (!regex.reluctant) {
+            if (regex.reluctant) {
               lastState.addNext(engine.epsilon, output);
               buildRegex(regex.item, lastState, curState);
             } else {
@@ -235,90 +166,41 @@ export class TemperRegexNFA(
           }
           lastState.addNext(engine.epsilon, output);
         } else {
-          if (!regex.reluctant) {
-            lastState.addNext(engine.epsilon, output);
-            buildRegex(regex.item, lastState, lastState);
+          // Loop on a fresh state, since lastState may be the input that
+          // sibling alternatives also leave from.
+          let loop = engine.newState();
+          lastState.addNext(engine.epsilon, loop);
+          if (regex.reluctant) {
+            loop.addNext(engine.epsilon, output);
+            buildRegex(regex.item, loop, loop);
           } else {
-            buildRegex(regex.item, lastState, lastState);
-            lastState.addNext(engine.epsilon, output);
+            buildRegex(regex.item, loop, loop);
+            loop.addNext(engine.epsilon, output);
           }
         }
       }
       is Sequence -> do {
-        when (regex.items.length) {
-          0 -> input.addNext(engine.epsilon, output);
-          1 -> buildRegex(regex.items[0], input, output);
-          else -> do {
-            let seqs = new ListBuilder<Listed<RegexNode>>();
-            var last = new ListBuilder<RegexNode>();
-            let addAll(items: Listed<RegexNode>): Void {
-              for (var i = 0; i < items.length; i++) {
-                let item = items[i];
-                when (item) {
-                  Begin, End, WordBoundary, Dot -> do {
-                    if (last.length != 0) {
-                      seqs.add(last);
-                    }
-                    last = new ListBuilder<RegexNode>();
-                    last.add(item);
-                  }
-                  is Sequence -> do {
-                    addAll(item.items);
-                  }
-                  else -> do {
-                    last.add(item);
-                  }
-                }
-              }
-            }
-            addAll(regex.items);
-            if (last.length != 0) {
-              seqs.add(last);
-            }
-            if (seqs.length == 0) {
-              input.addNext(engine.epsilon, output);
-            } else {
-              var v1 = input;
-              for (var i = 0; i < seqs.length; i++) {
-                let items = seqs[i];
-                for (var j = 0; j < items.length; j++) {
-                  var v2 = if (j + 1 != items.length || i + 1 != seqs.length) {
-                    engine.newState()
-                  } else {
-                    output
-                  };
-
-                  buildRegex(items[j], v1, v2);
-                  v1 = v2;
-                }
-              };
-            }
-          }
-        }
-      }
-      is Special -> do {
-        if (regex == Begin) {
-          input.addNext(new BeginMatcher(), output);
-        } else if (regex == Dot) {
-          input.addNext(fromChars([0], false), output);
-        } else if (regex == End) {
-          input.addNext(new EndMatcher(), output);
-        } else if (regex == WordBoundary) {
-          input.addNext(new WordBoundaryMatcher(), output);
-        } else if (regex == Digit) {
-          let ls = new ListBuilder<Int>();
-          for (var i = char'0'; i <= char'9'; i++) {
-            ls.add(i);
-          }
-          input.addNext(fromChars(ls, true), output);
-        } else if(regex == Space) {
-          input.addNext(fromChars(spaceCharsList, true), output);
-        } else if (regex == Word) {
-          input.addNext(fromChars(wordCharsList, true), output);
+        let items = regex.items;
+        if (items.isEmpty) {
+          input.addNext(engine.epsilon, output);
         } else {
-          panic();
+          var v1 = input;
+          for (var i = 0; i < items.length; i++) {
+            let v2 = if (i + 1 < items.length) {
+              engine.newState()
+            } else {
+              output
+            };
+            buildRegex(items[i], v1, v2);
+            v1 = v2;
+          }
         }
       }
+      is BeginSpecial -> input.addNext(new BeginMatcher(), output);
+      is EndSpecial -> input.addNext(new EndMatcher(), output);
+      is WordBoundarySpecial -> input.addNext(new WordBoundaryMatcher(), output);
+      is DotSpecial -> input.addNext(fromChars([char'\n'], false), output);
+      is SpecialSet -> input.addNext(fromChars(setChars(regex), true), output);
     }
   }
 

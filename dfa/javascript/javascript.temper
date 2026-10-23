@@ -23,15 +23,23 @@ export class Javascript(
     }
   }
 
+  // Code points above U+FFFF take two UTF-16 units.
+  private addCodeAndNext(): Void {
+    addString("  const code = str.codePointAt(head);\n");
+    addString("  const next = head + (code > 0xffff ? 2 : 1);\n");
+  }
+
   public addRow(row: Row): Void {
     addString("const ");
     addTarget(row.name);
     addString(" = ");
     addString("(str, head) => {\n");
     if (row.ok) {
-        addString("  let ret = -1;\n");
+      addString("  if (head >= str.length) return head;\n");
+      addCodeAndNext();
+      addString("  let ret = -1;\n");
       if (row.keys.length != 0) {
-        addString("  switch (str.codePointAt(head)|0) {\n");
+        addString("  switch (code) {\n");
         for (var i = 0; i < row.keys.length; i++) {
           let key = row.keys[i];
           addString("  case ");
@@ -41,7 +49,7 @@ export class Javascript(
           if (target.id >= 0) {
             addString("    ret = ");
             addTarget(target);
-            addString("(str, head + 1);\n");
+            addString("(str, next);\n");
           }
           addString("    break;\n");
         }
@@ -49,7 +57,7 @@ export class Javascript(
         if (row.other.id >= 0) {
           addString("    ret = ");
           addTarget(row.other);
-          addString("(str, head + 1);\n");
+          addString("(str, next);\n");
         }
         addString("    break;\n");
         addString("  }\n")
@@ -57,7 +65,7 @@ export class Javascript(
         if (row.other.id >= 0) {
           addString("  ret = ");
           addTarget(row.other);
-          addString("(str, head + 1);\n");
+          addString("(str, next);\n");
         }
       }
       addString("  if (ret < 0) {\n");
@@ -66,8 +74,10 @@ export class Javascript(
       addString("    return ret;\n");
       addString("  }\n");
     } else {
+      addString("  if (head >= str.length) return -1;\n");
+      addCodeAndNext();
       if (row.keys.length != 0) {
-        addString("  switch (str.codePointAt(head)|0) {\n");
+        addString("  switch (code) {\n");
         for (var i = 0; i < row.keys.length; i++) {
           let key = row.keys[i];
           addString("  case ");
@@ -79,7 +89,7 @@ export class Javascript(
           } else {
             addString("    return ");
             addTarget(target);
-            addString("(str, head + 1);\n");
+            addString("(str, next);\n");
           }
           addString("    break;\n");
         }
@@ -89,7 +99,7 @@ export class Javascript(
         } else {
           addString("    return ");
           addTarget(row.other);
-          addString("(str, head + 1);\n");
+          addString("(str, next);\n");
         }
         addString("    break;\n");
         addString("  }\n")
@@ -99,7 +109,7 @@ export class Javascript(
         } else {
           addString("  return ");
           addTarget(row.other);
-          addString("(str, head + 1);\n");
+          addString("(str, next);\n");
         }
       }
     }
@@ -113,5 +123,5 @@ export class Javascript(
       }
     }
     addString("module.ret = q0;\n");
-  };
+  }
 }

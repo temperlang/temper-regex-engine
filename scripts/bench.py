@@ -21,15 +21,17 @@ last = None
 @bench.on_engine_result
 def on_engine_result(result):
     global last
+    # Pair compares by identity, so compare its contents.
+    passed = {(x.key, x.value) for x in result.passed}
     if last is not None:
-        if last != result.passed:
-            for x in set(last) - set(result.passed):
-                print(f'wanted: /{regex_to_string(x.key)}/.found("{x.value}")')
-            for x in set(result.passed) - set(last):
-                print(f'not wanted: /{regex_to_string(x.key)}/.found("{x.value}")')
+        if last != passed:
+            for regex, text in last - passed:
+                print(f'wanted: /{regex_to_string(regex)}/.found("{text}")')
+            for regex, text in passed - last:
+                print(f'not wanted: /{regex_to_string(regex)}/.found("{text}")')
             raise RuntimeError(f'failed: {result.engine}')
     else:
-        last = result.passed
+        last = passed
     print(result.to_string())
 
 bench.run()

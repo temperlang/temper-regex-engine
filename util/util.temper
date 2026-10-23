@@ -17,8 +17,8 @@ export let regexToString(base: RegexNode): String throws Bubble {
           is CodeRange -> do {
             ret.add("${String.fromCodePoint(subBase.min)}-${String.fromCodePoint(subBase.max)}");
           }
-          is CodePoints -> do {
-            ret.add(subBase.value);
+          else -> do {
+            ret.add(regexToString(subBase));
           }
         }
       }
@@ -67,23 +67,19 @@ export let regexToString(base: RegexNode): String throws Bubble {
         ""
       };
       let str = regexToString(base.item);
-      var pat = "%";
-      when (base.item) {
-        is CodeSet -> do {
-          pat = str;
-        }
+      let item = base.item;
+      let pat = when (item) {
+        is CodeSet -> str;
         is CodePoints -> do {
-          let points = base.item as CodePoints;
-          if (points.value.hasIndex(String.begin) && !points.value.hasIndex(points.value.next(String.begin))) {
-            pat = str;
+          let value = item.value;
+          if (value.hasIndex(String.begin) && !value.hasIndex(value.next(String.begin))) {
+            str
           } else {
-            pat = "${str}";
+            "(${str})"
           }
         }
-        else -> do {
-          pat = "(${str})";
-        }
-      }
+        else -> "(${str})";
+      };
       return "${pat}${mod}${q}";
     }
     is Sequence -> do {
@@ -97,29 +93,17 @@ export let regexToString(base: RegexNode): String throws Bubble {
         for (var i = 0; i < base.items.length; i += 1) {
           strings.add(regexToString(base.items[i]));
         }
-        let inner = strings.join("") { (x);; x };
+        let inner = strings.join("") { x => x };
         return "(${inner})";
       }
     }
-    is Special -> do {
-      if (base == Begin) {
-        return "^";
-      } else if (base == Dot) {
-        return ".";
-      } else if (base == End) {
-        return "$";
-      } else if (base == WordBoundary) {
-        return "\\b";
-      } else if (base == Digit) {
-        return "\\d";
-      } else if(base == Space) {
-        return "\\s";
-      } else if (base == Word) {
-        return "\\w";
-      } else {
-        return bubble();
-      }
-    }
+    is BeginSpecial -> return "^";
+    is DotSpecial -> return ".";
+    is EndSpecial -> return "$";
+    is WordBoundarySpecial -> return "\\b";
+    is DigitSpecial -> return "\\d";
+    is SpaceSpecial -> return "\\s";
+    is WordSpecial -> return "\\w";
     else -> return bubble();
   }
 }

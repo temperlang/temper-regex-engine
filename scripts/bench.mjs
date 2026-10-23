@@ -23,10 +23,10 @@ let last = new Set();
 
 bench.onEngineResult((result) => {
     const pass = new Set(result.passed.map(x => `/${regexToString(x[0])}/.found("${x[1]}")`));
-    const tooMany = pass.difference(last);
-    const tooFew = last.difference(pass);
+    const tooMany = [...pass].filter(p => !last.has(p));
+    const tooFew = [...last].filter(p => !pass.has(p));
     // console.log([...pass].join('\n'));
-    if (last.size !== 0 && (tooMany.size !== 0 || tooFew.size !== 0)) {
+    if (last.size !== 0 && (tooMany.length !== 0 || tooFew.length !== 0)) {
         for (const p of tooMany) {
             console.log('not wanted: ' + p);
         }

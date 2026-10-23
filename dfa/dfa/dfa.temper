@@ -30,6 +30,15 @@ export class Target(@noProperty arg: Listed<Int>) {
     return "{${body}}"
   }
 
+  public has(id: Int): Boolean {
+    for (var i = 0; i < name.length; i++) {
+      if (name[i] == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public and(other: Int): Target {
     let r = new ListBuilder<Int>();
     for (var j = 0; j < name.length; j++) {
@@ -150,35 +159,53 @@ export class Table(
     })
   }
 
+  /** The end of the longest match starting at `head`. */
   public foundAt(str: String, var head: StringIndex): StringIndexOption {
-    let stop = str.end;
-    var target = 0;
-    inner: while (true) {
-      var cur = rows.getOr(target, noRow);
-      var char = str[head];
-      let next = cur.map.getOr(char, cur.other);
-      if (next.id < 0 || head == stop) {
-        if (cur.ok) {
-          return head;
-        } else {
-          return StringIndex.none;
-        }
+    var found: StringIndexOption = StringIndex.none;
+    var cur = rows.getOr(0, noRow);
+    while (true) {
+      if (cur.ok) {
+        found = head;
       }
-      target = next.id;
+      if (!str.hasIndex(head)) {
+        break;
+      }
+      let next = cur.map.getOr(str[head], cur.other);
+      if (next.id < 0) {
+        break;
+      }
+      cur = rows.getOr(next.id, noRow);
       head = str.next(head);
     }
+    found
   }
 
-  public foundAfter(str: String, var head: StringIndex): StringIndexOption {
-    let stop = str.end;
-    while (head != stop) {
-      let got = foundAt(str, head);
-      if (got != StringIndex.none) {
-        return got;
+  /** Whether some match starts at `head`, stopping at the first accept. */
+  public matchesAt(str: String, var head: StringIndex): Boolean {
+    var cur = rows.getOr(0, noRow);
+    while (!cur.ok) {
+      if (!str.hasIndex(head)) {
+        return false;
+      }
+      let next = cur.map.getOr(str[head], cur.other);
+      if (next.id < 0) {
+        return false;
+      }
+      cur = rows.getOr(next.id, noRow);
+      head = str.next(head);
+    }
+    true
+  }
+
+  /** The first position at or after `head` where a match starts. */
+  public firstStart(str: String, var head: StringIndex): StringIndexOption {
+    while (!matchesAt(str, head)) {
+      if (!str.hasIndex(head)) {
+        return StringIndex.none;
       }
       head = str.next(head);
     }
-    return StringIndex.none;
+    head
   }
 }
 
@@ -201,14 +228,8 @@ class Alphabet {
         let {matcher} = state.next[j];
         when (matcher) {
           is ContainsMatcher -> do {
-            if (matcher.want) {
-              for (var k = 0; k < matcher.options.length; k++) {
-                ret.add(matcher.options[k]);
-              }
-            } else {
-              for (var k = 0; k < matcher.options.length; k++) {
-                ret.add(matcher.options[k]);
-              }
+            for (var k = 0; k < matcher.options.length; k++) {
+              ret.add(matcher.options[k]);
             }
           }
           is SingleMatcher -> do {
@@ -223,6 +244,27 @@ class Alphabet {
 }
 
 let noTable = new Table(new ListBuilder<Row>(), []);
+
+// Group markers don't consume anything, and a DFA has no groups to track, so
+// they're as empty as epsilon here.
+let isEmptyEdge(matcher: Matcher): Boolean {
+  matcher is EpsilonMatcher || matcher is StartGroupMatcher || matcher is EndGroupMatcher
+}
+
+/** `target` plus `state` and every state reachable from it by empty edges. */
+let epsilonClosure(state: State, target: Target): Target {
+  if (target.has(state.id)) {
+    return target;
+  }
+  var ret = target.and(state.id);
+  for (var j = 0; j < state.next.length; j++) {
+    let { toState, matcher } = state.next[j];
+    if (isEmptyEdge(matcher)) {
+      ret = epsilonClosure(toState, ret);
+    }
+  }
+  ret
+}
 
 export class DFA(
   public table: Table,
@@ -241,7 +283,7 @@ export class DFA(
     }
 
     let newTable: Table = new Table(new ListBuilder<Row>(), []);
-    newTable.addEmpty(new Target([0]));
+    newTable.addEmpty(epsilonClosure(engine.startState, noTarget));
 
     var ok = true;
 
@@ -254,48 +296,39 @@ export class DFA(
 
       let done = new MapBuilder<Int, Boolean>();
 
+      // Both add toState and its empty-edge closure, stopping at states
+      // already added so cycles end.
       let addOther(toState: State): Void {
-        for (var j = 0; j < toState.next.length; j++) {
-          let {toState, matcher} = toState.next[j];
-          when (matcher) {
-            is EpsilonMatcher -> do {
-              addOther(toState);
-            }
-            is StartGroupMatcher,
-            is EndGroupMatcher,
-            is WordBoundaryMatcher,
-            is BeginMatcher,
-            is EndMatcher -> do {
-              ok = false;
-            }
-            else -> do {}
-          }
+        if (other.has(toState.id)) {
+          return;
         }
         other = other.and(toState.id);
+        for (var j = 0; j < toState.next.length; j++) {
+          let {toState as dest, matcher} = toState.next[j];
+          if (isEmptyEdge(matcher)) {
+            addOther(dest);
+          } else if (matcher is WordBoundaryMatcher || matcher is BeginMatcher || matcher is EndMatcher) {
+            ok = false;
+          }
+        }
       }
 
       let add(char: Int, toState: State): Void {
-        for (var j = 0; j < toState.next.length; j++) {
-          let {toState, matcher} = toState.next[j];
-          when (matcher) {
-            is EpsilonMatcher -> do {
-              add(char, toState);
-            }
-            is StartGroupMatcher,
-            is EndGroupMatcher,
-            is WordBoundaryMatcher,
-            is BeginMatcher,
-            is EndMatcher -> do {
-              ok = false;
-            }
-            else -> do {}
-          }
+        let existing = map.getOr(char, noTarget);
+        if (existing.has(toState.id)) {
+          return;
         }
         if (!map.has(char)) {
           keys.add(char);
-          map[char] = new Target([toState.id]);
-        } else {
-          map[char] = (map[char] orelse panic()).and(toState.id);
+        }
+        map[char] = existing.and(toState.id);
+        for (var j = 0; j < toState.next.length; j++) {
+          let {toState as dest, matcher} = toState.next[j];
+          if (isEmptyEdge(matcher)) {
+            add(char, dest);
+          } else if (matcher is WordBoundaryMatcher || matcher is BeginMatcher || matcher is EndMatcher) {
+            ok = false;
+          }
         }
       }
 
@@ -331,13 +364,13 @@ export class DFA(
             is SingleMatcher -> do {
               add(matcher.char, toState);
             }
-            // epsilon & named epsilon
-            is EpsilonMatcher -> do {
-              onState(toState);
-            }
             // bad for DFA things
-            else -> do {
+            is WordBoundaryMatcher, is BeginMatcher, is EndMatcher -> do {
               ok = false;
+            }
+            // epsilon & group markers
+            else -> do {
+              onState(toState);
             }
           }
         }

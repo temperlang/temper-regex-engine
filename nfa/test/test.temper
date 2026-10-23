@@ -1,6 +1,126 @@
 
 let { ... } = import("std/regex");
 let { TemperRegexNFA } = import("../nfa");
+let { regexToString } = import("../../util");
+
+// Tests use regex literals rather than names like `Begin`, which the Java and
+// C# backends fail to initialize in test modules.
+
+let nfa(regex: Regex): TemperRegexNFA {
+  TemperRegexNFA.fromRegex(regex.data)
+}
+
+let source(regex: Regex): String {
+  regexToString(regex.data) orelse "bubbled"
+}
+
+test("special kinds") {
+  assert(source(/^/) == "^");
+  assert(source(/./) == ".");
+  assert(source(/$/) == "$");
+  assert(source(/\b/) == "\\b");
+  assert(source(/\d/) == "\\d");
+  assert(source(/\s/) == "\\s");
+  assert(source(/\w/) == "\\w");
+}
+
+test("special sets") {
+  assert(nfa(/\s/).found(" "));
+  assert(nfa(/\s/).found("\u000B"));
+  assert(!nfa(/\s/).found("\u000E"));
+  assert(nfa(/[\d_]/).found("7"));
+  assert(nfa(/[^\w]/).found("a!"));
+  assert(!nfa(/[^\w]/).found("a"));
+  let regex = nfa(/^\d+\s\w$/);
+  assert(regex.found("12 a"));
+  assert(!regex.found("x12 a"));
+  assert(!regex.found("12 a!"));
+}
+
+test("dot") {
+  assert(!nfa(/./).found("\n"));
+  assert(nfa(/./).found("\u0000"));
+}
+
+test("empty matches at the end") {
+  assert(nfa(/$/).found(""));
+  assert(nfa(/a*/).found(""));
+  assert(nfa(/a$/).found("ba"));
+}
+
+test("replace with empty matches") {
+  assert(nfa(/a*/).replace("baac") { m => "@" } == "@b@@c@");
+  assert(nfa(/,/).replace("a,b,") { m => "_" } == "a_b_");
+}
+
+test("split") {
+  assert(nfa(/x*/).split("abc").join("|") { s => s } == "a|b|c");
+  assert(nfa(/,/).split(",a,,b,").join("|") { s => s } == "|a||b|");
+}
+
+test("alternatives and repeats keep their priority") {
+  assert(nfa(/a|ab/).find("ab").full.value == "a");
+  assert(nfa(/ab|a/).find("ab").full.value == "ab");
+  assert(nfa(/a+/).find("aaa").full.value == "aaa");
+  assert(nfa(/a+?/).find("aaa").full.value == "a");
+  assert(nfa(/a{1,3}?/).find("aaa").full.value == "a");
+}
+
+test("star inside alternatives doesn't leak") {
+  assert(!nfa(/^(?:a*|b)$/).found("ab"));
+  assert(nfa(/^(?:a*|b)$/).found("aa"));
+}
+
+test("repeats of empty matches end") {
+  assert(!nfa(/(?:a*)*b/).found("aac"));
+  // Long enough that its visited marks need far more than the initial bits.
+  assert(!nfa(/(?:a?)*b/).found("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  assert(nfa(/^(?:a?)*$/).found("aa"));
+  assert(nfa(/(?:a|)*c/).find("aac").full.value == "aac");
+}
+
+test("nested repeats don't backtrack exponentially") {
+  let text = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  assert(!nfa(/(?:a+a)+b/).found(text));
+  assert(nfa(/(?:a+a)+b/).replace("${text}b") { m => "" } == "");
+}
+
+test("find from a position") {
+  let text = "a-a";
+  let second = text.next(text.next(String.begin));
+  let found = nfa(/a/).find(text, second);
+  assert(text.countBetween(String.begin, found.full.begin) == 2);
+}
+
+test("captures come from the matching path") {
+  let found = nfa(/(?:(?g=.)!)*/).find("a!b");
+  assert(found.full.value == "a!");
+  assert((found.groups["g"].value orelse "missing") == "a");
+  let c = nfa(/(?b=a)b|(?c=a)c/).find("ac");
+  assert(!c.groups.has("b"));
+  assert((c.groups["c"].value orelse "missing") == "a");
+}
+
+test("dfa") {
+  assert(TemperRegexNFA.fromRegexDFA(/a|abc/.data).found("abd"));
+  assert(TemperRegexNFA.fromRegexDFA(/ab/.data).found("ab"));
+  assert(TemperRegexNFA.fromRegexDFA(/a*/.data).found(""));
+  assert(!TemperRegexNFA.fromRegexDFA(/ab/.data).found("ba"));
+  assert(TemperRegexNFA.fromRegexDFA(/(?:a*)*b/.data).found("aab"));
+  // The DFA only finds where matches start, so finds keep NFA priorities.
+  assert(TemperRegexNFA.fromRegexDFA(/a{1,3}?/.data).find("aaa").full.value == "a");
+  assert(TemperRegexNFA.fromRegexDFA(/a|ab/.data).find("ab").full.value == "a");
+  let grouped = TemperRegexNFA.fromRegexDFA(/x(?g=a+)y/.data).find("zzxaay");
+  assert(grouped.full.value == "xaay");
+  assert((grouped.groups["g"].value orelse "missing") == "aa");
+  assert(TemperRegexNFA.fromRegexDFA(/a*/.data).replace("baac") { m => "@" } == "@b@@c@");
+  assert(TemperRegexNFA.fromRegexDFA(/x*/.data).split("abc").join("|") { s => s } == "a|b|c");
+}
+
+test("regex to string") {
+  assert(source(/(?:ab)*/) == "(ab)*");
+  assert(source(/[\d_]/) == "[\\d_]");
+}
 
 test("charset member after charset") {
   // Check out a standard Temper regex.
@@ -17,12 +137,12 @@ test("charset member after charset") {
 
 test("word boundary at edge") {
   // Find word boundary alone, including at string edges.
-  let regex = TemperRegexNFA.fromRegex(WordBoundary);
+  let regex = nfa(/\b/);
   assert(!regex.found(""));
   assert(!regex.found("!"));
   assert(regex.found("!a!"));
   assert(regex.found("a"));
   // Make sure we also can find trailing edges.
-  let r2 = TemperRegexNFA.fromRegex(new Sequence([Dot, WordBoundary]));
+  let r2 = nfa(/.\b/);
   assert(r2.found("a"));
 }
