@@ -45,7 +45,7 @@ export let regexToString(base: RegexNode): String throws Bubble {
       let mid = ret.toList().join("|", fn(p: Pair<String, Boolean>): String {
         return p.key;
       });
-      return "(${mid})";
+      return "(?:${mid})";
     }
     is Repeat -> do {
       let mod = if (base.min == 0 && base.max == 1) {
@@ -68,34 +68,28 @@ export let regexToString(base: RegexNode): String throws Bubble {
       };
       let str = regexToString(base.item);
       let item = base.item;
+      // Temper captures need names, so plain groups are written `(?:...)`.
       let pat = when (item) {
-        is CodeSet -> str;
+        is CodeSet, is Or, is Capture, is Special -> str;
         is CodePoints -> do {
           let value = item.value;
           if (value.hasIndex(String.begin) && !value.hasIndex(value.next(String.begin))) {
             str
           } else {
-            "(${str})"
+            "(?:${str})"
           }
         }
-        else -> "(${str})";
+        else -> "(?:${str})";
       };
       return "${pat}${mod}${q}";
     }
     is Sequence -> do {
-      if (base.items.length == 0) {
-        return "";
-      } else if (base.items.length == 1) {
-        return regexToString(base.items[0]);
-      } else {
-        // Can't use join directly if regexToString is bubbly.
-        let strings = new ListBuilder<String>();
-        for (var i = 0; i < base.items.length; i += 1) {
-          strings.add(regexToString(base.items[i]));
-        }
-        let inner = strings.join("") { x => x };
-        return "(${inner})";
+      // Can't use join directly if regexToString is bubbly.
+      let strings = new ListBuilder<String>();
+      for (var i = 0; i < base.items.length; i += 1) {
+        strings.add(regexToString(base.items[i]));
       }
+      return strings.join("") { x => x };
     }
     is BeginSpecial -> return "^";
     is DotSpecial -> return ".";

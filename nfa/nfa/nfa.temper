@@ -11,29 +11,20 @@ let { ... } = import("../../dfa/dfa");
 let { ... } = import("../../ctype");
 import("../test");
 
-let noRunFound(str: String): StringIndexOption {
-  return StringIndex.none;
-}
-
-/** Finds the first position where `foundAt`, which tries one, finds a match. */
-let firstStartWith(foundAt: fn(String, StringIndex): StringIndexOption): fn(String, StringIndex): StringIndexOption {
-  return fn(str: String, from: StringIndex): StringIndexOption {
-    var head = from;
-    while (foundAt(str, head) == StringIndex.none) {
-      if (!str.hasIndex(head)) {
-        return StringIndex.none;
-      }
-      head = str.next(head);
-    }
-    head
-  };
-}
-
-let useFindStart(nfa: TemperRegexNFA, findStart: fn(String, StringIndex): StringIndexOption): Void {
-  nfa.engine.findStart = findStart;
-  nfa.runFound = fn(str: String): StringIndexOption {
-    return findStart(str, String.begin);
-  };
+/** An NFA for `regex`, scanning with `makeScan` of its DFA if it has one. */
+let withScan(
+  regex: RegexNode,
+  makeScan: fn(Table): fn(String, StringIndex): StringIndexOption,
+): TemperRegexNFA {
+  let nfa = TemperRegexNFA.fromRegex(regex);
+  let dfa = DFA.fromEngine(nfa.engine);
+  if (dfa != null) {
+    let scan = makeScan(dfa.table);
+    nfa.engine.scan = fn(str: String, from: StringIndex): StringIndexOption {
+      scan(str, from)
+    };
+  }
+  nfa
 }
 
 let setChars(special: SpecialSet): Listed<Int> {
@@ -45,58 +36,39 @@ let setChars(special: SpecialSet): Listed<Int> {
 }
 
 /**
- * Matches with a backtracking NFA. When the regex has no anchors, a DFA can
- * find where matches start, which answers `found` alone and lets the others
- * skip start positions. Only the NFA knows the priorities of alternatives and
- * repeats, though, so it still picks the match.
+ * Matches with a backtracking NFA. When the regex has no anchors, a DFA scan
+ * answers `found` alone and lets the others give up early when nothing
+ * matches. Only the NFA knows the priorities of alternatives and repeats,
+ * though, so it still picks the match.
  */
 export class TemperRegexNFA(
-  public var engine: Engine,
-  public var runFound: fn(String): StringIndexOption,
+  public engine: Engine,
 ) extends TemperRegex {
   public static fromRegex(regex: RegexNode): TemperRegexNFA {
-    let nfa = new TemperRegexNFA(new Engine(), noRunFound);
+    let nfa = new TemperRegexNFA(new Engine());
     nfa.buildRegex(regex, nfa.engine.startState, nfa.engine.endState);
-    nfa.runFound = fn(str: String): StringIndexOption {
-      return nfa.engine.found(str, String.begin);
-    };
     return nfa;
   }
 
   public static fromRegexDFA(regex: RegexNode): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
-    if (dfa != null) {
-      let table = dfa.table;
-      useFindStart(nfa, fn(str: String, from: StringIndex): StringIndexOption {
-        return table.firstStart(str, from);
-      });
+    withScan(regex) { table =>
+      fn(str: String, from: StringIndex): StringIndexOption { table.scan(str, from) }
     }
-    return nfa;
   }
 
   public static fromRegexLua(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
-    if (dfa != null) {
-      useFindStart(nfa, firstStartWith(load(Lua.fromTable(dfa.table))));
-    }
-    return nfa;
+    withScan(regex) { table => load(Lua.fromTable(table)) }
   }
 
   public static fromRegexJavascript(regex: RegexNode, load: fn(String): fn(String, StringIndex): StringIndexOption): TemperRegexNFA {
-    let nfa = TemperRegexNFA.fromRegex(regex);
-    let dfa = DFA.fromEngine(nfa.engine);
-    if (dfa != null) {
-      useFindStart(nfa, firstStartWith(load(Javascript.fromTable(dfa.table))));
-    }
-    return nfa;
+    withScan(regex) { table => load(Javascript.fromTable(table)) }
   }
 
   // Edges are tried in the order they're added, so add preferred paths first.
   public buildRegex(regex: RegexNode, input: State, output: State): Void {
     when (regex) {
       is Capture -> do {
+        engine.addGroupName(regex.name);
         var mid1 = engine.newState();
         var mid2 = engine.newState();
         input.addNext(new StartGroupMatcher(regex.name), mid1);
@@ -104,6 +76,9 @@ export class TemperRegexNFA(
         mid2.addNext(new EndGroupMatcher(regex.name), output);
       }
       is CodePoints -> do {
+        if (regex.value.isEmpty) {
+          input.addNext(engine.epsilon, output);
+        }
         var lastState = input;
         var index = String.begin;
         while (regex.value.hasIndex(index)) {
@@ -213,7 +188,7 @@ export class TemperRegexNFA(
   }
 
   public found(text: String): Boolean {
-    return runFound(text) != StringIndex.none;
+    return engine.found(text, String.begin);
   }
 
   public find(text: String, begin: StringIndex = String.begin): Match {

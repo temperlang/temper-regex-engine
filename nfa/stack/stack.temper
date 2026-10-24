@@ -20,6 +20,5 @@ export class StackSlot(
   public index: StringIndex,
   public pos: Int,
   public state: State,
-  public next: StackSlot?,
   public spans: Span?,
 ) {}

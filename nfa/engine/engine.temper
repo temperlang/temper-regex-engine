@@ -11,19 +11,22 @@ class Hit(
   public spans: Span?,
 ) {}
 
+/** The end of the earliest match starting at or after `from`, or none. */
+@fun export interface Scan(str: String, from: StringIndex): StringIndexOption;
+
 export class Engine {
   public states: ListBuilder<State> = new ListBuilder<State>();
   public startState: State = Engine.newStateIn(states);
   public endState: State = Engine.newStateIn(states);
   public epsilon: EpsilonMatcher = new EpsilonMatcher();
+  /** Capture group names in the order the pattern first names them. */
+  public groupNames: ListBuilder<String> = new ListBuilder<String>();
   /**
-   * The first position at or after the given one where some match starts, or
-   * none. The leftmost match starts there, so a faster matcher like a DFA can
-   * skip the start positions that can't match.
+   * A faster scanner, like a DFA, that answers `found` alone and lets the
+   * other searches give up early when nothing matches. It can't tell which
+   * match has priority, so the backtracking search still picks it.
    */
-  public var findStart: fn(String, StringIndex): StringIndexOption = fn(str: String, from: StringIndex): StringIndexOption {
-    from
-  };
+  public var scan: Scan? = null;
 
   private static newStateIn(states: ListBuilder<State>): State {
     var ret = new State(states.length);
@@ -35,13 +38,24 @@ export class Engine {
     Engine.newStateIn(states)
   }
 
+  public addGroupName(name: String): Void {
+    for (var i = 0; i < groupNames.length; i++) {
+      if (groupNames[i] == name) {
+        return;
+      }
+    }
+    groupNames.add(name);
+  }
+
   /** The leftmost match starting at or after `from`. */
   private search(str: String, from: StringIndex): Hit? {
-    let start = findStart(str, from);
-    if (start is StringIndex) {
-      return searchFrom(str, start);
+    // No early return, which Python translates to a costly exception.
+    let scanner = scan;
+    if (scanner == null || scanner(str, from) != StringIndex.none) {
+      searchFrom(str, from)
+    } else {
+      null
     }
-    null
   }
 
   /**
@@ -53,50 +67,35 @@ export class Engine {
    * revisited only through their one predecessor, or never, for the start.
    */
   private searchFrom(str: String, from: StringIndex): Hit? {
-    let stateCount = states.length;
-    // Allocated on the first mark, since many searches never need one.
-    var visited: DenseBitVector? = null;
+    let marks = new Marks(states.length);
+    let stack = new ListBuilder<StackSlot>();
     var begin = from;
     var beginPos = 0;
     while (true) {
-      var stack: StackSlot? = new StackSlot(begin, beginPos, startState, null, null);
-      while (true) {
-        let top = stack;
-        if (top != null) {
-          stack = top.next;
-          var fresh = true;
-          if (top.state.incoming > 1) {
-            let key = top.pos * stateCount + top.state.id;
-            let existing = visited;
-            let marks = if (existing != null) { existing } else { new DenseBitVector(0) };
-            visited = marks;
-            fresh = !marks[key];
-            marks[key] = true;
+      stack.add(new StackSlot(begin, beginPos, startState, null));
+      while (!stack.isEmpty) {
+        let top = stack.removeLast();
+        if (top.state.incoming < 2 || marks.mark(top.state, top.pos)) {
+          if (top.state.id == endState.id) {
+            return new Hit(begin, top.index, top.spans);
           }
-          if (fresh) {
-            if (top.state.id == endState.id) {
-              return new Hit(begin, top.index, top.spans);
-            }
-            let index = top.index;
-            let next = top.state.next;
-            for (var c = next.length - 1; c >= 0; c -= 1) {
-              let { matcher, toState } = next[c];
-              let skip = matcher.matches(str, index);
-              if (skip is StringIndex) {
-                let pos = if (skip == index) { top.pos } else { top.pos + 1 };
-                if (!isMarked(visited, pos * stateCount + toState.id)) {
-                  let spans = when (matcher) {
-                    is StartGroupMatcher -> new Span(matcher.name, index, null, top.spans);
-                    is EndGroupMatcher -> closeSpan(top.spans, matcher.name, index);
-                    else -> top.spans;
-                  };
-                  stack = new StackSlot(skip, pos, toState, stack, spans);
-                }
+          let index = top.index;
+          let next = top.state.next;
+          for (var c = next.length - 1; c >= 0; c -= 1) {
+            let { matcher, toState } = next[c];
+            let skip = matcher.matches(str, index);
+            if (skip is StringIndex) {
+              let pos = if (skip == index) { top.pos } else { top.pos + 1 };
+              if (!marks.has(toState, pos)) {
+                let spans = when (matcher) {
+                  is StartGroupMatcher -> new Span(matcher.name, index, null, top.spans);
+                  is EndGroupMatcher -> closeSpan(top.spans, matcher.name, index);
+                  else -> top.spans;
+                };
+                stack.add(new StackSlot(skip, pos, toState, spans));
               }
             }
           }
-        } else {
-          break;
         }
       }
       if (!str.hasIndex(begin)) {
@@ -116,7 +115,7 @@ export class Engine {
       let hit = search(str, from);
       if (hit != null) {
         ret.appendBetween(str, last, hit.begin);
-        ret.append(replacer(buildMatch(str, hit)));
+        ret.append(replacer(buildMatch(str, hit, groupNames)));
         last = hit.end;
         if (hit.end != hit.begin) {
           from = hit.end;
@@ -161,19 +160,19 @@ export class Engine {
     ret
   }
 
-  public found(str: String, start: StringIndex): StringIndexOption {
-    let hit = search(str, start);
-    if (hit != null) {
-      hit.end
+  public found(str: String, start: StringIndex): Boolean {
+    let scanner = scan;
+    if (scanner != null) {
+      scanner(str, start) != StringIndex.none
     } else {
-      StringIndex.none
+      searchFrom(str, start) != null
     }
   }
 
   public find(str: String, begin: StringIndex = String.begin): Match {
     let hit = search(str, begin);
     if (hit != null) {
-      buildMatch(str, hit)
+      buildMatch(str, hit, groupNames)
     } else {
       bogusMatch()
     }
@@ -227,11 +226,31 @@ export class Engine {
   // }
 }
 
-let isMarked(visited: DenseBitVector?, key: Int): Boolean {
-  if (visited != null) {
-    visited[key]
-  } else {
-    false
+/**
+ * The (state, position) pairs a search has explored. There's one vector per
+ * state, indexed by position, so keys can't overflow, and they're made on the
+ * first mark, since many searches never need one.
+ */
+class Marks(
+  private stateCount: Int,
+) {
+  private byState: ListBuilder<DenseBitVector> = new ListBuilder<DenseBitVector>();
+
+  /** Marks the pair, and says whether it was unmarked before. */
+  public mark(state: State, pos: Int): Boolean {
+    if (byState.isEmpty) {
+      for (var i = 0; i < stateCount; i++) {
+        byState.add(new DenseBitVector(0));
+      }
+    }
+    let bits = byState[state.id];
+    let fresh = !bits[pos];
+    bits[pos] = true;
+    fresh
+  }
+
+  public has(state: State, pos: Int): Boolean {
+    !byState.isEmpty && byState[state.id][pos]
   }
 }
 
@@ -253,8 +272,8 @@ let closeSpan(spans: Span?, name: String, end: StringIndex): Span {
   panic()
 }
 
-/** Each group's last iteration, ordered by where it begins, outer first. */
-let buildMatch(str: String, hit: Hit): Match {
+/** Each group's last iteration, in the order of `names`. */
+let buildMatch(str: String, hit: Hit, names: Listed<String>): Match {
   let latest = new MapBuilder<String, Group>();
   var rest = hit.spans;
   while (true) {
@@ -271,16 +290,12 @@ let buildMatch(str: String, hit: Hit): Match {
       break;
     }
   }
-  let ordered = latest.values().sorted { a, b =>
-    if (a.begin != b.begin) {
-      a.begin <=> b.begin
-    } else {
-      b.end <=> a.end
-    }
-  };
   let groups = new MapBuilder<String, Group>();
-  for (let group of ordered) {
-    groups[group.name] = group;
+  for (var i = 0; i < names.length; i++) {
+    let name = names[i];
+    if (latest.has(name)) {
+      groups[name] = latest[name] orelse panic();
+    }
   }
   let full = new Group("full", str.slice(hit.begin, hit.end), hit.begin, hit.end);
   new Match(full, groups.toMap())

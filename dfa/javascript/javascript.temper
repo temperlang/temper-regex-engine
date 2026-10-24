@@ -14,114 +14,44 @@ export class Javascript(
     buf.add(string);
   }
 
-  public addTarget(target: Target): Void {
-    if (target.id < 0) {
-      panic();
-    } else {
-      addString("q");
-      addString(target.id.toString());
-    }
-  }
-
-  // Code points above U+FFFF take two UTF-16 units.
-  private addCodeAndNext(): Void {
-    addString("  const code = str.codePointAt(head);\n");
-    addString("  const next = head + (code > 0xffff ? 2 : 1);\n");
-  }
-
+  // Each row is a function from a code point to the next row's index.
   public addRow(row: Row): Void {
-    addString("const ");
-    addTarget(row.name);
-    addString(" = ");
-    addString("(str, head) => {\n");
-    if (row.ok) {
-      addString("  if (head >= str.length) return head;\n");
-      addCodeAndNext();
-      addString("  let ret = -1;\n");
-      if (row.keys.length != 0) {
-        addString("  switch (code) {\n");
-        for (var i = 0; i < row.keys.length; i++) {
-          let key = row.keys[i];
-          addString("  case ");
-          addString(key.toString());
-          addString(":\n");
-          let target = row.map[key] orelse panic();
-          if (target.id >= 0) {
-            addString("    ret = ");
-            addTarget(target);
-            addString("(str, next);\n");
-          }
-          addString("    break;\n");
-        }
-        addString("  default:\n")
-        if (row.other.id >= 0) {
-          addString("    ret = ");
-          addTarget(row.other);
-          addString("(str, next);\n");
-        }
-        addString("    break;\n");
-        addString("  }\n")
-      } else {
-        if (row.other.id >= 0) {
-          addString("  ret = ");
-          addTarget(row.other);
-          addString("(str, next);\n");
-        }
+    let id = row.name.id.toString();
+    addString("rows[${id}] = (code) => {\n");
+    if (row.keys.length != 0) {
+      addString("  switch (code) {\n");
+      for (var i = 0; i < row.keys.length; i++) {
+        let key = row.keys[i];
+        let target = row.map[key] orelse panic();
+        addString("  case ${key}: return ${target.id};\n");
       }
-      addString("  if (ret < 0) {\n");
-      addString("    return head;\n");
-      addString("  } else {\n");
-      addString("    return ret;\n");
       addString("  }\n");
-    } else {
-      addString("  if (head >= str.length) return -1;\n");
-      addCodeAndNext();
-      if (row.keys.length != 0) {
-        addString("  switch (code) {\n");
-        for (var i = 0; i < row.keys.length; i++) {
-          let key = row.keys[i];
-          addString("  case ");
-          addString(key.toString());
-          addString(":\n");
-          let target = row.map[key] orelse panic();
-          if (target.id < 0) {
-            addString("    return -1;\n");
-          } else {
-            addString("    return ");
-            addTarget(target);
-            addString("(str, next);\n");
-          }
-          addString("    break;\n");
-        }
-        addString("  default:\n")
-        if (row.other.id < 0) {
-          addString("    return -1;\n");
-        } else {
-          addString("    return ");
-          addTarget(row.other);
-          addString("(str, next);\n");
-        }
-        addString("    break;\n");
-        addString("  }\n")
-      } else {
-        if (row.other.id < 0) {
-          addString("  return -1;\n");
-        } else {
-          addString("  return ");
-          addTarget(row.other);
-          addString("(str, next);\n");
-        }
-      }
     }
+    addString("  return ${row.other.id};\n");
     addString("};\n");
+    if (row.ok) {
+      addString("ok[${id}] = true;\n");
+    }
   }
 
+  // A loop rather than calls between rows, so long matches can't overflow
+  // the stack.
   public addTable(table: Table): Void {
+    addString("const rows = [];\n");
+    addString("const ok = [];\n");
     for (var i = 0; i < table.rows.length; i++) {
-      if (table.rows[i].name.id >= 0) {
-        addRow(table.rows[i]);
-      }
+      addRow(table.rows[i]);
     }
-    addString("module.ret = q0;\n");
+    addString("module.ret = (str, head) => {\n");
+    addString("  let row = 0;\n");
+    addString("  while (!ok[row]) {\n");
+    addString("    if (head >= str.length) return -1;\n");
+    addString("    const code = str.codePointAt(head);\n");
+    // Code points above U+FFFF take two UTF-16 units.
+    addString("    head += code > 0xffff ? 2 : 1;\n");
+    addString("    row = rows[row](code);\n");
+    addString("  }\n");
+    addString("  return head;\n");
+    addString("};\n");
   }
 }

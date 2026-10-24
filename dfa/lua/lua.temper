@@ -14,123 +14,49 @@ export class Lua(
     buf.add(string);
   }
 
-  public addTarget(target: Target): Void {
-    if (target.id < 0) {
-      panic();
-    } else {
-      addString("q");
-      addString(target.id.toString());
-    }
-  }
-
+  // Each row is a function from a code point to the next row's index.
   public addRow(row: Row): Void {
-    addTarget(row.name);
-    addString(" = function");
-    addString("(str, head)\n");
-    if (row.ok) {
-      addString("  if head > #str then return #str + 1 end\n");
-      addString("  local next = utf8_offset(str, 2, head)\n");
-      addString("  local code = utf8_codepoint(str, head)\n");
-      addString("  local ret = -1\n");
-      for (var i = 0; i < row.keys.length; i++) {
-        let key = row.keys[i];
-        if (i == 0) {
-          addString("  if ")
-        } else {
-          addString("  elseif ")
-        }
-        addString("code == ");
-        addString(key.toString());
-        addString(" then\n");
-        let target = row.map[key] orelse panic();
-        if (target.id >= 0) {
-          addString("    ret = ");
-          addTarget(target);
-          addString("(str, next)\n");
-        }
-      }
-      if (row.keys.length != 0) {
-        addString("  else\n")
-        if (row.other.id >= 0) {
-          addString("    ret = ");
-          addTarget(row.other);
-          addString("(str, next)\n");
-        }
-        addString("  end\n")
+    let id = row.name.id.toString();
+    addString("rows[${id}] = function(code)\n");
+    for (var i = 0; i < row.keys.length; i++) {
+      let key = row.keys[i];
+      let target = row.map[key] orelse panic();
+      if (i == 0) {
+        addString("  if ");
       } else {
-        if (row.other.id >= 0) {
-          addString("  ret = ");
-          addTarget(row.other);
-          addString("(str, next)\n");
-        }
+        addString("  elseif ");
       }
-      addString("  if ret < 0 then\n");
-      addString("    return head\n");
-      addString("  else\n");
-      addString("    return ret\n");
-      addString("  end\n");
-    } else {
-      addString("  if head > #str then return -1 end\n");
-      addString("  local next = utf8_offset(str, 2, head)\n");
-      addString("  local code = utf8_codepoint(str, head)\n");
-      for (var i = 0; i < row.keys.length; i++) {
-        let key = row.keys[i];
-        if (i == 0) {
-          addString("  if ")
-        } else {
-          addString("  elseif ")
-        }
-        addString("code == ");
-        addString(key.toString());
-        addString(" then\n");
-        let target = row.map[key] orelse panic();
-        if (target.id < 0) {
-          addString("    return -1\n");
-        } else {
-          addString("    return ");
-          addTarget(target);
-          addString("(str, next)\n");
-        }
-      }
-      if (row.keys.length != 0) {
-        addString("  else\n")
-        if (row.other.id < 0) {
-          addString("    return -1\n");
-        } else {
-          addString("    return ");
-          addTarget(row.other);
-          addString("(str, next)\n");
-        }
-        addString("  end\n")
-      } else {
-        if (row.other.id < 0) {
-          addString("  return -1\n");
-        } else {
-          addString("  return ");
-          addTarget(row.other);
-          addString("(str, next)\n");
-        }
-      }
+      addString("code == ${key} then return ${target.id}\n");
     }
+    if (row.keys.length != 0) {
+      addString("  end\n");
+    }
+    addString("  return ${row.other.id}\n");
     addString("end\n");
+    if (row.ok) {
+      addString("ok[${id}] = true\n");
+    }
   }
 
+  // A loop rather than calls between rows, so long matches can't overflow
+  // the stack.
   public addTable(table: Table): Void {
-    addString("local temper = package.loaded['temper-core/prelude']\n");
     addString("local utf8_codepoint = utf8.codepoint\n");
     addString("local utf8_offset = utf8.offset\n");
+    addString("local rows = {}\n");
+    addString("local ok = {}\n");
     for (var i = 0; i < table.rows.length; i++) {
-      if (table.rows[i].name.id >= 0) {
-        addString("local ")
-        addTarget(table.rows[i].name);
-        addString("\n")
-      }
+      addRow(table.rows[i]);
     }
-    for (var i = 0; i < table.rows.length; i++) {
-      if (table.rows[i].name.id >= 0) {
-        addRow(table.rows[i]);
-      }
-    }
-    addString("return q0\n");
+    addString("return function(str, head)\n");
+    addString("  local row = 0\n");
+    addString("  while not ok[row] do\n");
+    addString("    if head > #str then return -1 end\n");
+    addString("    local code = utf8_codepoint(str, head)\n");
+    addString("    head = utf8_offset(str, 2, head)\n");
+    addString("    row = rows[row](code)\n");
+    addString("  end\n");
+    addString("  return head\n");
+    addString("end\n");
   }
 }

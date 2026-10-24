@@ -85,8 +85,6 @@ export class Row(
   }
 }
 
-let noRow = new Row(noTarget, noTarget, [], new Map<Int, Target>([]), false);
-
 export class Table(
   public rows: ListBuilder<Row>,
   @noProperty targets: Listed<Target>,
@@ -159,53 +157,23 @@ export class Table(
     })
   }
 
-  /** The end of the longest match starting at `head`. */
-  public foundAt(str: String, var head: StringIndex): StringIndexOption {
-    var found: StringIndexOption = StringIndex.none;
-    var cur = rows.getOr(0, noRow);
-    while (true) {
-      if (cur.ok) {
-        found = head;
-      }
-      if (!str.hasIndex(head)) {
-        break;
-      }
-      let next = cur.map.getOr(str[head], cur.other);
-      if (next.id < 0) {
-        break;
-      }
-      cur = rows.getOr(next.id, noRow);
+  /**
+   * The end of the earliest match starting at or after `head`, or none, in
+   * one pass. Every row includes the start states, so a match can begin at
+   * any position and no transition is dead.
+   */
+  public scan(str: String, var head: StringIndex): StringIndexOption {
+    // No early return, which Python translates to a costly exception.
+    var cur = rows[0];
+    while (!cur.ok && str.hasIndex(head)) {
+      cur = rows[cur.map.getOr(str[head], cur.other).id];
       head = str.next(head);
     }
-    found
-  }
-
-  /** Whether some match starts at `head`, stopping at the first accept. */
-  public matchesAt(str: String, var head: StringIndex): Boolean {
-    var cur = rows.getOr(0, noRow);
-    while (!cur.ok) {
-      if (!str.hasIndex(head)) {
-        return false;
-      }
-      let next = cur.map.getOr(str[head], cur.other);
-      if (next.id < 0) {
-        return false;
-      }
-      cur = rows.getOr(next.id, noRow);
-      head = str.next(head);
+    if (cur.ok) {
+      head
+    } else {
+      StringIndex.none
     }
-    true
-  }
-
-  /** The first position at or after `head` where a match starts. */
-  public firstStart(str: String, var head: StringIndex): StringIndexOption {
-    while (!matchesAt(str, head)) {
-      if (!str.hasIndex(head)) {
-        return StringIndex.none;
-      }
-      head = str.next(head);
-    }
-    head
   }
 }
 
@@ -251,6 +219,10 @@ let isEmptyEdge(matcher: Matcher): Boolean {
   matcher is EpsilonMatcher || matcher is StartGroupMatcher || matcher is EndGroupMatcher
 }
 
+// Unanchored tables can grow exponentially, as for /a[ab]{20}/, and building
+// one is quadratic in its rows, so past this many the NFA works alone.
+let maxRows = 500;
+
 /** `target` plus `state` and every state reachable from it by empty edges. */
 let epsilonClosure(state: State, target: Target): Target {
   if (target.has(state.id)) {
@@ -283,18 +255,20 @@ export class DFA(
     }
 
     let newTable: Table = new Table(new ListBuilder<Row>(), []);
-    newTable.addEmpty(epsilonClosure(engine.startState, noTarget));
+    let start = epsilonClosure(engine.startState, noTarget);
+    newTable.addEmpty(start);
 
     var ok = true;
 
     for (var i = 0; i < newTable.rows.length; i++) {
+      if (i == maxRows) {
+        return null;
+      }
       let row = newTable.rows[i];
 
       var other = new Target([]);
       let keys = new ListBuilder<Int>();
       let map = new MapBuilder<Int, Target>();
-
-      let done = new MapBuilder<Int, Boolean>();
 
       // Both add toState and its empty-edge closure, stopping at states
       // already added so cycles end.
@@ -333,10 +307,6 @@ export class DFA(
       }
 
       let onState(state: State): Void {
-        if (done.getOr(state.id, false)) {
-          return;
-        }
-        done[state.id] = true;
         for (var j = 0; j < state.next.length; j++) {
           let {toState, matcher} = state.next[j];
           when (matcher) {
@@ -368,26 +338,24 @@ export class DFA(
             is WordBoundaryMatcher, is BeginMatcher, is EndMatcher -> do {
               ok = false;
             }
-            // epsilon & group markers
-            else -> do {
-              onState(toState);
-            }
+            // Empty edges, whose targets every row already holds.
+            else -> do {}
           }
         }
-        done[state.id] = false;
       }
 
       for (var j = 0; j < row.name.name.length; j++) {
         onState(states[row.name.name[j]] orelse panic());
       }
 
-      if (other.name.length != 0) {
-        newTable.addEmpty(other);
-      }
+      // A new match can start after any code point.
+      other = other.ands(start);
+      newTable.addEmpty(other);
 
-      for (var i = 0; i < keys.length; i++) {
-        let key = keys[i];
-        let val = map[key] orelse panic();
+      for (var j = 0; j < keys.length; j++) {
+        let key = keys[j];
+        let val = (map[key] orelse panic()).ands(start);
+        map[key] = val;
         newTable.addEmpty(val);
       }
 
@@ -411,6 +379,6 @@ export class DFA(
   }
 
   public found(s: String, start: StringIndex): StringIndexOption {
-    return table.foundAt(s, start);
+    return table.scan(s, start);
   }
 }

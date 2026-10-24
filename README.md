@@ -2,14 +2,10 @@
 
 A regex engine in temper.
 
-It's a backtracking NFA that remembers which states it has tried at each
-position, so it takes time linear in the pattern times the text, and a DFA that
-skips start positions where no match can begin when the pattern has no anchors.
-It works on backends without regex engines in them (like lua), and Temper's Lua
-backend bundles it as `std/regex`.
-
-Building needs a Temper compiler whose `std/regex` exports the special classes,
-such as `BeginSpecial`.
+It's a backtracking NFA that explores each state at each position at most once
+per search. When a pattern has no anchors, a DFA also answers `found` on its
+own and ends other searches early when nothing matches. It works on backends
+without regex engines in them (like lua).
 
 ## Example testing
 

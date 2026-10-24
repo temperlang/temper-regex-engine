@@ -101,6 +101,11 @@ test("captures come from the matching path") {
   assert((c.groups["c"].value orelse "missing") == "a");
 }
 
+test("groups come in pattern order") {
+  let found = nfa(/(?:(?a=x)|(?b=y))+/).find("yx");
+  assert(found.groups.keys().join(",") { k => k } == "a,b");
+}
+
 test("dfa") {
   assert(TemperRegexNFA.fromRegexDFA(/a|abc/.data).found("abd"));
   assert(TemperRegexNFA.fromRegexDFA(/ab/.data).found("ab"));
@@ -115,10 +120,21 @@ test("dfa") {
   assert((grouped.groups["g"].value orelse "missing") == "aa");
   assert(TemperRegexNFA.fromRegexDFA(/a*/.data).replace("baac") { m => "@" } == "@b@@c@");
   assert(TemperRegexNFA.fromRegexDFA(/x*/.data).split("abc").join("|") { s => s } == "a|b|c");
+  // The earliest match to end isn't always the leftmost.
+  assert(TemperRegexNFA.fromRegexDFA(/xabc|ab/.data).find("xabc").full.value == "xabc");
+  assert(!TemperRegexNFA.fromRegexDFA(/a*b/.data).found("aaaa"));
+}
+
+test("dfa too big to build") {
+  let regex = TemperRegexNFA.fromRegexDFA(/a[ab]{12}/.data);
+  assert(regex.found("baaaaaaaaaaaaa"));
+  assert(!regex.found("baaaaaaaaaaaa"));
 }
 
 test("regex to string") {
-  assert(source(/(?:ab)*/) == "(ab)*");
+  assert(source(/(?:ab)*/) == "(?:ab)*");
+  assert(source(/ab|c/) == "(?:ab|c)");
+  assert(source(/(?n=a)+.*/) == "(?n=a)+.*");
   assert(source(/[\d_]/) == "[\\d_]");
 }
 
@@ -133,6 +149,11 @@ test("charset member after charset") {
   // And one specifically from this library.
   let here = TemperRegexNFA.fromRegex(standard.data);
   assert(here.found("121"));
+}
+
+test("empty code points") {
+  let regex = TemperRegexNFA.fromRegex(new Sequence([new CodePoints(""), new CodePoints("a")]));
+  assert(regex.found("a"));
 }
 
 test("word boundary at edge") {
